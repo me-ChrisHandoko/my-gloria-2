@@ -10,6 +10,11 @@ jest.mock('@clerk/backend', () => ({
   createClerkClient: jest.fn(() => ({
     users: {
       getUser: jest.fn(),
+      updateUser: jest.fn(),
+    },
+    emailAddresses: {
+      createEmailAddress: jest.fn(),
+      deleteEmailAddress: jest.fn(),
     },
   })),
 }));
@@ -58,11 +63,15 @@ describe('ClerkAuthService - DataKaryawan Validation', () => {
   };
 
   const mockConfigService = {
-    get: jest.fn((key: string) => {
-      if (key === 'CLERK_SECRET_KEY') {
-        return 'test_secret_key';
-      }
-      return null;
+    get: jest.fn((key: string, defaultValue?: any) => {
+      const config: Record<string, any> = {
+        CLERK_SECRET_KEY: 'test_secret_key',
+        CLERK_AUTO_SYNC_EMAIL: true,
+        CLERK_SYNC_MAX_RETRIES: 3,
+        CLERK_SYNC_RETRY_DELAY: 1000,
+        CLERK_SYNC_TIMEOUT: 5000,
+      };
+      return config[key] !== undefined ? config[key] : defaultValue;
     }),
   };
 
@@ -503,6 +512,229 @@ describe('ClerkAuthService - DataKaryawan Validation', () => {
       const result = await service.loadUserProfile('clerk_123');
 
       expect(result).toEqual(mockProfile);
+    });
+  });
+
+  describe('Email Sync Functionality', () => {
+    let mockClerkClient: any;
+
+    beforeEach(() => {
+      mockClerkClient = (service as any).clerkClient;
+      jest.clearAllMocks();
+    });
+
+    it('should successfully sync email when mismatch detected for existing user', async () => {
+      // Setup existing user with email mismatch
+      const existingProfile = {
+        id: 'profile_123',
+        clerkUserId: 'clerk_123',
+        nip: '123456789012345',
+        isActive: true,
+      };
+
+      const clerkUser = {
+        id: 'clerk_123',
+        email: 'old@example.com', // Old email in Clerk
+      };
+
+      const dataKaryawan = {
+        nip: '123456789012345',
+        email: 'new@example.com', // New email in DataKaryawan
+        statusAktif: 'Aktif',
+        nama: 'Test User',
+      };
+
+      // Mock responses
+      mockPrismaService.userProfile.findUnique.mockResolvedValue(
+        existingProfile,
+      );
+      mockPrismaService.dataKaryawan.findUnique.mockResolvedValue(dataKaryawan);
+      mockClerkClient.emailAddresses.createEmailAddress.mockResolvedValue({
+        id: 'email_123',
+        emailAddress: 'new@example.com',
+      });
+      mockClerkClient.users.updateUser.mockResolvedValue({});
+      mockClerkClient.users.getUser.mockResolvedValue({
+        emailAddresses: [{ id: 'email_old', emailAddress: 'old@example.com' }],
+      });
+
+      // Enable email sync
+      (service as any).emailSyncEnabled = true;
+
+      const result = await service.syncUserProfile(clerkUser);
+
+      // Verify sync operations were called
+      expect(
+        mockClerkClient.emailAddresses.createEmailAddress,
+      ).toHaveBeenCalledWith({
+        userId: 'clerk_123',
+        emailAddress: 'new@example.com',
+        verified: true,
+        primary: false,
+      });
+
+      expect(mockClerkClient.users.updateUser).toHaveBeenCalledWith(
+        'clerk_123',
+        {
+          primaryEmailAddressId: 'email_123',
+        },
+      );
+
+      // Verify audit logs
+      expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          metadata: expect.objectContaining({
+            reason: 'EMAIL_MISMATCH_DETECTED',
+          }),
+        }),
+      });
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle sync failure with retry logic', async () => {
+      const existingProfile = {
+        id: 'profile_123',
+        clerkUserId: 'clerk_123',
+        nip: '123456789012345',
+        isActive: true,
+      };
+
+      const clerkUser = {
+        id: 'clerk_123',
+        email: 'old@example.com',
+      };
+
+      const dataKaryawan = {
+        nip: '123456789012345',
+        email: 'new@example.com',
+        statusAktif: 'Aktif',
+        nama: 'Test User',
+      };
+
+      mockPrismaService.userProfile.findUnique.mockResolvedValue(
+        existingProfile,
+      );
+      mockPrismaService.dataKaryawan.findUnique.mockResolvedValue(dataKaryawan);
+
+      // Mock failure then success pattern for retry logic
+      mockClerkClient.emailAddresses.createEmailAddress
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce({
+          id: 'email_123',
+          emailAddress: 'new@example.com',
+        });
+
+      mockClerkClient.users.updateUser.mockResolvedValue({});
+      mockClerkClient.users.getUser.mockResolvedValue({
+        emailAddresses: [{ id: 'email_old', emailAddress: 'old@example.com' }],
+      });
+
+      (service as any).emailSyncEnabled = true;
+      (service as any).syncMaxRetries = 3;
+      (service as any).syncRetryDelay = 10; // Short delay for testing
+
+      const result = await service.syncUserProfile(clerkUser);
+
+      // Should have retried 3 times (2 failures + 1 success)
+      expect(
+        mockClerkClient.emailAddresses.createEmailAddress,
+      ).toHaveBeenCalledTimes(3);
+      expect(result).toBeDefined();
+    });
+
+    it('should deny access when sync is disabled via config', async () => {
+      const existingProfile = {
+        id: 'profile_123',
+        clerkUserId: 'clerk_123',
+        nip: '123456789012345',
+        isActive: true,
+      };
+
+      const clerkUser = {
+        id: 'clerk_123',
+        email: 'old@example.com',
+      };
+
+      const dataKaryawan = {
+        nip: '123456789012345',
+        email: 'new@example.com',
+        statusAktif: 'Aktif',
+        nama: 'Test User',
+      };
+
+      mockPrismaService.userProfile.findUnique.mockResolvedValue(
+        existingProfile,
+      );
+      mockPrismaService.dataKaryawan.findUnique.mockResolvedValue(dataKaryawan);
+
+      // Disable email sync
+      (service as any).emailSyncEnabled = false;
+
+      await expect(service.syncUserProfile(clerkUser)).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      // Verify no sync operations were attempted
+      expect(
+        mockClerkClient.emailAddresses.createEmailAddress,
+      ).not.toHaveBeenCalled();
+      expect(mockClerkClient.users.updateUser).not.toHaveBeenCalled();
+
+      // Verify appropriate error message
+      await expect(service.syncUserProfile(clerkUser)).rejects.toThrow(
+        /email address does not match employee records/,
+      );
+    });
+
+    it('should handle timeout during email sync', async () => {
+      const existingProfile = {
+        id: 'profile_123',
+        clerkUserId: 'clerk_123',
+        nip: '123456789012345',
+        isActive: true,
+      };
+
+      const clerkUser = {
+        id: 'clerk_123',
+        email: 'old@example.com',
+      };
+
+      const dataKaryawan = {
+        nip: '123456789012345',
+        email: 'new@example.com',
+        statusAktif: 'Aktif',
+        nama: 'Test User',
+      };
+
+      mockPrismaService.userProfile.findUnique.mockResolvedValue(
+        existingProfile,
+      );
+      mockPrismaService.dataKaryawan.findUnique.mockResolvedValue(dataKaryawan);
+
+      // Mock delayed response to trigger timeout
+      mockClerkClient.emailAddresses.createEmailAddress.mockImplementation(
+        () => new Promise((resolve) => setTimeout(resolve, 10000)),
+      );
+
+      (service as any).emailSyncEnabled = true;
+      (service as any).syncTimeout = 100; // Very short timeout for testing
+      (service as any).syncMaxRetries = 1; // Single attempt for testing
+
+      await expect(service.syncUserProfile(clerkUser)).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      // Verify timeout was handled
+      expect(mockPrismaService.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          metadata: expect.objectContaining({
+            reason: 'EMAIL_MISMATCH',
+            syncAttempted: true,
+          }),
+        }),
+      });
     });
   });
 
