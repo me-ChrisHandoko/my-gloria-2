@@ -1,0 +1,493 @@
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createClerkClient, ClerkClient } from '@clerk/backend';
+import { PrismaService } from '../../database/prisma.service';
+import { AuthenticatedUser } from '../guards/clerk-auth.guard';
+
+interface ClerkUserData {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  profileImageUrl: string | null;
+  banned: boolean;
+  publicMetadata: any;
+  privateMetadata: any;
+}
+
+interface UserProfileData {
+  id: string;
+  clerkUserId: string;
+  nip: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  isActive: boolean;
+  lastLogin?: Date;
+  dataKaryawan?: any;
+}
+
+@Injectable()
+export class ClerkAuthService {
+  private readonly logger = new Logger(ClerkAuthService.name);
+  private readonly clerkClient: ClerkClient;
+  private readonly maxRetries = 3;
+  private readonly retryDelay = 1000; // 1 second
+  private readonly cacheTimeout = 300000; // 5 minutes
+  private userCache = new Map<string, { user: any; timestamp: number }>();
+
+  constructor(
+    private configService: ConfigService,
+    private prismaService: PrismaService,
+  ) {
+    const secretKey = this.configService.get<string>('CLERK_SECRET_KEY');
+    const publishableKey = this.configService.get<string>('CLERK_PUBLISHABLE_KEY');
+    
+    if (!secretKey) {
+      this.logger.error('CLERK_SECRET_KEY is not configured');
+      throw new Error('Clerk authentication is not properly configured');
+    }
+
+    this.clerkClient = createClerkClient({
+      secretKey,
+      publishableKey,
+    });
+  }
+
+  /**
+   * Verify session token with Clerk
+   */
+  async verifySession(token: string): Promise<any> {
+    return this.withRetry(async () => {
+      try {
+        // Verify the JWT token using authenticateRequest
+        const { data: verifiedToken, error } = await this.clerkClient.authenticateRequest({
+          headerToken: token,
+        });
+        
+        if (error || !verifiedToken || !verifiedToken.userId) {
+          throw new UnauthorizedException({
+            message: error?.message || 'Invalid session token',
+            code: 'AUTH_INVALID_TOKEN',
+          });
+        }
+
+        // Get session details
+        const sessions = await this.clerkClient.sessions.getSessionList({
+          userId: verifiedToken.userId,
+        });
+
+        const activeSession = sessions.data.find(s => s.status === 'active');
+        
+        if (!activeSession) {
+          throw new UnauthorizedException({
+            message: 'No active session found',
+            code: 'AUTH_NO_ACTIVE_SESSION',
+          });
+        }
+
+        return {
+          userId: verifiedToken.userId,
+          sessionId: activeSession.id,
+          organizationId: verifiedToken.orgId || null,
+          organizationRole: verifiedToken.orgRole || null,
+        };
+      } catch (error) {
+        if (error instanceof UnauthorizedException) {
+          throw error;
+        }
+
+        this.logger.error(`Session verification failed: ${error.message}`);
+        
+        if (error.message?.includes('expired')) {
+          throw new UnauthorizedException({
+            message: 'Session has expired',
+            code: 'AUTH_SESSION_EXPIRED',
+          });
+        }
+
+        throw new UnauthorizedException({
+          message: 'Failed to verify session',
+          code: 'AUTH_VERIFICATION_FAILED',
+        });
+      }
+    }, 'Session verification');
+  }
+
+  /**
+   * Get user from Clerk with caching
+   */
+  async getClerkUser(userId: string): Promise<ClerkUserData> {
+    // Check cache first
+    const cached = this.userCache.get(userId);
+    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+      return cached.user;
+    }
+
+    const user = await this.withRetry(async () => {
+      const clerkUser = await this.clerkClient.users.getUser(userId);
+      
+      if (!clerkUser) {
+        throw new UnauthorizedException({
+          message: 'User not found',
+          code: 'AUTH_USER_NOT_FOUND',
+        });
+      }
+
+      return {
+        id: clerkUser.id,
+        email: clerkUser.emailAddresses?.[0]?.emailAddress || null,
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+        username: clerkUser.username,
+        profileImageUrl: clerkUser.imageUrl,
+        banned: clerkUser.banned || false,
+        publicMetadata: clerkUser.publicMetadata || {},
+        privateMetadata: clerkUser.privateMetadata || {},
+      };
+    }, 'User fetch');
+
+    // Cache the user
+    this.userCache.set(userId, { user, timestamp: Date.now() });
+    
+    // Clean old cache entries
+    this.cleanCache();
+
+    return user;
+  }
+
+  /**
+   * Sync user profile with database
+   */
+  async syncUserProfile(clerkUser: ClerkUserData): Promise<UserProfileData | null> {
+    try {
+      // Check if user profile exists
+      let userProfile = await this.prismaService.userProfile.findUnique({
+        where: { clerkUserId: clerkUser.id },
+        include: {
+          dataKaryawan: {
+            select: {
+              NIP: true,
+              Nama: true,
+              Email: true,
+              KodeSekolah: true,
+            },
+          },
+        },
+      });
+
+      if (!userProfile && clerkUser.email) {
+        // Try to find by email in DataKaryawan
+        const dataKaryawan = await this.prismaService.dataKaryawan.findFirst({
+          where: {
+            Email: {
+              equals: clerkUser.email,
+              mode: 'insensitive',
+            },
+          },
+        });
+
+        if (dataKaryawan) {
+          // Create user profile linked to DataKaryawan
+          userProfile = await this.prismaService.userProfile.create({
+            data: {
+              id: crypto.randomUUID(),
+              clerkUserId: clerkUser.id,
+              nip: dataKaryawan.NIP,
+              email: clerkUser.email,
+              firstName: clerkUser.firstName,
+              lastName: clerkUser.lastName,
+              isActive: true,
+              lastLogin: new Date(),
+            },
+            include: {
+              dataKaryawan: {
+                select: {
+                  NIP: true,
+                  Nama: true,
+                  Email: true,
+                  KodeSekolah: true,
+                },
+              },
+            },
+          });
+
+          this.logger.log(`Created new user profile for ${clerkUser.email}`);
+          
+          // Create audit log
+          await this.createAuditLog(userProfile.id, 'USER_PROFILE_CREATED', {
+            clerkUserId: clerkUser.id,
+            email: clerkUser.email,
+          });
+        }
+      } else if (userProfile) {
+        // Update user profile with latest Clerk data
+        const updateData: any = {};
+        
+        if (clerkUser.email && userProfile.email !== clerkUser.email) {
+          updateData.email = clerkUser.email;
+        }
+        if (clerkUser.firstName && userProfile.firstName !== clerkUser.firstName) {
+          updateData.firstName = clerkUser.firstName;
+        }
+        if (clerkUser.lastName && userProfile.lastName !== clerkUser.lastName) {
+          updateData.lastName = clerkUser.lastName;
+        }
+        
+        // Always update last login
+        updateData.lastLogin = new Date();
+        
+        userProfile = await this.prismaService.userProfile.update({
+          where: { id: userProfile.id },
+          data: updateData,
+          include: {
+            dataKaryawan: {
+              select: {
+                NIP: true,
+                Nama: true,
+                Email: true,
+                KodeSekolah: true,
+              },
+            },
+          },
+        });
+      }
+
+      return userProfile;
+    } catch (error) {
+      this.logger.error(`Failed to sync user profile: ${error.message}`);
+      // Don't throw - allow authentication to continue even if sync fails
+      return null;
+    }
+  }
+
+  /**
+   * Load user roles and permissions
+   */
+  async loadUserRolesAndPermissions(userProfileId: string) {
+    try {
+      // Use transaction for consistency
+      const result = await this.prismaService.$transaction(async (tx) => {
+        // Load user roles
+        const userRoles = await tx.userRole.findMany({
+          where: {
+            userProfileId,
+            isActive: true,
+            role: {
+              isActive: true,
+            },
+          },
+          include: {
+            role: {
+              include: {
+                permissions: {
+                  where: {
+                    isActive: true,
+                  },
+                  include: {
+                    permission: {
+                      where: {
+                        isActive: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        // Load direct user permissions
+        const userPermissions = await tx.userPermission.findMany({
+          where: {
+            userProfileId,
+            isGranted: true,
+            validFrom: {
+              lte: new Date(),
+            },
+            OR: [
+              { validUntil: null },
+              { validUntil: { gte: new Date() } },
+            ],
+          },
+        });
+        
+        // Get permission details
+        const permissionIds = userPermissions.map(up => up.permissionId);
+        const permissions = await tx.permission.findMany({
+          where: {
+            id: { in: permissionIds },
+            isActive: true,
+          },
+        });
+
+        // Load position-based permissions
+        const userPositions = await tx.userPosition.findMany({
+          where: {
+            userProfileId,
+            isActive: true,
+            OR: [
+              { endDate: null },
+              { endDate: { gte: new Date() } },
+            ],
+          },
+        });
+
+        return { userRoles, userPermissions, userPositions, permissions };
+      });
+
+      // Combine and deduplicate permissions
+      const rolesData = result.userRoles.map(ur => ({
+        id: ur.role.id,
+        name: ur.role.name,
+        code: ur.role.code,
+        priority: ur.role.priority || 0,
+      }));
+
+      const permissionsMap = new Map();
+
+      // Add permissions from roles (lowest priority)
+      result.userRoles.forEach(ur => {
+        ur.role.permissions.forEach(rp => {
+          if (!permissionsMap.has(rp.permission.code)) {
+            permissionsMap.set(rp.permission.code, {
+              id: rp.permission.id,
+              name: rp.permission.name,
+              code: rp.permission.code,
+              scope: rp.scope || 'OWN',
+              source: 'role',
+              roleId: ur.role.id,
+            });
+          }
+        });
+      });
+
+      // Note: Position-based permissions would be loaded here if the schema supports it
+      // Currently skipping position permissions as they're not directly linked in the schema
+
+      // Add direct permissions (highest priority - these override everything)
+      const permissionMap = new Map(result.permissions.map(p => [p.id, p]));
+      result.userPermissions.forEach(up => {
+        const permission = permissionMap.get(up.permissionId);
+        if (permission && up.isGranted) {
+          permissionsMap.set(permission.code, {
+            id: permission.id,
+            name: permission.name,
+            code: permission.code,
+            scope: permission.scope || 'OWN',
+            source: 'direct',
+            isGranted: up.isGranted,
+          });
+        }
+      });
+
+      return {
+        roles: rolesData,
+        permissions: Array.from(permissionsMap.values()),
+        positions: result.userPositions.map(up => ({
+          id: up.positionId,
+          positionId: up.positionId,
+          isPlt: up.isPlt,
+          startDate: up.startDate,
+          endDate: up.endDate,
+        })),
+      };
+    } catch (error) {
+      this.logger.error(`Failed to load roles and permissions: ${error.message}`);
+      return { roles: [], permissions: [], positions: [] };
+    }
+  }
+
+  /**
+   * Create audit log entry
+   */
+  async createAuditLog(userId: string, action: string, data: any) {
+    try {
+      // Map string action to AuditAction enum
+      const auditAction = this.mapToAuditAction(action);
+      
+      await this.prismaService.auditLog.create({
+        data: {
+          id: crypto.randomUUID(),
+          actorId: userId,
+          action: auditAction,
+          module: 'AUTH',
+          entityType: 'USER',
+          entityId: userId,
+          entityDisplay: data.email || userId,
+          metadata: data,
+          ipAddress: data.ipAddress || '0.0.0.0',
+          userAgent: data.userAgent || 'System',
+        },
+      });
+    } catch (error) {
+      // Don't fail if audit logging fails
+      this.logger.warn(`Failed to create audit log: ${error.message}`);
+    }
+  }
+
+  /**
+   * Map string action to AuditAction enum
+   */
+  private mapToAuditAction(action: string): any {
+    const actionMap: Record<string, string> = {
+      'AUTH_SUCCESS': 'LOGIN',
+      'AUTH_FAILURE': 'LOGIN',
+      'USER_PROFILE_CREATED': 'CREATE',
+      'USER_PROFILE_UPDATED': 'UPDATE',
+      'LOGOUT': 'LOGOUT',
+    };
+    
+    return actionMap[action] || 'LOGIN';
+  }
+
+  /**
+   * Clear expired user cache entries
+   */
+  private cleanCache() {
+    const now = Date.now();
+    const expiredKeys: string[] = [];
+
+    this.userCache.forEach((value, key) => {
+      if (now - value.timestamp > this.cacheTimeout) {
+        expiredKeys.push(key);
+      }
+    });
+
+    expiredKeys.forEach(key => this.userCache.delete(key));
+  }
+
+  /**
+   * Generic retry wrapper for external API calls
+   */
+  private async withRetry<T>(
+    operation: () => Promise<T>,
+    operationName: string,
+    attempt = 1,
+  ): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt < this.maxRetries) {
+        this.logger.debug(
+          `${operationName} failed, retrying (attempt ${attempt}/${this.maxRetries})`,
+        );
+        await this.delay(this.retryDelay * attempt);
+        return this.withRetry(operation, operationName, attempt + 1);
+      }
+
+      this.logger.error(
+        `${operationName} failed after ${this.maxRetries} attempts: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Helper function for delays
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
