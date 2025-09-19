@@ -218,7 +218,7 @@ export class AuditInterceptor implements NestInterceptor {
     const apiIndex = urlParts.indexOf('api');
 
     if (apiIndex >= 0 && urlParts[apiIndex + 2]) {
-      // Format: /api/v1/entity-type/id
+      // Format: /entity-type/id
       info.entityType = urlParts[apiIndex + 2].toUpperCase();
 
       if (urlParts[apiIndex + 3] && !urlParts[apiIndex + 3].includes('?')) {
@@ -312,7 +312,7 @@ export class AuditInterceptor implements NestInterceptor {
     const apiIndex = urlParts.indexOf('api');
 
     if (apiIndex >= 0 && urlParts[apiIndex + 2]) {
-      // Format: /api/v1/module-name/...
+      // Format: /module-name/...
       const module = urlParts[apiIndex + 2];
       // Convert to uppercase and singular
       return module.toUpperCase().replace(/S$/, '');

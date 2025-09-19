@@ -61,7 +61,7 @@ describe('Authentication Integration Tests', () => {
     jest.clearAllMocks();
   });
 
-  describe('POST /api/v1/auth/login', () => {
+  describe('POST /auth/login', () => {
     it('should authenticate user with valid token', async () => {
       // Mock Clerk token validation
       const mockToken = 'valid_jwt_token';
@@ -90,7 +90,7 @@ describe('Authentication Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/login',
+        url: '/auth/login',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -122,7 +122,7 @@ describe('Authentication Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/login',
+        url: '/auth/login',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -147,7 +147,7 @@ describe('Authentication Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/login',
+        url: '/auth/login',
         headers: {
           Authorization: 'Bearer invalid_token',
         },
@@ -159,14 +159,14 @@ describe('Authentication Integration Tests', () => {
     it('should return 401 without authorization header', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/login',
+        url: '/auth/login',
       });
 
       expect(response.statusCode).toBe(401);
     });
   });
 
-  describe('POST /api/v1/auth/logout', () => {
+  describe('POST /auth/logout', () => {
     it('should logout user successfully', async () => {
       const mockToken = 'valid_jwt_token';
       const mockClerkUser = {
@@ -180,7 +180,7 @@ describe('Authentication Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/logout',
+        url: '/auth/logout',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -192,7 +192,7 @@ describe('Authentication Integration Tests', () => {
     });
   });
 
-  describe('GET /api/v1/auth/me', () => {
+  describe('GET /auth/me', () => {
     it('should return current user profile', async () => {
       const mockToken = 'valid_jwt_token';
       const mockClerkUser = {
@@ -231,7 +231,7 @@ describe('Authentication Integration Tests', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/auth/me',
+        url: '/auth/me',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -247,14 +247,14 @@ describe('Authentication Integration Tests', () => {
     it('should return 401 for unauthenticated request', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/auth/me',
+        url: '/auth/me',
       });
 
       expect(response.statusCode).toBe(401);
     });
   });
 
-  describe('POST /api/v1/auth/validate', () => {
+  describe('POST /auth/validate', () => {
     it('should validate token and return validation result', async () => {
       const mockToken = 'valid_jwt_token';
       const mockClerkUser = {
@@ -268,7 +268,7 @@ describe('Authentication Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/validate',
+        url: '/auth/validate',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -287,7 +287,7 @@ describe('Authentication Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/validate',
+        url: '/auth/validate',
         headers: {
           Authorization: 'Bearer expired_token',
         },
@@ -299,7 +299,7 @@ describe('Authentication Integration Tests', () => {
     });
   });
 
-  describe('POST /api/v1/auth/refresh-permissions', () => {
+  describe('POST /auth/refresh-permissions', () => {
     it('should refresh user permissions cache', async () => {
       const mockToken = 'valid_jwt_token';
       const mockClerkUser = {
@@ -323,7 +323,7 @@ describe('Authentication Integration Tests', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/refresh-permissions',
+        url: '/auth/refresh-permissions',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -361,7 +361,7 @@ describe('Authentication Integration Tests', () => {
       // 1. Login
       const loginResponse = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/login',
+        url: '/auth/login',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -371,7 +371,7 @@ describe('Authentication Integration Tests', () => {
       // 2. Get current user
       const meResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/auth/me',
+        url: '/auth/me',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -381,7 +381,7 @@ describe('Authentication Integration Tests', () => {
       // 3. Validate token
       const validateResponse = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/validate',
+        url: '/auth/validate',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -391,7 +391,7 @@ describe('Authentication Integration Tests', () => {
       // 4. Refresh permissions
       const refreshResponse = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/refresh-permissions',
+        url: '/auth/refresh-permissions',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -401,7 +401,7 @@ describe('Authentication Integration Tests', () => {
       // 5. Logout
       const logoutResponse = await app.inject({
         method: 'POST',
-        url: '/api/v1/auth/logout',
+        url: '/auth/logout',
         headers: {
           Authorization: `Bearer ${mockToken}`,
         },
@@ -420,7 +420,7 @@ describe('Authentication Integration Tests', () => {
       const promises = Array.from({ length: 10 }, () =>
         app.inject({
           method: 'POST',
-          url: '/api/v1/auth/login',
+          url: '/auth/login',
           headers: {
             Authorization: 'Bearer invalid_token',
           },
@@ -439,7 +439,7 @@ describe('Authentication Integration Tests', () => {
     it('should include security headers in response', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/auth/me',
+        url: '/auth/me',
       });
 
       expect(response.headers).toHaveProperty('x-frame-options');

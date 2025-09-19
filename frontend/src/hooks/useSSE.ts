@@ -3,10 +3,10 @@
  * Production-ready React hook for Server-Sent Events with Clerk authentication
  */
 
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
-import { useAppDispatch } from '@/hooks/useAppDispatch';
-import { SSEService } from '@/lib/sse/SSEService';
+import { useEffect, useRef, useCallback, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { SSEService } from "@/lib/sse/SSEService";
 import {
   SSEConnectionStatus,
   SSEEventType,
@@ -15,8 +15,8 @@ import {
   UserStatusSSEData,
   WorkflowSSEData,
   SystemAnnouncementSSEData,
-} from '@/types/sse';
-import toast from 'react-hot-toast';
+} from "@/types/sse";
+import toast from "react-hot-toast";
 
 /**
  * Hook options
@@ -40,15 +40,21 @@ interface UseSSEReturn {
   connect: () => void;
   disconnect: () => void;
   reconnect: () => void;
-  addEventListener: <T = any>(event: SSEEventType, handler: SSEEventHandler<T>) => () => void;
-  removeEventListener: <T = any>(event: SSEEventType, handler: SSEEventHandler<T>) => void;
+  addEventListener: <T = any>(
+    event: SSEEventType,
+    handler: SSEEventHandler<T>
+  ) => () => void;
+  removeEventListener: <T = any>(
+    event: SSEEventType,
+    handler: SSEEventHandler<T>
+  ) => void;
 }
 
 /**
  * Production-ready SSE Hook with Clerk Authentication
  */
 export const useSSE = (
-  endpoint: string = '/sse',
+  endpoint: string = "/sse",
   options: UseSSEOptions = {}
 ): UseSSEReturn => {
   const {
@@ -56,13 +62,15 @@ export const useSSE = (
     reconnectOnFocus = true,
     reconnectOnOnline = true,
     onConnectionChange,
-    enableLogging = process.env.NODE_ENV === 'development',
+    enableLogging = process.env.NODE_ENV === "development",
   } = options;
 
   const { getToken, isSignedIn } = useAuth();
   const dispatch = useAppDispatch();
 
-  const [status, setStatus] = useState<SSEConnectionStatus>(SSEConnectionStatus.DISCONNECTED);
+  const [status, setStatus] = useState<SSEConnectionStatus>(
+    SSEConnectionStatus.DISCONNECTED
+  );
   const [error, setError] = useState<Error | null>(null);
 
   const serviceRef = useRef<SSEService | null>(null);
@@ -72,18 +80,21 @@ export const useSSE = (
   /**
    * Log helper
    */
-  const log = useCallback((message: string, ...args: any[]) => {
-    if (enableLogging) {
-      console.log(`[useSSE] ${message}`, ...args);
-    }
-  }, [enableLogging]);
+  const log = useCallback(
+    (message: string, ...args: any[]) => {
+      if (enableLogging) {
+        console.log(`[useSSE] ${message}`, ...args);
+      }
+    },
+    [enableLogging]
+  );
 
   /**
    * Initialize SSE service
    */
   const initializeService = useCallback(async () => {
     if (!isSignedIn) {
-      log('User not signed in, skipping SSE connection');
+      log("User not signed in, skipping SSE connection");
       return null;
     }
 
@@ -91,11 +102,12 @@ export const useSSE = (
       // Get authentication token
       const token = await getToken();
       if (!token) {
-        throw new Error('Failed to get authentication token');
+        throw new Error("Failed to get authentication token");
       }
 
       // Build SSE URL
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
       const sseUrl = `${baseUrl}${endpoint}`;
 
       // Create or get existing service
@@ -106,7 +118,7 @@ export const useSSE = (
           maxReconnectAttempts: 10,
           heartbeatInterval: 30000,
           onOpen: () => {
-            log('SSE connection opened');
+            log("SSE connection opened");
             setStatus(SSEConnectionStatus.CONNECTED);
             setError(null);
             isConnectedRef.current = true;
@@ -114,7 +126,7 @@ export const useSSE = (
             onConnectionChange?.(SSEConnectionStatus.CONNECTED);
           },
           onError: (err) => {
-            log('SSE connection error:', err);
+            log("SSE connection error:", err);
             setError(err);
             setStatus(SSEConnectionStatus.ERROR);
             isConnectedRef.current = false;
@@ -127,7 +139,7 @@ export const useSSE = (
             onConnectionChange?.(SSEConnectionStatus.RECONNECTING);
           },
           onClose: () => {
-            log('SSE connection closed');
+            log("SSE connection closed");
             setStatus(SSEConnectionStatus.DISCONNECTED);
             isConnectedRef.current = false;
             onConnectionChange?.(SSEConnectionStatus.DISCONNECTED);
@@ -140,7 +152,7 @@ export const useSSE = (
 
       return serviceRef.current;
     } catch (err) {
-      log('Failed to initialize SSE service:', err);
+      log("Failed to initialize SSE service:", err);
       setError(err as Error);
       return null;
     }
@@ -150,7 +162,7 @@ export const useSSE = (
    * Connect to SSE
    */
   const connect = useCallback(async () => {
-    log('Connecting to SSE...');
+    log("Connecting to SSE...");
     const service = await initializeService();
     if (service) {
       service.connect();
@@ -161,7 +173,7 @@ export const useSSE = (
    * Disconnect from SSE
    */
   const disconnect = useCallback(() => {
-    log('Disconnecting from SSE...');
+    log("Disconnecting from SSE...");
     if (serviceRef.current) {
       serviceRef.current.disconnect();
     }
@@ -171,7 +183,7 @@ export const useSSE = (
    * Reconnect to SSE
    */
   const reconnect = useCallback(() => {
-    log('Reconnecting to SSE...');
+    log("Reconnecting to SSE...");
     if (serviceRef.current) {
       serviceRef.current.reconnect();
     }
@@ -180,27 +192,30 @@ export const useSSE = (
   /**
    * Add event listener wrapper
    */
-  const addEventListener = useCallback(<T = any>(
-    event: SSEEventType,
-    handler: SSEEventHandler<T>
-  ): (() => void) => {
-    if (serviceRef.current) {
-      return serviceRef.current.addEventListener(event, handler);
-    }
-    return () => {};
-  }, []);
+  const addEventListener = useCallback(
+    <T = any>(
+      event: SSEEventType,
+      handler: SSEEventHandler<T>
+    ): (() => void) => {
+      if (serviceRef.current) {
+        return serviceRef.current.addEventListener(event, handler);
+      }
+      return () => {};
+    },
+    []
+  );
 
   /**
    * Remove event listener wrapper
    */
-  const removeEventListener = useCallback(<T = any>(
-    event: SSEEventType,
-    handler: SSEEventHandler<T>
-  ): void => {
-    if (serviceRef.current) {
-      serviceRef.current.removeEventListener(event, handler);
-    }
-  }, []);
+  const removeEventListener = useCallback(
+    <T = any>(event: SSEEventType, handler: SSEEventHandler<T>): void => {
+      if (serviceRef.current) {
+        serviceRef.current.removeEventListener(event, handler);
+      }
+    },
+    []
+  );
 
   /**
    * Setup default event handlers
@@ -210,18 +225,18 @@ export const useSSE = (
 
     // Notification handler
     const handleNotification = (data: NotificationSSEData) => {
-      log('Received notification:', data);
+      log("Received notification:", data);
 
       // Show toast notification
       switch (data.type) {
-        case 'success':
+        case "success":
           toast.success(data.message);
           break;
-        case 'error':
+        case "error":
           toast.error(data.message);
           break;
-        case 'warning':
-          toast(data.message, { icon: '⚠️' });
+        case "warning":
+          toast(data.message, { icon: "⚠️" });
           break;
         default:
           toast(data.message);
@@ -229,50 +244,54 @@ export const useSSE = (
 
       // Dispatch to Redux store
       dispatch({
-        type: 'notifications/addNotification',
+        type: "notifications/addNotification",
         payload: data,
       });
     };
 
     // User status handler
     const handleUserStatus = (data: UserStatusSSEData) => {
-      log('User status changed:', data);
+      log("User status changed:", data);
       dispatch({
-        type: 'users/updateUserStatus',
+        type: "users/updateUserStatus",
         payload: data,
       });
     };
 
     // Workflow handler
     const handleWorkflow = (data: WorkflowSSEData) => {
-      log('Workflow update:', data);
+      log("Workflow update:", data);
 
-      if (data.status === 'completed') {
+      if (data.status === "completed") {
         toast.success(`Workflow "${data.workflowName}" completed successfully`);
-      } else if (data.status === 'failed') {
+      } else if (data.status === "failed") {
         toast.error(`Workflow "${data.workflowName}" failed: ${data.error}`);
       }
 
       dispatch({
-        type: 'workflows/updateWorkflow',
+        type: "workflows/updateWorkflow",
         payload: data,
       });
     };
 
     // System announcement handler
     const handleSystemAnnouncement = (data: SystemAnnouncementSSEData) => {
-      log('System announcement:', data);
+      log("System announcement:", data);
 
-      const icon = data.severity === 'critical' ? '🚨' :
-                   data.severity === 'warning' ? '⚠️' : 'ℹ️';
+      const icon =
+        data.severity === "critical"
+          ? "🚨"
+          : data.severity === "warning"
+          ? "⚠️"
+          : "ℹ️";
 
       toast(data.message, {
         icon,
-        duration: data.severity === 'critical' ? Infinity : 10000,
+        duration: data.severity === "critical" ? Infinity : 10000,
       });
 
       dispatch({
-        type: 'system/addAnnouncement',
+        type: "system/addAnnouncement",
         payload: data,
       });
     };
@@ -284,12 +303,15 @@ export const useSSE = (
       addEventListener(SSEEventType.USER_STATUS_CHANGED, handleUserStatus),
       addEventListener(SSEEventType.WORKFLOW_COMPLETED, handleWorkflow),
       addEventListener(SSEEventType.WORKFLOW_FAILED, handleWorkflow),
-      addEventListener(SSEEventType.SYSTEM_ANNOUNCEMENT, handleSystemAnnouncement),
+      addEventListener(
+        SSEEventType.SYSTEM_ANNOUNCEMENT,
+        handleSystemAnnouncement
+      ),
     ];
 
     // Cleanup
     return () => {
-      unsubscribers.forEach(unsub => unsub());
+      unsubscribers.forEach((unsub) => unsub());
     };
   }, [addEventListener, dispatch, log]);
 
@@ -300,15 +322,15 @@ export const useSSE = (
     if (!reconnectOnFocus) return;
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && !isConnectedRef.current) {
-        log('Page became visible, reconnecting...');
+      if (document.visibilityState === "visible" && !isConnectedRef.current) {
+        log("Page became visible, reconnecting...");
         reconnect();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [reconnectOnFocus, reconnect, log]);
 
@@ -319,21 +341,21 @@ export const useSSE = (
     if (!reconnectOnOnline) return;
 
     const handleOnline = () => {
-      log('Network came online, reconnecting...');
+      log("Network came online, reconnecting...");
       reconnect();
     };
 
     const handleOffline = () => {
-      log('Network went offline');
+      log("Network went offline");
       setStatus(SSEConnectionStatus.DISCONNECTED);
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, [reconnectOnOnline, reconnect, log]);
 
@@ -373,7 +395,7 @@ export const useSSE = (
 export const useSSENotifications = (
   onNotification?: (notification: NotificationSSEData) => void
 ) => {
-  const sse = useSSE('/sse/notifications');
+  const sse = useSSE("/sse/notifications");
 
   useEffect(() => {
     if (!onNotification) return;
@@ -395,7 +417,7 @@ export const useSSENotifications = (
 export const useSSEWorkflows = (
   onWorkflowUpdate?: (workflow: WorkflowSSEData) => void
 ) => {
-  const sse = useSSE('/sse/workflows');
+  const sse = useSSE("/sse/workflows");
 
   useEffect(() => {
     if (!onWorkflowUpdate) return;
@@ -404,11 +426,14 @@ export const useSSEWorkflows = (
       sse.addEventListener(SSEEventType.WORKFLOW_STARTED, onWorkflowUpdate),
       sse.addEventListener(SSEEventType.WORKFLOW_COMPLETED, onWorkflowUpdate),
       sse.addEventListener(SSEEventType.WORKFLOW_FAILED, onWorkflowUpdate),
-      sse.addEventListener(SSEEventType.WORKFLOW_STEP_COMPLETED, onWorkflowUpdate),
+      sse.addEventListener(
+        SSEEventType.WORKFLOW_STEP_COMPLETED,
+        onWorkflowUpdate
+      ),
     ];
 
     return () => {
-      unsubscribers.forEach(unsub => unsub());
+      unsubscribers.forEach((unsub) => unsub());
     };
   }, [sse, onWorkflowUpdate]);
 

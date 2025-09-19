@@ -97,6 +97,7 @@ export default function CustomSignIn() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false); // Navigation guard state
 
   // For development mode indicator
   const isDevelopment = process.env.NODE_ENV === "development";
@@ -309,8 +310,33 @@ export default function CustomSignIn() {
           const isValid = await validateWithBackend(token);
 
           if (isValid) {
-            // Direct redirect without processing state
-            router.push(redirectUrl);
+            // Set navigation guard to prevent race conditions
+            setIsNavigating(true);
+            setIsLoading(false);
+
+            // Log successful authentication for monitoring
+            console.log('[Auth] OTP verification successful, redirecting to:', redirectUrl);
+
+            // Small delay to ensure state synchronization across all auth contexts
+            const navigationTimeout = setTimeout(() => {
+              try {
+                // Use replace to prevent back navigation issues
+                router.replace(redirectUrl);
+              } catch (navError) {
+                console.error('[Auth] Navigation error:', navError);
+                // Fallback to hard navigation if router fails
+                window.location.href = redirectUrl;
+              }
+            }, 100);
+
+            // Safety cleanup - if navigation takes too long, reset state
+            setTimeout(() => {
+              if (isNavigating) {
+                console.warn('[Auth] Navigation timeout, resetting state');
+                setIsNavigating(false);
+                clearTimeout(navigationTimeout);
+              }
+            }, 5000);
           } else {
             setStep("email");
             setOtp("");
@@ -380,8 +406,33 @@ export default function CustomSignIn() {
           const isValid = await validateWithBackend(token);
 
           if (isValid) {
-            // Direct redirect without processing state
-            router.push(redirectUrl);
+            // Set navigation guard to prevent race conditions
+            setIsNavigating(true);
+            setIsLoading(false);
+
+            // Log successful authentication for monitoring
+            console.log('[Auth] Password verification successful, redirecting to:', redirectUrl);
+
+            // Small delay to ensure state synchronization across all auth contexts
+            const navigationTimeout = setTimeout(() => {
+              try {
+                // Use replace to prevent back navigation issues
+                router.replace(redirectUrl);
+              } catch (navError) {
+                console.error('[Auth] Navigation error:', navError);
+                // Fallback to hard navigation if router fails
+                window.location.href = redirectUrl;
+              }
+            }, 100);
+
+            // Safety cleanup - if navigation takes too long, reset state
+            setTimeout(() => {
+              if (isNavigating) {
+                console.warn('[Auth] Navigation timeout, resetting state');
+                setIsNavigating(false);
+                clearTimeout(navigationTimeout);
+              }
+            }, 5000);
           } else {
             setStep("email");
             setPassword("");
@@ -506,15 +557,15 @@ export default function CustomSignIn() {
     setEmailAddressId(null); // Reset emailAddressId when going back
   }, []);
 
-  // Show loading state while Clerk loads
-  if (!isLoaded) {
+  // Show loading state while Clerk loads or during navigation
+  if (!isLoaded || isNavigating) {
     return (
       <Card className="w-full shadow-lg border-0">
         <CardContent className="pt-6">
           <div className="flex items-center justify-center space-x-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="text-muted-foreground">
-              Loading authentication...
+              {isNavigating ? 'Redirecting to dashboard...' : 'Loading authentication...'}
             </span>
           </div>
         </CardContent>
@@ -542,7 +593,7 @@ export default function CustomSignIn() {
               <Button
                 variant="outline"
                 onClick={() => handleOAuthSignIn("oauth_google")}
-                disabled={isLoading}
+                disabled={isLoading || isNavigating}
                 className="w-full"
               >
                 <GoogleIcon />
@@ -552,7 +603,7 @@ export default function CustomSignIn() {
               <Button
                 variant="outline"
                 onClick={() => handleOAuthSignIn("oauth_microsoft")}
-                disabled={isLoading}
+                disabled={isLoading || isNavigating}
                 className="w-full"
               >
                 <MicrosoftIcon />
@@ -590,7 +641,7 @@ export default function CustomSignIn() {
                       const error = validateField("email", email);
                       if (error) setFieldErrors({ email: error });
                     }}
-                    disabled={isLoading}
+                    disabled={isLoading || isNavigating}
                     autoComplete="email"
                     autoFocus
                   />
@@ -603,7 +654,7 @@ export default function CustomSignIn() {
 
                 <Button
                   type="submit"
-                  disabled={isLoading || !email}
+                  disabled={isLoading || !email || isNavigating}
                   className="w-full"
                 >
                   {isLoading && (
@@ -645,11 +696,11 @@ export default function CustomSignIn() {
                     }}
                     onComplete={(value) => {
                       // Auto-submit when all digits are entered
-                      if (value.length === 6) {
+                      if (value.length === 6 && !isNavigating) {
                         handleOtpSubmit(value);
                       }
                     }}
-                    disabled={isLoading}
+                    disabled={isLoading || isNavigating}
                     autoFocus
                     error={!!fieldErrors.otp || !!error}
                   />
@@ -661,7 +712,7 @@ export default function CustomSignIn() {
 
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || isNavigating}
                 className="w-full"
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -672,7 +723,7 @@ export default function CustomSignIn() {
                 type="button"
                 variant="link"
                 onClick={handleResendOtp}
-                disabled={resendTimer > 0 || isLoading}
+                disabled={resendTimer > 0 || isLoading || isNavigating}
                 className="w-full"
               >
                 {resendTimer > 0
@@ -714,7 +765,7 @@ export default function CustomSignIn() {
                       const error = validateField("password", password);
                       if (error) setFieldErrors({ password: error });
                     }}
-                    disabled={isLoading}
+                    disabled={isLoading || isNavigating}
                     autoComplete="current-password"
                     autoFocus
                   />
@@ -741,7 +792,7 @@ export default function CustomSignIn() {
 
               <Button
                 type="submit"
-                disabled={isLoading || !password}
+                disabled={isLoading || !password || isNavigating}
                 className="w-full"
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -6,7 +6,7 @@ import { HttpStatus } from '@nestjs/common';
  * E2E tests for Users module
  */
 createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
-  describe('/api/v1/users', () => {
+  describe('/users', () => {
     beforeEach(async () => {
       // Seed test data before each test
       await testSetup.seedDatabase(async (prisma) => {
@@ -53,7 +53,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
       it('should return paginated users list', async () => {
         const response = await testSetup.makeAuthenticatedRequest(
           'GET',
-          '/api/v1/users',
+          '/users',
         );
 
         expect(response.statusCode).toBe(HttpStatus.OK);
@@ -72,7 +72,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
       it('should filter users by active status', async () => {
         const response = await testSetup.makeAuthenticatedRequest(
           'GET',
-          '/api/v1/users',
+          '/users',
           {
             query: { isActive: true },
           },
@@ -88,7 +88,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
       it('should search users by name or email', async () => {
         const response = await testSetup.makeAuthenticatedRequest(
           'GET',
-          '/api/v1/users',
+          '/users',
           {
             query: { search: 'admin' },
           },
@@ -102,7 +102,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
       it('should handle pagination parameters', async () => {
         const response = await testSetup.makeAuthenticatedRequest(
           'GET',
-          '/api/v1/users',
+          '/users',
           {
             query: { page: 2, limit: 1 },
           },
@@ -114,7 +114,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
       });
 
       it('should return 401 for unauthenticated requests', async () => {
-        const response = await testSetup.makeRequest('GET', '/api/v1/users');
+        const response = await testSetup.makeRequest('GET', '/users');
         expect(response.statusCode).toBe(HttpStatus.UNAUTHORIZED);
       });
     });
@@ -123,7 +123,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
       it('should return a specific user by ID', async () => {
         const response = await testSetup.makeAuthenticatedRequest(
           'GET',
-          `/api/v1/users/${testFixtures.users.admin.id}`,
+          `/users/${testFixtures.users.admin.id}`,
         );
 
         expect(response.statusCode).toBe(HttpStatus.OK);
@@ -134,7 +134,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
       it('should return 404 for non-existent user', async () => {
         const response = await testSetup.makeAuthenticatedRequest(
           'GET',
-          '/api/v1/users/non-existent-id',
+          '/users/non-existent-id',
         );
 
         expect(response.statusCode).toBe(HttpStatus.NOT_FOUND);
@@ -152,7 +152,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
 
         const response = await testSetup.makeAuthenticatedRequest(
           'GET',
-          `/api/v1/users/${testFixtures.users.admin.id}?include=roles`,
+          `/users/${testFixtures.users.admin.id}?include=roles`,
         );
 
         expect(response.statusCode).toBe(HttpStatus.OK);
@@ -187,7 +187,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
 
         const response = await testSetup.makeAuthenticatedRequest(
           'POST',
-          '/api/v1/users',
+          '/users',
           { body: newUser },
         );
 
@@ -209,7 +209,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
 
         const response = await testSetup.makeAuthenticatedRequest(
           'POST',
-          '/api/v1/users',
+          '/users',
           { body: invalidUser },
         );
 
@@ -224,7 +224,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
 
         const response = await testSetup.makeAuthenticatedRequest(
           'POST',
-          '/api/v1/users',
+          '/users',
           { body: duplicateUser },
         );
 
@@ -241,7 +241,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
 
         const response = await testSetup.makeAuthenticatedRequest(
           'PATCH',
-          `/api/v1/users/${testFixtures.users.teacher.id}`,
+          `/users/${testFixtures.users.teacher.id}`,
           { body: updateData },
         );
 
@@ -258,7 +258,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
       it('should return 404 for non-existent user', async () => {
         const response = await testSetup.makeAuthenticatedRequest(
           'PATCH',
-          '/api/v1/users/non-existent-id',
+          '/users/non-existent-id',
           { body: { isActive: false } },
         );
 
@@ -290,7 +290,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
 
         const response = await testSetup.makeAuthenticatedRequest(
           'DELETE',
-          `/api/v1/users/${userToDelete.id}`,
+          `/users/${userToDelete.id}`,
         );
 
         expect(response.statusCode).toBe(HttpStatus.OK);
@@ -305,7 +305,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
       it('should return 404 for non-existent user', async () => {
         const response = await testSetup.makeAuthenticatedRequest(
           'DELETE',
-          '/api/v1/users/non-existent-id',
+          '/users/non-existent-id',
         );
 
         expect(response.statusCode).toBe(HttpStatus.NOT_FOUND);
@@ -341,7 +341,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
 
         const response = await testSetup.makeAuthenticatedRequest(
           'GET',
-          `/api/v1/users/${testFixtures.users.admin.id}/permissions`,
+          `/users/${testFixtures.users.admin.id}/permissions`,
         );
 
         expect(response.statusCode).toBe(HttpStatus.OK);
@@ -354,7 +354,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
       it('should assign role to user', async () => {
         const response = await testSetup.makeAuthenticatedRequest(
           'POST',
-          `/api/v1/users/${testFixtures.users.teacher.id}/roles`,
+          `/users/${testFixtures.users.teacher.id}/roles`,
           {
             body: {
               roleId: testFixtures.roles.admin.id,
@@ -386,7 +386,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
 
         const response = await testSetup.makeAuthenticatedRequest(
           'DELETE',
-          `/api/v1/users/${testFixtures.users.teacher.id}/roles/${testFixtures.roles.teacher.id}`,
+          `/users/${testFixtures.users.teacher.id}/roles/${testFixtures.roles.teacher.id}`,
         );
 
         expect(response.statusCode).toBe(HttpStatus.OK);
@@ -413,7 +413,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
 
         const response = await testSetup.makeAuthenticatedRequest(
           'GET',
-          `/api/v1/users/${testFixtures.users.teacher.id}/roles`,
+          `/users/${testFixtures.users.teacher.id}/roles`,
         );
 
         expect(response.statusCode).toBe(HttpStatus.OK);

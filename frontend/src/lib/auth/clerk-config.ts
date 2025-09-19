@@ -1,8 +1,8 @@
-import { useAuth, useUser } from '@clerk/nextjs';
-import { useCallback, useEffect } from 'react';
-import apiClient from '@/lib/api/client';
-import { useAppDispatch } from '@/store/hooks';
-import { setUser, setPermissions, setRoles } from '@/store/slices/authSlice';
+import { useAuth, useUser } from "@clerk/nextjs";
+import { useCallback, useEffect } from "react";
+import apiClient from "@/lib/api/client";
+import { useAppDispatch } from "@/store/hooks";
+import { setUser, setPermissions, setRoles } from "@/store/slices/authSlice";
 
 /**
  * Custom hook for making authenticated requests with Clerk tokens
@@ -10,27 +10,30 @@ import { setUser, setPermissions, setRoles } from '@/store/slices/authSlice';
 export const useAuthenticatedRequest = () => {
   const { getToken } = useAuth();
 
-  return useCallback(async (config: RequestInit = {}) => {
-    try {
-      const token = await getToken();
+  return useCallback(
+    async (config: RequestInit = {}) => {
+      try {
+        const token = await getToken();
 
-      if (!token) {
-        throw new Error('No authentication token available');
+        if (!token) {
+          throw new Error("No authentication token available");
+        }
+
+        return {
+          ...config,
+          headers: {
+            ...config.headers,
+            Authorization: `Bearer ${token}`,
+            "X-Client-Version": process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0",
+          },
+        };
+      } catch (error) {
+        console.error("Failed to get auth token:", error);
+        throw error;
       }
-
-      return {
-        ...config,
-        headers: {
-          ...config.headers,
-          Authorization: `Bearer ${token}`,
-          'X-Client-Version': process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
-        },
-      };
-    } catch (error) {
-      console.error('Failed to get auth token:', error);
-      throw error;
-    }
-  }, [getToken]);
+    },
+    [getToken]
+  );
 };
 
 /**
@@ -53,7 +56,7 @@ export const useClerkApiSync = () => {
             apiClient.setAuthToken(token, 3600); // 1 hour expiry
 
             // Fetch user data from backend
-            const response = await apiClient.get('/api/v1/auth/me');
+            const response = await apiClient.get("/auth/me");
 
             // Update Redux store
             if (response) {
@@ -73,7 +76,7 @@ export const useClerkApiSync = () => {
           apiClient.clearAuthToken();
         }
       } catch (error) {
-        console.error('Failed to sync auth token:', error);
+        console.error("Failed to sync auth token:", error);
         apiClient.clearAuthToken();
       }
     };
@@ -98,10 +101,12 @@ export const useClerkSessionSync = () => {
 
     const handleSessionChange = () => {
       // Invalidate any cached data when session changes
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('clerk-session-change', {
-          detail: { session }
-        }));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("clerk-session-change", {
+            detail: { session },
+          })
+        );
       }
     };
 
@@ -112,14 +117,16 @@ export const useClerkSessionSync = () => {
 /**
  * Get authentication headers for server-side requests
  */
-export const getServerAuthHeaders = async (token: string | null): Promise<HeadersInit> => {
+export const getServerAuthHeaders = async (
+  token: string | null
+): Promise<HeadersInit> => {
   if (!token) {
     return {};
   }
 
   return {
     Authorization: `Bearer ${token}`,
-    'X-Client-Version': process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+    "X-Client-Version": process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0",
   };
 };
 
@@ -128,14 +135,14 @@ export const getServerAuthHeaders = async (token: string | null): Promise<Header
  */
 export const usePermissionCheck = (requiredPermissions: string[]) => {
   const { isLoaded, isSignedIn } = useAuth();
-  const userPermissions = useAppSelector(state => state.auth.permissions);
+  const userPermissions = useAppSelector((state) => state.auth.permissions);
 
   const hasPermission = useCallback(() => {
     if (!isLoaded || !isSignedIn) return false;
 
     if (requiredPermissions.length === 0) return true;
 
-    return requiredPermissions.every(permission =>
+    return requiredPermissions.every((permission) =>
       userPermissions.includes(permission)
     );
   }, [isLoaded, isSignedIn, userPermissions, requiredPermissions]);
@@ -148,18 +155,18 @@ export const usePermissionCheck = (requiredPermissions: string[]) => {
  */
 export const useRoleCheck = (requiredRoles: string[]) => {
   const { isLoaded, isSignedIn } = useAuth();
-  const userRoles = useAppSelector(state => state.auth.roles);
+  const userRoles = useAppSelector((state) => state.auth.roles);
 
   const hasRole = useCallback(() => {
     if (!isLoaded || !isSignedIn) return false;
 
     if (requiredRoles.length === 0) return true;
 
-    return requiredRoles.some(role => userRoles.includes(role));
+    return requiredRoles.some((role) => userRoles.includes(role));
   }, [isLoaded, isSignedIn, userRoles, requiredRoles]);
 
   return { hasRole: hasRole(), isLoaded };
 };
 
 // Import useAppSelector
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector } from "@/store/hooks";

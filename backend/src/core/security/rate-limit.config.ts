@@ -24,96 +24,96 @@ export class RateLimitConfigService {
 
   private readonly endpointConfigs: EndpointRateLimitConfig = {
     // Authentication endpoints - stricter limits
-    '/api/v1/auth/login': {
+    '/auth/login': {
       max: 5,
       timeWindow: 300000, // 5 minutes
       skipSuccessfulRequests: true,
     },
-    '/api/v1/auth/register': {
+    '/auth/register': {
       max: 3,
       timeWindow: 600000, // 10 minutes
     },
-    '/api/v1/auth/forgot-password': {
+    '/auth/forgot-password': {
       max: 3,
       timeWindow: 600000, // 10 minutes
     },
-    '/api/v1/auth/reset-password': {
+    '/auth/reset-password': {
       max: 3,
       timeWindow: 600000, // 10 minutes
     },
 
     // Feature flag evaluation - higher limits for reads
-    '/api/v1/feature-flags/evaluate': {
+    '/feature-flags/evaluate': {
       max: 500,
       timeWindow: 60000, // 1 minute
     },
-    '/api/v1/feature-flags/evaluate-bulk': {
+    '/feature-flags/evaluate-bulk': {
       max: 100,
       timeWindow: 60000, // 1 minute
     },
 
     // System config - moderate limits
-    '/api/v1/system-config': {
+    '/system-config': {
       max: 50,
       timeWindow: 60000, // 1 minute
     },
-    '/api/v1/system-config/public': {
+    '/system-config/public': {
       max: 100,
       timeWindow: 60000, // 1 minute
     },
 
     // Workflow execution - resource intensive
-    '/api/v1/workflows/execute': {
+    '/workflows/execute': {
       max: 10,
       timeWindow: 60000, // 1 minute
     },
-    '/api/v1/workflows/bulk': {
+    '/workflows/bulk': {
       max: 5,
       timeWindow: 60000, // 1 minute
     },
 
     // Notification sending - prevent spam
-    '/api/v1/notifications/send': {
+    '/notifications/send': {
       max: 20,
       timeWindow: 60000, // 1 minute
     },
-    '/api/v1/notifications/bulk': {
+    '/notifications/bulk': {
       max: 5,
       timeWindow: 60000, // 1 minute
     },
 
     // Data export - resource intensive
-    '/api/v1/audit/export': {
+    '/audit/export': {
       max: 5,
       timeWindow: 300000, // 5 minutes
     },
-    '/api/v1/system-config/export': {
+    '/system-config/export': {
       max: 5,
       timeWindow: 300000, // 5 minutes
     },
 
     // Search endpoints - moderate limits
-    '/api/v1/users/search': {
+    '/users/search': {
       max: 30,
       timeWindow: 60000, // 1 minute
     },
-    '/api/v1/permissions/check': {
+    '/permissions/check': {
       max: 100,
       timeWindow: 60000, // 1 minute
     },
 
     // File uploads - strict limits
-    '/api/v1/files/upload': {
+    '/files/upload': {
       max: 10,
       timeWindow: 60000, // 1 minute
     },
 
     // Bulk operations - strict limits
-    '/api/v1/permissions/bulk-assign': {
+    '/permissions/bulk-assign': {
       max: 5,
       timeWindow: 60000, // 1 minute
     },
-    '/api/v1/users/bulk-import': {
+    '/users/bulk-import': {
       max: 2,
       timeWindow: 600000, // 10 minutes
     },
@@ -143,7 +143,7 @@ export class RateLimitConfigService {
       return { ...this.defaultConfig, ...this.endpointConfigs[endpoint] };
     }
 
-    // Check for pattern match (e.g., /api/v1/users/:id)
+    // Check for pattern match (e.g., /users/:id)
     for (const [pattern, config] of Object.entries(this.endpointConfigs)) {
       const regex = this.patternToRegex(pattern);
       if (regex.test(endpoint)) {
@@ -193,7 +193,7 @@ export class RateLimitConfigService {
 
   private patternToRegex(pattern: string): RegExp {
     // Convert route pattern to regex
-    // e.g., /api/v1/users/:id -> /api/v1/users/[^/]+
+    // e.g., /users/:id -> /users/[^/]+
     const regexPattern = pattern
       .replace(/:[^/]+/g, '[^/]+')
       .replace(/\*/g, '.*');

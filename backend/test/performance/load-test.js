@@ -17,19 +17,19 @@ const permissionCheckDuration = new Trend('permission_check_duration');
 // Test configuration
 export const options = {
   stages: [
-    { duration: '30s', target: 10 },   // Ramp up to 10 users over 30s
-    { duration: '1m', target: 50 },    // Ramp up to 50 users over 1m
-    { duration: '2m', target: 100 },   // Ramp up to 100 users over 2m
-    { duration: '3m', target: 100 },   // Stay at 100 users for 3m
-    { duration: '1m', target: 50 },    // Ramp down to 50 users over 1m
-    { duration: '30s', target: 0 },    // Ramp down to 0 users over 30s
+    { duration: '30s', target: 10 }, // Ramp up to 10 users over 30s
+    { duration: '1m', target: 50 }, // Ramp up to 50 users over 1m
+    { duration: '2m', target: 100 }, // Ramp up to 100 users over 2m
+    { duration: '3m', target: 100 }, // Stay at 100 users for 3m
+    { duration: '1m', target: 50 }, // Ramp down to 50 users over 1m
+    { duration: '30s', target: 0 }, // Ramp down to 0 users over 30s
   ],
   thresholds: {
     http_req_duration: ['p(95)<500', 'p(99)<1000'], // 95% of requests < 500ms, 99% < 1s
-    errors: ['rate<0.1'],                            // Error rate < 10%
-    login_duration: ['p(95)<300'],                   // 95% of logins < 300ms
-    user_list_duration: ['p(95)<200'],               // 95% of user list < 200ms
-    permission_check_duration: ['p(95)<100'],        // 95% of permission checks < 100ms
+    errors: ['rate<0.1'], // Error rate < 10%
+    login_duration: ['p(95)<300'], // 95% of logins < 300ms
+    user_list_duration: ['p(95)<200'], // 95% of user list < 200ms
+    permission_check_duration: ['p(95)<100'], // 95% of permission checks < 100ms
   },
 };
 
@@ -44,12 +44,17 @@ function authenticatedRequest(url, params = {}) {
     ...params,
     headers: {
       ...params.headers,
-      'Authorization': `Bearer ${AUTH_TOKEN}`,
+      Authorization: `Bearer ${AUTH_TOKEN}`,
       'Content-Type': 'application/json',
       'x-api-key': API_KEY,
     },
   };
-  return http.request(params.method || 'GET', url, params.body || null, authParams);
+  return http.request(
+    params.method || 'GET',
+    url,
+    params.body || null,
+    authParams,
+  );
 }
 
 // Setup function - runs once per VU
@@ -73,7 +78,7 @@ export default function (data) {
   group('Authentication Flow', () => {
     const loginStart = Date.now();
     const loginRes = http.post(
-      `${BASE_URL}/api/v1/auth/login`,
+      `${BASE_URL}/auth/login`,
       JSON.stringify({
         email: `user${__VU}@test.com`,
         password: 'password123',
@@ -82,7 +87,7 @@ export default function (data) {
         headers: {
           'Content-Type': 'application/json',
         },
-      }
+      },
     );
     loginDuration.add(Date.now() - loginStart);
 
@@ -107,7 +112,7 @@ export default function (data) {
   group('User Management', () => {
     // List users
     const listStart = Date.now();
-    const listRes = authenticatedRequest(`${BASE_URL}/api/v1/users?page=1&limit=20`);
+    const listRes = authenticatedRequest(`${BASE_URL}/users?page=1&limit=20`);
     userListDuration.add(Date.now() - listStart);
 
     const listSuccess = check(listRes, {
@@ -123,7 +128,7 @@ export default function (data) {
     // Get user details
     if (listSuccess && listRes.json().data.length > 0) {
       const userId = listRes.json().data[0].id;
-      const userRes = authenticatedRequest(`${BASE_URL}/api/v1/users/${userId}`);
+      const userRes = authenticatedRequest(`${BASE_URL}/users/${userId}`);
 
       check(userRes, {
         'User details successful': (r) => r.status === 200,
@@ -140,16 +145,13 @@ export default function (data) {
   // Scenario 3: Permission Checks
   group('Permission System', () => {
     const permStart = Date.now();
-    const permRes = authenticatedRequest(
-      `${BASE_URL}/api/v1/permissions/check`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          permission: 'MANAGE_USERS',
-          scope: 'DEPARTMENT',
-        }),
-      }
-    );
+    const permRes = authenticatedRequest(`${BASE_URL}/permissions/check`, {
+      method: 'POST',
+      body: JSON.stringify({
+        permission: 'MANAGE_USERS',
+        scope: 'DEPARTMENT',
+      }),
+    });
     permissionCheckDuration.add(Date.now() - permStart);
 
     const permSuccess = check(permRes, {
@@ -168,14 +170,18 @@ export default function (data) {
   // Scenario 4: Organization Operations
   group('Organization Management', () => {
     // List schools
-    const schoolsRes = authenticatedRequest(`${BASE_URL}/api/v1/organizations/schools`);
+    const schoolsRes = authenticatedRequest(
+      `${BASE_URL}/organizations/schools`,
+    );
 
     check(schoolsRes, {
       'Schools list successful': (r) => r.status === 200,
     });
 
     // List departments
-    const deptsRes = authenticatedRequest(`${BASE_URL}/api/v1/organizations/departments`);
+    const deptsRes = authenticatedRequest(
+      `${BASE_URL}/organizations/departments`,
+    );
 
     check(deptsRes, {
       'Departments list successful': (r) => r.status === 200,
@@ -187,14 +193,31 @@ export default function (data) {
   // Scenario 5: Concurrent Operations
   group('Concurrent Operations', () => {
     const batch = http.batch([
-      ['GET', `${BASE_URL}/api/v1/users`, null, { headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` } }],
-      ['GET', `${BASE_URL}/api/v1/roles`, null, { headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` } }],
-      ['GET', `${BASE_URL}/api/v1/permissions`, null, { headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` } }],
+      [
+        'GET',
+        `${BASE_URL}/users`,
+        null,
+        { headers: { Authorization: `Bearer ${AUTH_TOKEN}` } },
+      ],
+      [
+        'GET',
+        `${BASE_URL}/roles`,
+        null,
+        { headers: { Authorization: `Bearer ${AUTH_TOKEN}` } },
+      ],
+      [
+        'GET',
+        `${BASE_URL}/permissions`,
+        null,
+        { headers: { Authorization: `Bearer ${AUTH_TOKEN}` } },
+      ],
     ]);
 
     check(batch[0], { 'Batch users successful': (r) => r.status === 200 });
     check(batch[1], { 'Batch roles successful': (r) => r.status === 200 });
-    check(batch[2], { 'Batch permissions successful': (r) => r.status === 200 });
+    check(batch[2], {
+      'Batch permissions successful': (r) => r.status === 200,
+    });
 
     sleep(2);
   });
@@ -204,11 +227,11 @@ export default function (data) {
     const userId = `user-${__VU}`;
 
     // First request - cache miss
-    const firstRes = authenticatedRequest(`${BASE_URL}/api/v1/users/${userId}`);
+    const firstRes = authenticatedRequest(`${BASE_URL}/users/${userId}`);
     const firstDuration = firstRes.timings.duration;
 
     // Second request - should be cached
-    const secondRes = authenticatedRequest(`${BASE_URL}/api/v1/users/${userId}`);
+    const secondRes = authenticatedRequest(`${BASE_URL}/users/${userId}`);
     const secondDuration = secondRes.timings.duration;
 
     check(null, {

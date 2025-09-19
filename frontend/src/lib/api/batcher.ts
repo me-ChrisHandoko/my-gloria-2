@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from "./client";
 
 /**
  * Batch Request Configuration
@@ -15,7 +15,7 @@ export interface BatchConfig {
  */
 export interface BatchRequestItem {
   id: string;
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   url: string;
   params?: any;
   data?: any;
@@ -50,7 +50,7 @@ interface PendingBatchRequest {
 class RequestBatcher {
   private readonly defaultMaxBatchSize = 20;
   private readonly defaultBatchDelay = 10; // milliseconds
-  private readonly defaultEndpoint = '/api/v1/batch';
+  private readonly defaultEndpoint = "/batch";
   private readonly maxWaitTime = 5000; // 5 seconds max wait
 
   private batches = new Map<string, PendingBatchRequest[]>();
@@ -62,7 +62,7 @@ class RequestBatcher {
    */
   add<T = any>(
     endpoint: string,
-    request: Omit<BatchRequestItem, 'id'>,
+    request: Omit<BatchRequestItem, "id">,
     config?: BatchConfig
   ): Promise<T> {
     return new Promise((resolve, reject) => {
@@ -102,8 +102,8 @@ class RequestBatcher {
     urls: string[],
     config?: BatchConfig
   ): Promise<BatchResponseItem<T>[]> {
-    const requests = urls.map(url => ({
-      method: 'GET' as const,
+    const requests = urls.map((url) => ({
+      method: "GET" as const,
       url,
     }));
 
@@ -114,11 +114,11 @@ class RequestBatcher {
    * Batch multiple requests of same type
    */
   async batchSame<T = any>(
-    method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+    method: "POST" | "PUT" | "PATCH" | "DELETE",
     items: Array<{ url: string; data?: any; params?: any }>,
     config?: BatchConfig
   ): Promise<BatchResponseItem<T>[]> {
-    const requests = items.map(item => ({
+    const requests = items.map((item) => ({
       method,
       url: item.url,
       data: item.data,
@@ -132,10 +132,10 @@ class RequestBatcher {
    * Execute batch of mixed requests
    */
   async executeBatch<T = any>(
-    requests: Omit<BatchRequestItem, 'id'>[],
+    requests: Omit<BatchRequestItem, "id">[],
     config?: BatchConfig
   ): Promise<BatchResponseItem<T>[]> {
-    const batchRequests: BatchRequestItem[] = requests.map(req => ({
+    const batchRequests: BatchRequestItem[] = requests.map((req) => ({
       ...req,
       id: this.generateRequestId(),
     }));
@@ -145,11 +145,15 @@ class RequestBatcher {
     try {
       const response = await apiClient.post<{
         batch: BatchResponseItem<T>[];
-      }>(endpoint, {
-        requests: batchRequests,
-      }, {
-        headers: config?.headers,
-      });
+      }>(
+        endpoint,
+        {
+          requests: batchRequests,
+        },
+        {
+          headers: config?.headers,
+        }
+      );
 
       return response.batch;
     } catch (error) {
@@ -179,7 +183,10 @@ class RequestBatcher {
   /**
    * Flush a batch
    */
-  private async flushBatch(batchKey: string, config?: BatchConfig): Promise<void> {
+  private async flushBatch(
+    batchKey: string,
+    config?: BatchConfig
+  ): Promise<void> {
     // Clear timer
     if (this.timers.has(batchKey)) {
       clearTimeout(this.timers.get(batchKey)!);
@@ -207,14 +214,14 @@ class RequestBatcher {
       // Filter out expired requests
       const now = Date.now();
       const validRequests = batch.filter(
-        req => now - req.timestamp < this.maxWaitTime
+        (req) => now - req.timestamp < this.maxWaitTime
       );
 
       // Reject expired requests
       batch
-        .filter(req => now - req.timestamp >= this.maxWaitTime)
-        .forEach(req => {
-          req.reject(new Error('Batch request timeout'));
+        .filter((req) => now - req.timestamp >= this.maxWaitTime)
+        .forEach((req) => {
+          req.reject(new Error("Batch request timeout"));
         });
 
       if (validRequests.length === 0) {
@@ -223,22 +230,26 @@ class RequestBatcher {
 
       // Execute batch
       const endpoint = config?.endpoint || this.defaultEndpoint;
-      const batchRequests = validRequests.map(r => r.request);
+      const batchRequests = validRequests.map((r) => r.request);
 
       const response = await apiClient.post<{
         batch: BatchResponseItem[];
-      }>(endpoint, {
-        requests: batchRequests,
-      }, {
-        headers: config?.headers,
-      });
+      }>(
+        endpoint,
+        {
+          requests: batchRequests,
+        },
+        {
+          headers: config?.headers,
+        }
+      );
 
       // Process responses
       const responseMap = new Map(
-        response.batch.map(item => [item.id, item])
+        response.batch.map((item) => [item.id, item])
       );
 
-      validRequests.forEach(req => {
+      validRequests.forEach((req) => {
         const result = responseMap.get(req.request.id);
 
         if (result) {
@@ -248,7 +259,7 @@ class RequestBatcher {
             req.resolve(result.data);
           }
         } else {
-          req.reject(new Error('No response for batch request'));
+          req.reject(new Error("No response for batch request"));
         }
       });
     } catch (error) {
@@ -266,7 +277,7 @@ class RequestBatcher {
     requests: BatchRequestItem[]
   ): Promise<BatchResponseItem<T>[]> {
     const results = await Promise.allSettled(
-      requests.map(async req => {
+      requests.map(async (req) => {
         try {
           const response = await this.executeIndividualRequest<T>(req);
           return {
@@ -279,7 +290,7 @@ class RequestBatcher {
             id: req.id,
             status: error.status || 500,
             error: {
-              message: error.message || 'Request failed',
+              message: error.message || "Request failed",
               code: error.code,
               details: error.details,
             },
@@ -288,15 +299,15 @@ class RequestBatcher {
       })
     );
 
-    return results.map(result => {
-      if (result.status === 'fulfilled') {
+    return results.map((result) => {
+      if (result.status === "fulfilled") {
         return result.value;
       } else {
         return {
-          id: '',
+          id: "",
           status: 500,
           error: {
-            message: result.reason?.message || 'Request failed',
+            message: result.reason?.message || "Request failed",
           },
         } as BatchResponseItem<T>;
       }
@@ -310,7 +321,7 @@ class RequestBatcher {
     batch: PendingBatchRequest[]
   ): Promise<void> {
     await Promise.all(
-      batch.map(async req => {
+      batch.map(async (req) => {
         try {
           const result = await this.executeIndividualRequest(req.request);
           req.resolve(result);
@@ -333,15 +344,15 @@ class RequestBatcher {
     };
 
     switch (request.method) {
-      case 'GET':
+      case "GET":
         return apiClient.get<T>(request.url, config);
-      case 'POST':
+      case "POST":
         return apiClient.post<T>(request.url, request.data, config);
-      case 'PUT':
+      case "PUT":
         return apiClient.put<T>(request.url, request.data, config);
-      case 'PATCH':
+      case "PATCH":
         return apiClient.patch<T>(request.url, request.data, config);
-      case 'DELETE':
+      case "DELETE":
         return apiClient.delete<T>(request.url, config);
       default:
         throw new Error(`Unsupported method: ${request.method}`);
@@ -367,7 +378,7 @@ class RequestBatcher {
    */
   async flushAll(config?: BatchConfig): Promise<void> {
     const keys = Array.from(this.batches.keys());
-    await Promise.all(keys.map(key => this.flushBatch(key, config)));
+    await Promise.all(keys.map((key) => this.flushBatch(key, config)));
   }
 
   /**
@@ -375,13 +386,13 @@ class RequestBatcher {
    */
   clearAll(): void {
     // Clear all timers
-    this.timers.forEach(timer => clearTimeout(timer));
+    this.timers.forEach((timer) => clearTimeout(timer));
     this.timers.clear();
 
     // Reject all pending requests
-    this.batches.forEach(batch => {
-      batch.forEach(req => {
-        req.reject(new Error('Batch cleared'));
+    this.batches.forEach((batch) => {
+      batch.forEach((req) => {
+        req.reject(new Error("Batch cleared"));
       });
     });
 
@@ -398,7 +409,7 @@ class RequestBatcher {
     processing: number;
   } {
     let pendingRequests = 0;
-    this.batches.forEach(batch => {
+    this.batches.forEach((batch) => {
       pendingRequests += batch.length;
     });
 
@@ -421,7 +432,7 @@ export { RequestBatcher };
  */
 export function useBatchRequest<T = any>(config?: BatchConfig) {
   const executeBatch = useCallback(
-    async (requests: Omit<BatchRequestItem, 'id'>[]) => {
+    async (requests: Omit<BatchRequestItem, "id">[]) => {
       return batcher.executeBatch<T>(requests, config);
     },
     [config]
@@ -447,4 +458,4 @@ export function useBatchRequest<T = any>(config?: BatchConfig) {
 }
 
 // Import for hook
-import { useCallback } from 'react';
+import { useCallback } from "react";

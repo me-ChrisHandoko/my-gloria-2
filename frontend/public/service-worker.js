@@ -3,18 +3,18 @@
  * Production-ready offline caching and PWA support
  */
 
-const CACHE_NAME = 'gloria-v1';
-const RUNTIME_CACHE = 'gloria-runtime-v1';
-const API_CACHE = 'gloria-api-v1';
+const CACHE_NAME = "gloria-v1";
+const RUNTIME_CACHE = "gloria-runtime-v1";
+const API_CACHE = "gloria-api-v1";
 
 // Files to cache on install (app shell)
 const STATIC_CACHE_URLS = [
-  '/',
-  '/offline.html',
-  '/manifest.json',
-  '/favicon.ico',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  "/",
+  "/offline.html",
+  "/manifest.json",
+  "/favicon.ico",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
 ];
 
 // API endpoints to cache
@@ -40,26 +40,26 @@ const CACHE_FIRST_PATTERNS = [
 ];
 
 // Install event - cache app shell
-self.addEventListener('install', (event) => {
-  console.log('[ServiceWorker] Install');
+self.addEventListener("install", (event) => {
+  console.log("[ServiceWorker] Install");
 
   event.waitUntil(
     caches
       .open(CACHE_NAME)
       .then((cache) => {
-        console.log('[ServiceWorker] Caching app shell');
+        console.log("[ServiceWorker] Caching app shell");
         return cache.addAll(STATIC_CACHE_URLS);
       })
       .then(() => {
-        console.log('[ServiceWorker] Skip waiting');
+        console.log("[ServiceWorker] Skip waiting");
         return self.skipWaiting();
       })
   );
 });
 
 // Activate event - clean old caches
-self.addEventListener('activate', (event) => {
-  console.log('[ServiceWorker] Activate');
+self.addEventListener("activate", (event) => {
+  console.log("[ServiceWorker] Activate");
 
   event.waitUntil(
     caches
@@ -72,42 +72,42 @@ self.addEventListener('activate', (event) => {
               cacheName !== RUNTIME_CACHE &&
               cacheName !== API_CACHE
             ) {
-              console.log('[ServiceWorker] Removing old cache:', cacheName);
+              console.log("[ServiceWorker] Removing old cache:", cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        console.log('[ServiceWorker] Claiming clients');
+        console.log("[ServiceWorker] Claiming clients");
         return self.clients.claim();
       })
   );
 });
 
 // Fetch event - serve from cache or network
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
   // Skip non-GET requests
-  if (request.method !== 'GET') {
+  if (request.method !== "GET") {
     return;
   }
 
   // Skip Chrome extensions, dev tools, hot reload, etc.
   if (
-    url.protocol === 'chrome-extension:' ||
-    url.hostname === 'localhost' && url.port === '3001' || // Skip backend API in dev
-    url.pathname.includes('__webpack') ||
-    url.pathname.includes('_next/webpack') ||
-    url.pathname.includes('hot-update')
+    url.protocol === "chrome-extension:" ||
+    (url.hostname === "localhost" && url.port === "3001") || // Skip backend API in dev
+    url.pathname.includes("__webpack") ||
+    url.pathname.includes("_next/webpack") ||
+    url.pathname.includes("hot-update")
   ) {
     return;
   }
 
   // Handle API requests
-  if (url.pathname.startsWith('/api/')) {
+  if (url.pathname.startsWith("/api/")) {
     event.respondWith(handleApiRequest(request));
     return;
   }
@@ -119,7 +119,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Handle navigation requests
-  if (request.mode === 'navigate') {
+  if (request.mode === "navigate") {
     event.respondWith(networkFirst(request));
     return;
   }
@@ -148,7 +148,7 @@ async function cacheFirst(request) {
 
     return networkResponse;
   } catch (error) {
-    console.error('[ServiceWorker] Cache first failed:', error);
+    console.error("[ServiceWorker] Cache first failed:", error);
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       return cachedResponse;
@@ -169,7 +169,7 @@ async function networkFirst(request) {
 
     return networkResponse;
   } catch (error) {
-    console.error('[ServiceWorker] Network first failed:', error);
+    console.error("[ServiceWorker] Network first failed:", error);
 
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
@@ -177,8 +177,8 @@ async function networkFirst(request) {
     }
 
     // For navigation requests, show offline page
-    if (request.mode === 'navigate') {
-      return caches.match('/offline.html');
+    if (request.mode === "navigate") {
+      return caches.match("/offline.html");
     }
 
     return offlineResponse();
@@ -205,8 +205,11 @@ async function handleApiRequest(request) {
       if (cachedResponse) {
         // Add header to indicate stale data
         const headers = new Headers(cachedResponse.headers);
-        headers.set('X-From-Cache', 'true');
-        headers.set('X-Cache-Time', new Date(cachedResponse.headers.get('date')).toISOString());
+        headers.set("X-From-Cache", "true");
+        headers.set(
+          "X-Cache-Time",
+          new Date(cachedResponse.headers.get("date")).toISOString()
+        );
 
         return new Response(cachedResponse.body, {
           status: cachedResponse.status,
@@ -226,7 +229,7 @@ async function handleApiRequest(request) {
 
     if (cachedResponse) {
       // Check if cache is still fresh (5 minutes)
-      const cacheTime = new Date(cachedResponse.headers.get('date'));
+      const cacheTime = new Date(cachedResponse.headers.get("date"));
       const now = new Date();
       const cacheAge = (now - cacheTime) / 1000 / 60; // in minutes
 
@@ -279,15 +282,15 @@ async function fetchAndCache(request, cacheName) {
 function offlineResponse() {
   return new Response(
     JSON.stringify({
-      error: 'Offline',
-      message: 'You are currently offline. Please check your connection.',
+      error: "Offline",
+      message: "You are currently offline. Please check your connection.",
     }),
     {
       status: 503,
-      statusText: 'Service Unavailable',
+      statusText: "Service Unavailable",
       headers: new Headers({
-        'Content-Type': 'application/json',
-        'X-From-Cache': 'offline',
+        "Content-Type": "application/json",
+        "X-From-Cache": "offline",
       }),
     }
   );
@@ -297,30 +300,31 @@ function offlineResponse() {
 function apiErrorResponse() {
   return new Response(
     JSON.stringify({
-      error: 'Network Error',
-      message: 'Unable to connect to the server. Showing cached data if available.',
+      error: "Network Error",
+      message:
+        "Unable to connect to the server. Showing cached data if available.",
       offline: true,
     }),
     {
       status: 503,
-      statusText: 'Service Unavailable',
+      statusText: "Service Unavailable",
       headers: new Headers({
-        'Content-Type': 'application/json',
-        'X-From-Cache': 'error',
+        "Content-Type": "application/json",
+        "X-From-Cache": "error",
       }),
     }
   );
 }
 
 // Message event - handle commands from the app
-self.addEventListener('message', (event) => {
-  console.log('[ServiceWorker] Message received:', event.data);
+self.addEventListener("message", (event) => {
+  console.log("[ServiceWorker] Message received:", event.data);
 
-  if (event.data.type === 'SKIP_WAITING') {
+  if (event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 
-  if (event.data.type === 'CLEAR_CACHE') {
+  if (event.data.type === "CLEAR_CACHE") {
     caches.keys().then((cacheNames) => {
       cacheNames.forEach((cacheName) => {
         caches.delete(cacheName);
@@ -328,7 +332,7 @@ self.addEventListener('message', (event) => {
     });
   }
 
-  if (event.data.type === 'CACHE_URLS') {
+  if (event.data.type === "CACHE_URLS") {
     const urls = event.data.urls;
     caches.open(RUNTIME_CACHE).then((cache) => {
       cache.addAll(urls);
@@ -337,10 +341,10 @@ self.addEventListener('message', (event) => {
 });
 
 // Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  console.log('[ServiceWorker] Background sync:', event.tag);
+self.addEventListener("sync", (event) => {
+  console.log("[ServiceWorker] Background sync:", event.tag);
 
-  if (event.tag === 'sync-api-data') {
+  if (event.tag === "sync-api-data") {
     event.waitUntil(syncApiData());
   }
 });
@@ -349,9 +353,9 @@ async function syncApiData() {
   try {
     // Sync critical data when coming back online
     const criticalEndpoints = [
-      '/api/v1/users/me',
-      '/api/v1/notifications/unread',
-      '/api/v1/system/health',
+      "/users/me",
+      "/notifications/unread",
+      "/system/health",
     ];
 
     const cache = await caches.open(API_CACHE);
@@ -373,47 +377,43 @@ async function syncApiData() {
     const clients = await self.clients.matchAll();
     clients.forEach((client) => {
       client.postMessage({
-        type: 'SYNC_COMPLETE',
+        type: "SYNC_COMPLETE",
         timestamp: Date.now(),
       });
     });
   } catch (error) {
-    console.error('[ServiceWorker] Sync failed:', error);
+    console.error("[ServiceWorker] Sync failed:", error);
   }
 }
 
 // Push notifications
-self.addEventListener('push', (event) => {
-  console.log('[ServiceWorker] Push received');
+self.addEventListener("push", (event) => {
+  console.log("[ServiceWorker] Push received");
 
   const options = {
-    body: event.data ? event.data.text() : 'New notification from Gloria',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/badge-72x72.png',
+    body: event.data ? event.data.text() : "New notification from Gloria",
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/badge-72x72.png",
     vibrate: [200, 100, 200],
     data: {
       timestamp: Date.now(),
     },
     actions: [
-      { action: 'view', title: 'View' },
-      { action: 'dismiss', title: 'Dismiss' },
+      { action: "view", title: "View" },
+      { action: "dismiss", title: "Dismiss" },
     ],
   };
 
-  event.waitUntil(
-    self.registration.showNotification('Gloria System', options)
-  );
+  event.waitUntil(self.registration.showNotification("Gloria System", options));
 });
 
 // Notification click handler
-self.addEventListener('notificationclick', (event) => {
-  console.log('[ServiceWorker] Notification click:', event.action);
+self.addEventListener("notificationclick", (event) => {
+  console.log("[ServiceWorker] Notification click:", event.action);
 
   event.notification.close();
 
-  if (event.action === 'view') {
-    event.waitUntil(
-      clients.openWindow('/notifications')
-    );
+  if (event.action === "view") {
+    event.waitUntil(clients.openWindow("/notifications"));
   }
 });

@@ -19,19 +19,19 @@ const cpuUsage = new Trend('cpu_usage');
 // Stress test configuration - gradually increase load to find breaking point
 export const options = {
   stages: [
-    { duration: '30s', target: 50 },    // Warm up
-    { duration: '1m', target: 100 },    // Normal load
-    { duration: '1m', target: 200 },    // High load
-    { duration: '2m', target: 500 },    // Very high load
-    { duration: '2m', target: 1000 },   // Extreme load
-    { duration: '1m', target: 1500 },   // Breaking point test
-    { duration: '2m', target: 1500 },   // Sustained extreme load
-    { duration: '2m', target: 0 },      // Recovery
+    { duration: '30s', target: 50 }, // Warm up
+    { duration: '1m', target: 100 }, // Normal load
+    { duration: '1m', target: 200 }, // High load
+    { duration: '2m', target: 500 }, // Very high load
+    { duration: '2m', target: 1000 }, // Extreme load
+    { duration: '1m', target: 1500 }, // Breaking point test
+    { duration: '2m', target: 1500 }, // Sustained extreme load
+    { duration: '2m', target: 0 }, // Recovery
   ],
   thresholds: {
     http_req_duration: ['p(95)<2000'], // 95% of requests should be below 2s even under stress
-    errors: ['rate<0.5'],               // Error rate should stay below 50% even under extreme load
-    http_req_failed: ['rate<0.5'],      // HTTP failure rate < 50%
+    errors: ['rate<0.5'], // Error rate should stay below 50% even under extreme load
+    http_req_failed: ['rate<0.5'], // HTTP failure rate < 50%
   },
 };
 
@@ -76,17 +76,17 @@ export default function (data) {
   group('Database Stress', () => {
     // Complex query with joins
     const complexQueryRes = http.get(
-      `${BASE_URL}/api/v1/users?` +
-      `page=${Math.floor(Math.random() * 100) + 1}&` +
-      `limit=50&` +
-      `includeRoles=true&` +
-      `includePositions=true&` +
-      `includePermissions=true`,
+      `${BASE_URL}/users?` +
+        `page=${Math.floor(Math.random() * 100) + 1}&` +
+        `limit=50&` +
+        `includeRoles=true&` +
+        `includePositions=true&` +
+        `includePermissions=true`,
       {
         headers: {
           'x-api-key': API_KEY,
         },
-      }
+      },
     );
 
     const success = check(complexQueryRes, {
@@ -98,9 +98,10 @@ export default function (data) {
     errorRate.add(!success);
 
     // Bulk write operations
-    if (__VU % 10 === 0) { // Every 10th VU performs writes
+    if (__VU % 10 === 0) {
+      // Every 10th VU performs writes
       const bulkWriteRes = http.post(
-        `${BASE_URL}/api/v1/audit/logs`,
+        `${BASE_URL}/audit/logs`,
         JSON.stringify({
           action: 'STRESS_TEST',
           entityType: 'TEST',
@@ -116,7 +117,7 @@ export default function (data) {
             'Content-Type': 'application/json',
             'x-api-key': API_KEY,
           },
-        }
+        },
       );
 
       check(bulkWriteRes, {
@@ -132,10 +133,10 @@ export default function (data) {
     // Rapid cache read/write
     for (let i = 0; i < 5; i++) {
       const cacheRes = http.get(
-        `${BASE_URL}/api/v1/permissions/check?key=${cacheKey}`,
+        `${BASE_URL}/permissions/check?key=${cacheKey}`,
         {
           headers: { 'x-api-key': API_KEY },
-        }
+        },
       );
 
       check(cacheRes, {
@@ -151,14 +152,14 @@ export default function (data) {
     for (let i = 0; i < 10; i++) {
       batch.push([
         'GET',
-        `${BASE_URL}/api/v1/users/${Math.floor(Math.random() * 1000)}`,
+        `${BASE_URL}/users/${Math.floor(Math.random() * 1000)}`,
         null,
         { headers: { 'x-api-key': API_KEY } },
       ]);
     }
 
     const batchRes = http.batch(batch);
-    const allSuccess = batchRes.every(r => r.status < 500);
+    const allSuccess = batchRes.every((r) => r.status < 500);
 
     check(null, {
       'All concurrent requests handled': () => allSuccess,
@@ -166,7 +167,8 @@ export default function (data) {
   });
 
   // Scenario 4: Memory Leak Test
-  if (__VU % 50 === 0) { // Every 50th VU checks memory
+  if (__VU % 50 === 0) {
+    // Every 50th VU checks memory
     group('Memory Monitoring', () => {
       getSystemMetrics();
 
@@ -185,14 +187,14 @@ export default function (data) {
       };
 
       const largeRes = http.post(
-        `${BASE_URL}/api/v1/users/bulk`,
+        `${BASE_URL}/users/bulk`,
         JSON.stringify(largePayload),
         {
           headers: {
             'Content-Type': 'application/json',
             'x-api-key': API_KEY,
           },
-        }
+        },
       );
 
       check(largeRes, {
@@ -206,13 +208,13 @@ export default function (data) {
     // Intentionally exceed rate limits
     const rapidRequests = [];
     for (let i = 0; i < 20; i++) {
-      const res = http.get(`${BASE_URL}/api/v1/auth/validate`, {
+      const res = http.get(`${BASE_URL}/auth/validate`, {
         headers: { 'x-api-key': API_KEY },
       });
       rapidRequests.push(res);
     }
 
-    const rateLimited = rapidRequests.some(r => r.status === 429);
+    const rateLimited = rapidRequests.some((r) => r.status === 429);
     check(null, {
       'Rate limiting active': () => rateLimited,
     });
@@ -221,16 +223,12 @@ export default function (data) {
   // Scenario 6: Error Recovery Test
   group('Error Recovery', () => {
     // Send malformed requests
-    const malformedRes = http.post(
-      `${BASE_URL}/api/v1/users`,
-      'not-json-{invalid',
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-        },
-      }
-    );
+    const malformedRes = http.post(`${BASE_URL}/users`, 'not-json-{invalid', {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+      },
+    });
 
     check(malformedRes, {
       'Malformed request handled gracefully': (r) => r.status === 400,
@@ -238,16 +236,12 @@ export default function (data) {
 
     // Send oversized payload
     const oversizedPayload = 'x'.repeat(11 * 1024 * 1024); // 11MB (over 10MB limit)
-    const oversizedRes = http.post(
-      `${BASE_URL}/api/v1/users`,
-      oversizedPayload,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-        },
-      }
-    );
+    const oversizedRes = http.post(`${BASE_URL}/users`, oversizedPayload, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+      },
+    });
 
     check(oversizedRes, {
       'Oversized payload rejected': (r) => r.status === 413 || r.status === 400,
@@ -258,11 +252,11 @@ export default function (data) {
   group('Timeout Testing', () => {
     // Request that should timeout
     const slowRes = http.get(
-      `${BASE_URL}/api/v1/users?delay=35000`, // 35 second delay
+      `${BASE_URL}/users?delay=35000`, // 35 second delay
       {
         headers: { 'x-api-key': API_KEY },
         timeout: '40s',
-      }
+      },
     );
 
     check(slowRes, {

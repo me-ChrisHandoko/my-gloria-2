@@ -1,50 +1,46 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 // Note: authMiddleware and redirectToSignIn are deprecated APIs from Clerk
 // This file appears to be unused - the main middleware.ts uses the new clerkMiddleware
 
 // Define public routes that don't require authentication
 const publicRoutes = [
-  '/',
-  '/login',
-  '/register',
-  '/forgot-password',
-  '/reset-password',
-  '/verify-email',
-  '/api/health',
-  '/api/public/(.*)',
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/api/health",
+  "/api/public/(.*)",
 ];
 
 // Define API routes that require authentication
 const protectedApiRoutes = [
-  '/api/users/(.*)',
-  '/api/organizations/(.*)',
-  '/api/permissions/(.*)',
-  '/api/workflows/(.*)',
-  '/api/notifications/(.*)',
-  '/api/audit/(.*)',
-  '/api/admin/(.*)',
+  "/api/users/(.*)",
+  "/api/organizations/(.*)",
+  "/api/permissions/(.*)",
+  "/api/workflows/(.*)",
+  "/api/notifications/(.*)",
+  "/api/audit/(.*)",
+  "/api/admin/(.*)",
 ];
 
 // Define admin-only routes
-const adminRoutes = [
-  '/admin/(.*)',
-  '/settings/system/(.*)',
-  '/api/admin/(.*)',
-];
+const adminRoutes = ["/admin/(.*)", "/settings/system/(.*)", "/api/admin/(.*)"];
 
 // Define role-based route permissions
 const roleBasedRoutes: Record<string, string[]> = {
-  '/dashboard/admin': ['admin', 'super_admin'],
-  '/users/manage': ['admin', 'user_manager'],
-  '/workflows/create': ['admin', 'workflow_manager'],
-  '/reports': ['admin', 'analyst', 'manager'],
+  "/dashboard/admin": ["admin", "super_admin"],
+  "/users/manage": ["admin", "user_manager"],
+  "/workflows/create": ["admin", "workflow_manager"],
+  "/reports": ["admin", "analyst", "manager"],
 };
 
 // Helper function to check if path matches pattern
 function matchesPattern(path: string, patterns: string[]): boolean {
-  return patterns.some(pattern => {
-    const regex = new RegExp(`^${pattern.replace(/\(\.\*\)/g, '.*')}$`);
+  return patterns.some((pattern) => {
+    const regex = new RegExp(`^${pattern.replace(/\(\.\*\)/g, ".*")}$`);
     return regex.test(path);
   });
 }
@@ -59,21 +55,22 @@ export async function authorizationMiddleware(request: NextRequest) {
   }
 
   // Get auth token from request
-  const token = request.cookies.get('__session')?.value ||
-                request.headers.get('authorization')?.replace('Bearer ', '');
+  const token =
+    request.cookies.get("__session")?.value ||
+    request.headers.get("authorization")?.replace("Bearer ", "");
 
   if (!token) {
     // No token, redirect to login for web routes
-    if (!pathname.startsWith('/api/')) {
+    if (!pathname.startsWith("/api/")) {
       const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      url.searchParams.set('redirectTo', pathname);
+      url.pathname = "/login";
+      url.searchParams.set("redirectTo", pathname);
       return NextResponse.redirect(url);
     }
 
     // Return 401 for API routes
     return NextResponse.json(
-      { error: 'Unauthorized', message: 'Authentication required' },
+      { error: "Unauthorized", message: "Authentication required" },
       { status: 401 }
     );
   }
@@ -83,21 +80,24 @@ export async function authorizationMiddleware(request: NextRequest) {
     const user = await verifyToken(token);
 
     if (!user) {
-      throw new Error('Invalid token');
+      throw new Error("Invalid token");
     }
 
     // Check admin routes
     if (matchesPattern(pathname, adminRoutes)) {
-      if (!user.roles?.includes('admin') && !user.roles?.includes('super_admin')) {
-        if (pathname.startsWith('/api/')) {
+      if (
+        !user.roles?.includes("admin") &&
+        !user.roles?.includes("super_admin")
+      ) {
+        if (pathname.startsWith("/api/")) {
           return NextResponse.json(
-            { error: 'Forbidden', message: 'Admin access required' },
+            { error: "Forbidden", message: "Admin access required" },
             { status: 403 }
           );
         }
 
         const url = request.nextUrl.clone();
-        url.pathname = '/unauthorized';
+        url.pathname = "/unauthorized";
         return NextResponse.redirect(url);
       }
     }
@@ -105,18 +105,23 @@ export async function authorizationMiddleware(request: NextRequest) {
     // Check role-based routes
     for (const [route, requiredRoles] of Object.entries(roleBasedRoutes)) {
       if (pathname.startsWith(route)) {
-        const hasRole = requiredRoles.some(role => user.roles?.includes(role));
+        const hasRole = requiredRoles.some((role) =>
+          user.roles?.includes(role)
+        );
 
         if (!hasRole) {
-          if (pathname.startsWith('/api/')) {
+          if (pathname.startsWith("/api/")) {
             return NextResponse.json(
-              { error: 'Forbidden', message: `Required roles: ${requiredRoles.join(', ')}` },
+              {
+                error: "Forbidden",
+                message: `Required roles: ${requiredRoles.join(", ")}`,
+              },
               { status: 403 }
             );
           }
 
           const url = request.nextUrl.clone();
-          url.pathname = '/unauthorized';
+          url.pathname = "/unauthorized";
           return NextResponse.redirect(url);
         }
       }
@@ -124,24 +129,27 @@ export async function authorizationMiddleware(request: NextRequest) {
 
     // Add user info to request headers for downstream use
     const response = NextResponse.next();
-    response.headers.set('x-user-id', user.id);
-    response.headers.set('x-user-roles', JSON.stringify(user.roles || []));
-    response.headers.set('x-user-permissions', JSON.stringify(user.permissions || []));
+    response.headers.set("x-user-id", user.id);
+    response.headers.set("x-user-roles", JSON.stringify(user.roles || []));
+    response.headers.set(
+      "x-user-permissions",
+      JSON.stringify(user.permissions || [])
+    );
 
     return response;
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.error("Auth middleware error:", error);
 
-    if (pathname.startsWith('/api/')) {
+    if (pathname.startsWith("/api/")) {
       return NextResponse.json(
-        { error: 'Unauthorized', message: 'Invalid or expired token' },
+        { error: "Unauthorized", message: "Invalid or expired token" },
         { status: 401 }
       );
     }
 
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    url.searchParams.set('redirectTo', pathname);
+    url.pathname = "/login";
+    url.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(url);
   }
 }
@@ -156,22 +164,25 @@ async function verifyToken(token: string): Promise<any> {
     // const user = await clerkClient.verifyToken(token);
 
     // If using your own backend
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/verify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/verify`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (!response.ok) {
-      throw new Error('Token verification failed');
+      throw new Error("Token verification failed");
     }
 
     const data = await response.json();
     return data.user;
   } catch (error) {
-    console.error('Token verification error:', error);
+    console.error("Token verification error:", error);
     return null;
   }
 }
@@ -180,7 +191,7 @@ async function verifyToken(token: string): Promise<any> {
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 export function rateLimitMiddleware(request: NextRequest) {
-  const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+  const ip = request.ip || request.headers.get("x-forwarded-for") || "unknown";
   const key = `${ip}:${request.nextUrl.pathname}`;
   const now = Date.now();
 
@@ -201,11 +212,13 @@ export function rateLimitMiddleware(request: NextRequest) {
 
   if (rateLimit.count >= maxRequests) {
     return NextResponse.json(
-      { error: 'Too Many Requests', message: 'Rate limit exceeded' },
+      { error: "Too Many Requests", message: "Rate limit exceeded" },
       {
         status: 429,
         headers: {
-          'Retry-After': Math.ceil((rateLimit.resetTime - now) / 1000).toString(),
+          "Retry-After": Math.ceil(
+            (rateLimit.resetTime - now) / 1000
+          ).toString(),
         },
       }
     );
@@ -221,24 +234,29 @@ export function rateLimitMiddleware(request: NextRequest) {
 // CORS middleware
 export function corsMiddleware(request: NextRequest) {
   const response = NextResponse.next();
-  const origin = request.headers.get('origin');
+  const origin = request.headers.get("origin");
 
   // Configure CORS
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
+    "http://localhost:3000",
+  ];
 
   if (origin && allowedOrigins.includes(origin)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set("Access-Control-Allow-Origin", origin);
   }
 
-  response.headers.set('Access-Control-Allow-Credentials', 'true');
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  response.headers.set("Access-Control-Allow-Credentials", "true");
   response.headers.set(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization, X-Requested-With, X-Client-Version'
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+  );
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With, X-Client-Version"
   );
 
   // Handle preflight requests
-  if (request.method === 'OPTIONS') {
+  if (request.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: response.headers });
   }
 
@@ -250,15 +268,18 @@ export function securityHeadersMiddleware(request: NextRequest) {
   const response = NextResponse.next();
 
   // Add security headers
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set(
-    'Content-Security-Policy',
+    "Content-Security-Policy",
     "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com; style-src 'self' 'unsafe-inline';"
   );
-  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=31536000; includeSubDomains"
+  );
 
   return response;
 }
@@ -269,7 +290,7 @@ export function middleware(request: NextRequest) {
 
   // 1. CORS
   const corsResponse = corsMiddleware(request);
-  if (corsResponse.status === 200 && request.method === 'OPTIONS') {
+  if (corsResponse.status === 200 && request.method === "OPTIONS") {
     return corsResponse;
   }
 
@@ -277,7 +298,7 @@ export function middleware(request: NextRequest) {
   securityHeadersMiddleware(request);
 
   // 3. Rate limiting (only for API routes)
-  if (request.nextUrl.pathname.startsWith('/api/')) {
+  if (request.nextUrl.pathname.startsWith("/api/")) {
     const rateLimitResponse = rateLimitMiddleware(request);
     if (rateLimitResponse.status === 429) {
       return rateLimitResponse;
@@ -292,6 +313,6 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Match all routes except static files
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    "/((?!_next/static|_next/image|favicon.ico|public).*)",
   ],
 };

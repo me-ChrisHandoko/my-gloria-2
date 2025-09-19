@@ -217,7 +217,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 1: Admin creates new user
       const createUserResponse = await app.inject({
         method: 'POST',
-        url: '/api/v1/users',
+        url: '/users',
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -230,7 +230,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 2: Assign to school
       const assignSchoolResponse = await app.inject({
         method: 'POST',
-        url: `/api/v1/users/${newUser.id}/schools`,
+        url: `/users/${newUser.id}/schools`,
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -244,7 +244,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 3: Assign to department
       const assignDeptResponse = await app.inject({
         method: 'POST',
-        url: `/api/v1/users/${newUser.id}/departments`,
+        url: `/users/${newUser.id}/departments`,
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -269,7 +269,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 5: Assign position
       const assignPositionResponse = await app.inject({
         method: 'POST',
-        url: `/api/v1/organizations/positions/${newPosition.id}/assign-user`,
+        url: `/organizations/positions/${newPosition.id}/assign-user`,
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -283,7 +283,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 6: Verify complete user profile
       const profileResponse = await app.inject({
         method: 'GET',
-        url: `/api/v1/users/${newUser.id}`,
+        url: `/users/${newUser.id}`,
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -343,7 +343,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 2: Employee initiates workflow
       const initiateResponse = await app.inject({
         method: 'POST',
-        url: `/api/v1/workflows/${workflowDef.id}/execute`,
+        url: `/workflows/${workflowDef.id}/execute`,
         headers: {
           Authorization: 'Bearer employee_token',
         },
@@ -363,7 +363,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 3: Manager approves request
       const approveResponse = await app.inject({
         method: 'POST',
-        url: `/api/v1/workflows/instances/${instance.id}/approve`,
+        url: `/workflows/instances/${instance.id}/approve`,
         headers: {
           Authorization: 'Bearer manager_token',
         },
@@ -379,7 +379,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 4: Verify workflow completion
       const statusResponse = await app.inject({
         method: 'GET',
-        url: `/api/v1/workflows/instances/${instance.id}`,
+        url: `/workflows/instances/${instance.id}`,
         headers: {
           Authorization: 'Bearer employee_token',
         },
@@ -435,7 +435,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Test 1: Manager can manage users in own department
       const manageOwnDeptResponse = await app.inject({
         method: 'PATCH',
-        url: `/api/v1/users/${employeeUser.id}`,
+        url: `/users/${employeeUser.id}`,
         headers: {
           Authorization: 'Bearer manager_token',
         },
@@ -449,7 +449,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Test 2: Manager can manage users in sub-department (DEPARTMENT scope)
       const manageSubDeptResponse = await app.inject({
         method: 'PATCH',
-        url: `/api/v1/users/${subEmployee.id}`,
+        url: `/users/${subEmployee.id}`,
         headers: {
           Authorization: 'Bearer manager_token',
         },
@@ -463,7 +463,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Test 3: Employee cannot manage other users
       const employeeManageResponse = await app.inject({
         method: 'PATCH',
-        url: `/api/v1/users/${managerUser.id}`,
+        url: `/users/${managerUser.id}`,
         headers: {
           Authorization: 'Bearer employee_token',
         },
@@ -481,7 +481,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 1: Set user notification preferences
       const preferencesResponse = await app.inject({
         method: 'PUT',
-        url: `/api/v1/notifications/preferences`,
+        url: `/notifications/preferences`,
         headers: {
           Authorization: 'Bearer employee_token',
         },
@@ -506,7 +506,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 2: Send notification
       const sendResponse = await app.inject({
         method: 'POST',
-        url: '/api/v1/notifications/send',
+        url: '/notifications/send',
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -525,7 +525,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 3: Verify in-app notification
       const inAppResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/notifications/inbox',
+        url: '/notifications/inbox',
         headers: {
           Authorization: 'Bearer employee_token',
         },
@@ -539,7 +539,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Step 4: Mark as read
       const markReadResponse = await app.inject({
         method: 'PATCH',
-        url: `/api/v1/notifications/${notification.id}/read`,
+        url: `/notifications/${notification.id}/read`,
         headers: {
           Authorization: 'Bearer employee_token',
         },
@@ -556,7 +556,7 @@ describe('Gloria Backend E2E Tests', () => {
         // Create user
         {
           method: 'POST',
-          url: '/api/v1/users',
+          url: '/users',
           payload: {
             clerkUserId: 'clerk_audit_test',
             email: 'audit@test.com',
@@ -568,7 +568,7 @@ describe('Gloria Backend E2E Tests', () => {
         // Assign role
         {
           method: 'POST',
-          url: '/api/v1/roles/assign',
+          url: '/roles/assign',
           payload: {
             userId: managerUser.id,
             roleId: testRole.id,
@@ -577,7 +577,7 @@ describe('Gloria Backend E2E Tests', () => {
         // Grant permission
         {
           method: 'POST',
-          url: '/api/v1/permissions/bulk-assign',
+          url: '/permissions/bulk-assign',
           payload: {
             userId: managerUser.id,
             permissionIds: [testPermission.id],
@@ -599,7 +599,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Query audit logs
       const auditResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/audit/logs',
+        url: '/audit/logs',
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -629,7 +629,7 @@ describe('Gloria Backend E2E Tests', () => {
       const requests = Array.from({ length: concurrentRequests }, (_, i) =>
         app.inject({
           method: 'GET',
-          url: `/api/v1/users`,
+          url: `/users`,
           headers: {
             Authorization: 'Bearer admin_token',
           },
@@ -656,7 +656,7 @@ describe('Gloria Backend E2E Tests', () => {
         () =>
           app.inject({
             method: 'POST',
-            url: '/api/v1/permissions/check',
+            url: '/permissions/check',
             headers: {
               Authorization: 'Bearer manager_token',
             },
@@ -673,7 +673,7 @@ describe('Gloria Backend E2E Tests', () => {
         () =>
           app.inject({
             method: 'POST',
-            url: '/api/v1/permissions/check',
+            url: '/permissions/check',
             headers: {
               Authorization: 'Bearer manager_token',
             },
@@ -699,7 +699,7 @@ describe('Gloria Backend E2E Tests', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/users',
+        url: '/users',
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -719,7 +719,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Should fallback to database
       const response = await app.inject({
         method: 'GET',
-        url: `/api/v1/users/${employeeUser.id}`,
+        url: `/users/${employeeUser.id}`,
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -740,7 +740,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Create role and assign permissions in transaction
       const createRoleResponse = await app.inject({
         method: 'POST',
-        url: '/api/v1/roles',
+        url: '/roles',
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -757,7 +757,7 @@ describe('Gloria Backend E2E Tests', () => {
 
       const assignPermResponse = await app.inject({
         method: 'POST',
-        url: `/api/v1/roles/${newRole.id}/permissions`,
+        url: `/roles/${newRole.id}/permissions`,
         headers: {
           Authorization: 'Bearer admin_token',
         },
@@ -771,7 +771,7 @@ describe('Gloria Backend E2E Tests', () => {
       // Verify role still exists and is usable
       const getRoleResponse = await app.inject({
         method: 'GET',
-        url: `/api/v1/roles/${newRole.id}`,
+        url: `/roles/${newRole.id}`,
         headers: {
           Authorization: 'Bearer admin_token',
         },

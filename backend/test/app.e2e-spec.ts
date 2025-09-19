@@ -53,10 +53,10 @@ describe('AppController (e2e)', () => {
     );
   });
 
-  it('/api/v1 (GET) - API root', async () => {
+  it(' (GET) - API root', async () => {
     const response = await app.inject({
       method: 'GET',
-      url: '/api/v1',
+      url: '',
     });
 
     expect(response.statusCode).toBe(200);

@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { usePathname } from "next/navigation"
-import type { UserResource } from "@clerk/types"
+import * as React from "react";
+import { usePathname } from "next/navigation";
+import type { UserResource } from "@clerk/types";
 import {
   FileText,
   Home,
@@ -13,23 +13,23 @@ import {
   Building2,
   Bell,
   Shield,
-  LockClosed,
+  Lock,
   FolderOpen,
   BarChart3,
   UserCircle,
-} from "lucide-react"
+} from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { NavMain } from "@/components/nav-main";
+import { NavProjects } from "@/components/nav-projects";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user?: UserResource | null;
@@ -40,7 +40,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
 
   // Helper function to check if a path is active
   const isPathActive = (href: string) => {
-    if (href === '/dashboard') {
+    if (href === "/dashboard") {
       return pathname === href;
     }
     return pathname.startsWith(href);
@@ -48,15 +48,17 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
 
   // Gloria System Navigation Structure - Updated to match old layout
   const navData = {
-    user: user ? {
-      name: user.fullName || user.username || "User",
-      email: user.primaryEmailAddress?.emailAddress || "",
-      avatar: user.imageUrl || "/avatars/default.jpg",
-    } : {
-      name: "Guest User",
-      email: "guest@gloria.gov",
-      avatar: "/avatars/default.jpg",
-    },
+    user: user
+      ? {
+          name: user.fullName || user.username || "User",
+          email: user.primaryEmailAddress?.emailAddress || "",
+          avatar: user.imageUrl || "/avatars/default.jpg",
+        }
+      : {
+          name: "Guest User",
+          email: "guest@gloria.gov",
+          avatar: "/avatars/default.jpg",
+        },
 
     teams: [
       {
@@ -166,7 +168,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       {
         title: "Permissions",
         url: "/dashboard/permissions",
-        icon: LockClosed,
+        icon: Lock,
         isActive: isPathActive("/dashboard/permissions"),
         items: [
           {
@@ -261,7 +263,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         icon: UserCircle,
       },
     ],
-  }
+  };
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -277,5 +279,5 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

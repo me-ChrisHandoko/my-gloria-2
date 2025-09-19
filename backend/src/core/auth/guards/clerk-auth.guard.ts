@@ -211,11 +211,11 @@ export class ClerkAuthGuard implements CanActivate {
   private shouldAuditLog(request: FastifyRequest): boolean {
     // Only log sensitive operations
     const sensitiveRoutes = [
-      '/api/v1/users',
-      '/api/v1/permissions',
-      '/api/v1/roles',
-      '/api/v1/schools',
-      '/api/v1/departments',
+      '/users',
+      '/permissions',
+      '/roles',
+      '/schools',
+      '/departments',
     ];
 
     const requestUrl = (request as any).url || '';
@@ -227,7 +227,7 @@ export class ClerkAuthGuard implements CanActivate {
     }
 
     // Log GET requests only for specific sensitive endpoints
-    const sensitiveGetEndpoints = ['/api/v1/permissions', '/api/v1/roles'];
+    const sensitiveGetEndpoints = ['/permissions', '/roles'];
 
     return sensitiveGetEndpoints.some((endpoint) =>
       requestUrl.startsWith(endpoint),

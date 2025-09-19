@@ -1,17 +1,17 @@
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 
 // Workflow types
 export interface WorkflowStep {
   id: string;
   name: string;
-  type: 'approval' | 'review' | 'action' | 'notification' | 'condition';
+  type: "approval" | "review" | "action" | "notification" | "condition";
   description?: string;
   assignees?: string[];
   conditions?: WorkflowCondition[];
   actions?: WorkflowAction[];
   nextSteps?: string[];
   previousSteps?: string[];
-  status: 'pending' | 'in_progress' | 'completed' | 'skipped' | 'failed';
+  status: "pending" | "in_progress" | "completed" | "skipped" | "failed";
   startedAt?: string;
   completedAt?: string;
   completedBy?: string;
@@ -22,14 +22,21 @@ export interface WorkflowStep {
 export interface WorkflowCondition {
   id: string;
   field: string;
-  operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than' | 'in' | 'not_in';
+  operator:
+    | "equals"
+    | "not_equals"
+    | "contains"
+    | "greater_than"
+    | "less_than"
+    | "in"
+    | "not_in";
   value: any;
-  logicalOperator?: 'AND' | 'OR';
+  logicalOperator?: "AND" | "OR";
 }
 
 export interface WorkflowAction {
   id: string;
-  type: 'email' | 'webhook' | 'update_field' | 'create_task' | 'assign_user';
+  type: "email" | "webhook" | "update_field" | "create_task" | "assign_user";
   config: Record<string, any>;
 }
 
@@ -51,14 +58,14 @@ export interface WorkflowTemplate {
 
 export interface WorkflowTrigger {
   id: string;
-  type: 'manual' | 'schedule' | 'event' | 'webhook';
+  type: "manual" | "schedule" | "event" | "webhook";
   config: Record<string, any>;
 }
 
 export interface WorkflowVariable {
   id: string;
   name: string;
-  type: 'string' | 'number' | 'boolean' | 'date' | 'array' | 'object';
+  type: "string" | "number" | "boolean" | "date" | "array" | "object";
   defaultValue?: any;
   required: boolean;
   validation?: Record<string, any>;
@@ -68,7 +75,7 @@ export interface WorkflowInstance {
   id: string;
   templateId: string;
   templateName: string;
-  status: 'draft' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed';
+  status: "draft" | "running" | "paused" | "completed" | "cancelled" | "failed";
   currentStep?: string;
   startedAt?: string;
   completedAt?: string;
@@ -143,15 +150,18 @@ const initialState: WorkflowState = {
 
 // Async thunks
 export const executeWorkflow = createAsyncThunk(
-  'workflow/execute',
-  async ({ templateId, data }: { templateId: string; data: Record<string, any> }, { rejectWithValue }) => {
+  "workflow/execute",
+  async (
+    { templateId, data }: { templateId: string; data: Record<string, any> },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await fetch(`/api/v1/workflows/${templateId}/execute`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(`/workflows/${templateId}/execute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to execute workflow');
+      if (!response.ok) throw new Error("Failed to execute workflow");
       return await response.json();
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -160,13 +170,13 @@ export const executeWorkflow = createAsyncThunk(
 );
 
 export const pauseWorkflow = createAsyncThunk(
-  'workflow/pause',
+  "workflow/pause",
   async (instanceId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/v1/workflows/instances/${instanceId}/pause`, {
-        method: 'POST',
+      const response = await fetch(`/workflows/instances/${instanceId}/pause`, {
+        method: "POST",
       });
-      if (!response.ok) throw new Error('Failed to pause workflow');
+      if (!response.ok) throw new Error("Failed to pause workflow");
       return await response.json();
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -175,13 +185,16 @@ export const pauseWorkflow = createAsyncThunk(
 );
 
 export const resumeWorkflow = createAsyncThunk(
-  'workflow/resume',
+  "workflow/resume",
   async (instanceId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/v1/workflows/instances/${instanceId}/resume`, {
-        method: 'POST',
-      });
-      if (!response.ok) throw new Error('Failed to resume workflow');
+      const response = await fetch(
+        `/workflows/instances/${instanceId}/resume`,
+        {
+          method: "POST",
+        }
+      );
+      if (!response.ok) throw new Error("Failed to resume workflow");
       return await response.json();
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -190,13 +203,16 @@ export const resumeWorkflow = createAsyncThunk(
 );
 
 export const cancelWorkflow = createAsyncThunk(
-  'workflow/cancel',
+  "workflow/cancel",
   async (instanceId: string, { rejectWithValue }) => {
     try {
-      const response = await fetch(`/api/v1/workflows/instances/${instanceId}/cancel`, {
-        method: 'POST',
-      });
-      if (!response.ok) throw new Error('Failed to cancel workflow');
+      const response = await fetch(
+        `/workflows/instances/${instanceId}/cancel`,
+        {
+          method: "POST",
+        }
+      );
+      if (!response.ok) throw new Error("Failed to cancel workflow");
       return await response.json();
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -205,14 +221,16 @@ export const cancelWorkflow = createAsyncThunk(
 );
 
 const workflowSlice = createSlice({
-  name: 'workflow',
+  name: "workflow",
   initialState,
   reducers: {
     // Templates
     setTemplates: (state, action: PayloadAction<WorkflowTemplate[]>) => {
       state.templates = action.payload;
       state.statistics.totalTemplates = action.payload.length;
-      state.statistics.activeTemplates = action.payload.filter(t => t.isActive).length;
+      state.statistics.activeTemplates = action.payload.filter(
+        (t) => t.isActive
+      ).length;
     },
     addTemplate: (state, action: PayloadAction<WorkflowTemplate>) => {
       state.templates.push(action.payload);
@@ -220,25 +238,31 @@ const workflowSlice = createSlice({
       if (action.payload.isActive) state.statistics.activeTemplates++;
     },
     updateTemplate: (state, action: PayloadAction<WorkflowTemplate>) => {
-      const index = state.templates.findIndex(t => t.id === action.payload.id);
+      const index = state.templates.findIndex(
+        (t) => t.id === action.payload.id
+      );
       if (index !== -1) {
         const wasActive = state.templates[index].isActive;
         state.templates[index] = action.payload;
-        if (!wasActive && action.payload.isActive) state.statistics.activeTemplates++;
-        if (wasActive && !action.payload.isActive) state.statistics.activeTemplates--;
+        if (!wasActive && action.payload.isActive)
+          state.statistics.activeTemplates++;
+        if (wasActive && !action.payload.isActive)
+          state.statistics.activeTemplates--;
       }
     },
     deleteTemplate: (state, action: PayloadAction<string>) => {
-      const template = state.templates.find(t => t.id === action.payload);
+      const template = state.templates.find((t) => t.id === action.payload);
       if (template) {
-        state.templates = state.templates.filter(t => t.id !== action.payload);
+        state.templates = state.templates.filter(
+          (t) => t.id !== action.payload
+        );
         state.statistics.totalTemplates--;
         if (template.isActive) state.statistics.activeTemplates--;
       }
     },
     selectTemplate: (state, action: PayloadAction<string | null>) => {
       state.selectedTemplate = action.payload
-        ? state.templates.find(t => t.id === action.payload) || null
+        ? state.templates.find((t) => t.id === action.payload) || null
         : null;
     },
 
@@ -246,30 +270,39 @@ const workflowSlice = createSlice({
     setInstances: (state, action: PayloadAction<WorkflowInstance[]>) => {
       state.instances = action.payload;
       state.statistics.totalInstances = action.payload.length;
-      state.statistics.runningInstances = action.payload.filter(i => i.status === 'running').length;
-      state.statistics.completedInstances = action.payload.filter(i => i.status === 'completed').length;
-      state.statistics.failedInstances = action.payload.filter(i => i.status === 'failed').length;
+      state.statistics.runningInstances = action.payload.filter(
+        (i) => i.status === "running"
+      ).length;
+      state.statistics.completedInstances = action.payload.filter(
+        (i) => i.status === "completed"
+      ).length;
+      state.statistics.failedInstances = action.payload.filter(
+        (i) => i.status === "failed"
+      ).length;
     },
     addInstance: (state, action: PayloadAction<WorkflowInstance>) => {
       state.instances.push(action.payload);
       state.statistics.totalInstances++;
-      if (action.payload.status === 'running') state.statistics.runningInstances++;
+      if (action.payload.status === "running")
+        state.statistics.runningInstances++;
     },
     updateInstance: (state, action: PayloadAction<WorkflowInstance>) => {
-      const index = state.instances.findIndex(i => i.id === action.payload.id);
+      const index = state.instances.findIndex(
+        (i) => i.id === action.payload.id
+      );
       if (index !== -1) {
         const oldStatus = state.instances[index].status;
         const newStatus = action.payload.status;
         state.instances[index] = action.payload;
 
         // Update statistics
-        if (oldStatus === 'running') state.statistics.runningInstances--;
-        if (oldStatus === 'completed') state.statistics.completedInstances--;
-        if (oldStatus === 'failed') state.statistics.failedInstances--;
+        if (oldStatus === "running") state.statistics.runningInstances--;
+        if (oldStatus === "completed") state.statistics.completedInstances--;
+        if (oldStatus === "failed") state.statistics.failedInstances--;
 
-        if (newStatus === 'running') state.statistics.runningInstances++;
-        if (newStatus === 'completed') state.statistics.completedInstances++;
-        if (newStatus === 'failed') state.statistics.failedInstances++;
+        if (newStatus === "running") state.statistics.runningInstances++;
+        if (newStatus === "completed") state.statistics.completedInstances++;
+        if (newStatus === "failed") state.statistics.failedInstances++;
 
         // Update active instance if it's the same
         if (state.activeInstance?.id === action.payload.id) {
@@ -278,13 +311,16 @@ const workflowSlice = createSlice({
       }
     },
     deleteInstance: (state, action: PayloadAction<string>) => {
-      const instance = state.instances.find(i => i.id === action.payload);
+      const instance = state.instances.find((i) => i.id === action.payload);
       if (instance) {
-        state.instances = state.instances.filter(i => i.id !== action.payload);
+        state.instances = state.instances.filter(
+          (i) => i.id !== action.payload
+        );
         state.statistics.totalInstances--;
-        if (instance.status === 'running') state.statistics.runningInstances--;
-        if (instance.status === 'completed') state.statistics.completedInstances--;
-        if (instance.status === 'failed') state.statistics.failedInstances--;
+        if (instance.status === "running") state.statistics.runningInstances--;
+        if (instance.status === "completed")
+          state.statistics.completedInstances--;
+        if (instance.status === "failed") state.statistics.failedInstances--;
 
         if (state.activeInstance?.id === action.payload) {
           state.activeInstance = null;
@@ -293,17 +329,26 @@ const workflowSlice = createSlice({
     },
     setActiveInstance: (state, action: PayloadAction<string | null>) => {
       state.activeInstance = action.payload
-        ? state.instances.find(i => i.id === action.payload) || null
+        ? state.instances.find((i) => i.id === action.payload) || null
         : null;
     },
 
     // Step updates
-    updateStep: (state, action: PayloadAction<{ instanceId: string; step: WorkflowStep }>) => {
-      const instance = state.instances.find(i => i.id === action.payload.instanceId);
+    updateStep: (
+      state,
+      action: PayloadAction<{ instanceId: string; step: WorkflowStep }>
+    ) => {
+      const instance = state.instances.find(
+        (i) => i.id === action.payload.instanceId
+      );
       if (instance) {
-        const template = state.templates.find(t => t.id === instance.templateId);
+        const template = state.templates.find(
+          (t) => t.id === instance.templateId
+        );
         if (template) {
-          const stepIndex = template.steps.findIndex(s => s.id === action.payload.step.id);
+          const stepIndex = template.steps.findIndex(
+            (s) => s.id === action.payload.step.id
+          );
           if (stepIndex !== -1) {
             template.steps[stepIndex] = action.payload.step;
           }
@@ -312,7 +357,7 @@ const workflowSlice = createSlice({
     },
 
     // Filters
-    setFilters: (state, action: PayloadAction<WorkflowState['filters']>) => {
+    setFilters: (state, action: PayloadAction<WorkflowState["filters"]>) => {
       state.filters = action.payload;
     },
     clearFilters: (state) => {
@@ -352,25 +397,25 @@ const workflowSlice = createSlice({
       })
       // Pause workflow
       .addCase(pauseWorkflow.fulfilled, (state, action) => {
-        const instance = state.instances.find(i => i.id === action.meta.arg);
+        const instance = state.instances.find((i) => i.id === action.meta.arg);
         if (instance) {
-          instance.status = 'paused';
+          instance.status = "paused";
           state.statistics.runningInstances--;
         }
       })
       // Resume workflow
       .addCase(resumeWorkflow.fulfilled, (state, action) => {
-        const instance = state.instances.find(i => i.id === action.meta.arg);
+        const instance = state.instances.find((i) => i.id === action.meta.arg);
         if (instance) {
-          instance.status = 'running';
+          instance.status = "running";
           state.statistics.runningInstances++;
         }
       })
       // Cancel workflow
       .addCase(cancelWorkflow.fulfilled, (state, action) => {
-        const instance = state.instances.find(i => i.id === action.meta.arg);
+        const instance = state.instances.find((i) => i.id === action.meta.arg);
         if (instance) {
-          instance.status = 'cancelled';
+          instance.status = "cancelled";
           state.statistics.runningInstances--;
         }
       });
@@ -397,23 +442,34 @@ export const {
 } = workflowSlice.actions;
 
 // Selectors
-export const selectWorkflowTemplates = (state: { workflow: WorkflowState }) => state.workflow.templates;
-export const selectWorkflowInstances = (state: { workflow: WorkflowState }) => state.workflow.instances;
-export const selectActiveWorkflowInstance = (state: { workflow: WorkflowState }) => state.workflow.activeInstance;
-export const selectSelectedTemplate = (state: { workflow: WorkflowState }) => state.workflow.selectedTemplate;
-export const selectWorkflowStatistics = (state: { workflow: WorkflowState }) => state.workflow.statistics;
-export const selectWorkflowFilters = (state: { workflow: WorkflowState }) => state.workflow.filters;
-export const selectWorkflowLoading = (state: { workflow: WorkflowState }) => state.workflow.isLoading;
-export const selectWorkflowError = (state: { workflow: WorkflowState }) => state.workflow.error;
+export const selectWorkflowTemplates = (state: { workflow: WorkflowState }) =>
+  state.workflow.templates;
+export const selectWorkflowInstances = (state: { workflow: WorkflowState }) =>
+  state.workflow.instances;
+export const selectActiveWorkflowInstance = (state: {
+  workflow: WorkflowState;
+}) => state.workflow.activeInstance;
+export const selectSelectedTemplate = (state: { workflow: WorkflowState }) =>
+  state.workflow.selectedTemplate;
+export const selectWorkflowStatistics = (state: { workflow: WorkflowState }) =>
+  state.workflow.statistics;
+export const selectWorkflowFilters = (state: { workflow: WorkflowState }) =>
+  state.workflow.filters;
+export const selectWorkflowLoading = (state: { workflow: WorkflowState }) =>
+  state.workflow.isLoading;
+export const selectWorkflowError = (state: { workflow: WorkflowState }) =>
+  state.workflow.error;
 
 // Complex selectors
 export const selectRunningWorkflows = (state: { workflow: WorkflowState }) =>
-  state.workflow.instances.filter(i => i.status === 'running');
+  state.workflow.instances.filter((i) => i.status === "running");
 
-export const selectTemplateById = (templateId: string) => (state: { workflow: WorkflowState }) =>
-  state.workflow.templates.find(t => t.id === templateId);
+export const selectTemplateById =
+  (templateId: string) => (state: { workflow: WorkflowState }) =>
+    state.workflow.templates.find((t) => t.id === templateId);
 
-export const selectInstancesByTemplate = (templateId: string) => (state: { workflow: WorkflowState }) =>
-  state.workflow.instances.filter(i => i.templateId === templateId);
+export const selectInstancesByTemplate =
+  (templateId: string) => (state: { workflow: WorkflowState }) =>
+    state.workflow.instances.filter((i) => i.templateId === templateId);
 
 export default workflowSlice.reducer;

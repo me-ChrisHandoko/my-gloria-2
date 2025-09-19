@@ -1,6 +1,10 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
-import { Mutex } from 'async-mutex';
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import type {
+  BaseQueryFn,
+  FetchArgs,
+  FetchBaseQueryError,
+} from "@reduxjs/toolkit/query";
+import { Mutex } from "async-mutex";
 
 // Create a new mutex for token refresh
 const mutex = new Mutex();
@@ -22,7 +26,7 @@ const getClerkToken = async (): Promise<string | null> => {
     }
 
     // Fallback to window.Clerk if available
-    if (typeof window !== 'undefined' && (window as any).Clerk) {
+    if (typeof window !== "undefined" && (window as any).Clerk) {
       const clerk = (window as any).Clerk;
       const session = await clerk.session;
 
@@ -33,41 +37,44 @@ const getClerkToken = async (): Promise<string | null> => {
 
     return null;
   } catch (error) {
-    console.error('Error getting Clerk token:', error);
+    console.error("Error getting Clerk token:", error);
     return null;
   }
 };
 
 // Custom base query with authentication
 const baseQuery = fetchBaseQuery({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1',
+  baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
   prepareHeaders: async (headers) => {
     try {
       // Get token from Clerk
       const token = await getClerkToken();
 
       if (token) {
-        headers.set('authorization', `Bearer ${token}`);
+        headers.set("authorization", `Bearer ${token}`);
       }
 
       // Add request ID for tracing
-      headers.set('X-Request-ID', `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+      headers.set(
+        "X-Request-ID",
+        `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      );
 
       // Add content type if not set
-      if (!headers.has('content-type')) {
-        headers.set('content-type', 'application/json');
+      if (!headers.has("content-type")) {
+        headers.set("content-type", "application/json");
       }
 
       return headers;
     } catch (error) {
-      console.error('Error preparing headers:', error);
+      console.error("Error preparing headers:", error);
       return headers;
     }
   },
   // Add timeout
   timeout: 30000,
   // Credentials for CORS
-  credentials: 'include',
+  credentials: "include",
 });
 
 // Enhanced base query with re-authentication support
@@ -94,15 +101,15 @@ const baseQueryWithReauth: BaseQueryFn<
           result = await baseQuery(args, api, extraOptions);
         } else {
           // Refresh failed, redirect to login
-          if (typeof window !== 'undefined') {
-            window.location.href = '/sign-in';
+          if (typeof window !== "undefined") {
+            window.location.href = "/sign-in";
           }
         }
       } catch (error) {
-        console.error('Token refresh failed:', error);
+        console.error("Token refresh failed:", error);
         // Redirect to login on refresh failure
-        if (typeof window !== 'undefined') {
-          window.location.href = '/sign-in';
+        if (typeof window !== "undefined") {
+          window.location.href = "/sign-in";
         }
       } finally {
         release();
@@ -115,11 +122,11 @@ const baseQueryWithReauth: BaseQueryFn<
   } else if (result.error) {
     // Handle other errors
     if (result.error.status === 403) {
-      console.error('Permission denied:', result.error);
+      console.error("Permission denied:", result.error);
     } else if (result.error.status === 429) {
-      console.error('Rate limit exceeded:', result.error);
+      console.error("Rate limit exceeded:", result.error);
     } else if (result.error.status >= 500) {
-      console.error('Server error:', result.error);
+      console.error("Server error:", result.error);
     }
   }
 
@@ -128,24 +135,24 @@ const baseQueryWithReauth: BaseQueryFn<
 
 // Create the API slice with comprehensive tag types
 export const apiSlice = createApi({
-  reducerPath: 'api',
+  reducerPath: "api",
   baseQuery: baseQueryWithReauth,
   tagTypes: [
-    'User',
-    'Organization',
-    'School',
-    'Department',
-    'Position',
-    'Permission',
-    'Role',
-    'Workflow',
-    'WorkflowTemplate',
-    'WorkflowInstance',
-    'Notification',
-    'NotificationTemplate',
-    'Audit',
-    'FeatureFlag',
-    'SystemConfig',
+    "User",
+    "Organization",
+    "School",
+    "Department",
+    "Position",
+    "Permission",
+    "Role",
+    "Workflow",
+    "WorkflowTemplate",
+    "WorkflowInstance",
+    "Notification",
+    "NotificationTemplate",
+    "Audit",
+    "FeatureFlag",
+    "SystemConfig",
   ],
   endpoints: () => ({}),
   // Refetch on focus/reconnect for better UX
@@ -156,7 +163,7 @@ export const apiSlice = createApi({
 });
 
 // Export hooks for usage in functional components
-export const { } = apiSlice;
+export const {} = apiSlice;
 
 // Export the api object for cross-tab sync
 export { apiSlice as api };

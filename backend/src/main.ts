@@ -122,10 +122,10 @@ async function bootstrap() {
       prefix: 'api/v',
     });
 
-    // Global prefix
-    app.setGlobalPrefix('api/v1', {
-      exclude: ['health', 'health/live', 'health/ready', 'metrics'],
-    });
+    // // Global prefix
+    // app.setGlobalPrefix('api/v1', {
+    //   exclude: ['health', 'health/live', 'health/ready', 'metrics'],
+    // });
 
     // Global pipes - Enhanced validation configuration
     app.useGlobalPipes(

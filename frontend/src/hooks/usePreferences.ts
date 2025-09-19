@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import { useAppSelector } from './useAppSelector';
-import { useAppDispatch } from './useAppDispatch';
+import { useCallback, useEffect, useMemo } from "react";
+import { useAppSelector } from "./useAppSelector";
+import { useAppDispatch } from "./useAppDispatch";
 import {
   selectPreferences,
   selectNotificationPreferences,
@@ -26,7 +26,7 @@ import {
   resetPreferences,
   resetCategory,
   type PreferencesState,
-} from '@/store/slices/preferencesSlice';
+} from "@/store/slices/preferencesSlice";
 
 interface PreferenceSyncOptions {
   syncToServer?: boolean;
@@ -67,17 +67,17 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(async () => {
         try {
-          const response = await fetch('/api/v1/preferences', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/preferences", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(prefs),
           });
 
           if (!response.ok) {
-            throw new Error('Failed to sync preferences to server');
+            throw new Error("Failed to sync preferences to server");
           }
         } catch (error) {
-          console.error('Preference sync failed:', error);
+          console.error("Preference sync failed:", error);
         }
       }, debounceMs);
     };
@@ -86,7 +86,7 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
   // Sync to localStorage
   useEffect(() => {
     if (syncToLocalStorage && preferences) {
-      localStorage.setItem('userPreferences', JSON.stringify(preferences));
+      localStorage.setItem("userPreferences", JSON.stringify(preferences));
     }
   }, [preferences, syncToLocalStorage]);
 
@@ -151,20 +151,21 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
    * Change theme with system detection
    */
   const changeTheme = useCallback(
-    (newTheme: 'light' | 'dark' | 'system') => {
+    (newTheme: "light" | "dark" | "system") => {
       dispatch(setTheme(newTheme));
 
       // Apply theme to document
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const root = document.documentElement;
 
-        if (newTheme === 'system') {
-          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light';
-          root.setAttribute('data-theme', systemTheme);
+        if (newTheme === "system") {
+          const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+            .matches
+            ? "dark"
+            : "light";
+          root.setAttribute("data-theme", systemTheme);
         } else {
-          root.setAttribute('data-theme', newTheme);
+          root.setAttribute("data-theme", newTheme);
         }
       }
     },
@@ -179,7 +180,7 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
       dispatch(setLanguage(newLanguage));
 
       // Update i18n if available
-      if (typeof window !== 'undefined' && (window as any).i18n) {
+      if (typeof window !== "undefined" && (window as any).i18n) {
         await (window as any).i18n.changeLanguage(newLanguage);
       }
     },
@@ -205,7 +206,7 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
    * Set notification digest frequency
    */
   const setDigestFrequency = useCallback(
-    (frequency: 'none' | 'daily' | 'weekly' | 'monthly') => {
+    (frequency: "none" | "daily" | "weekly" | "monthly") => {
       updateNotifications({ digest: frequency });
     },
     [updateNotifications]
@@ -219,9 +220,11 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
       updateAccessibility({ [feature]: enabled });
 
       // Apply accessibility classes to document
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const root = document.documentElement;
-        const className = `a11y-${feature.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+        const className = `a11y-${feature
+          .replace(/([A-Z])/g, "-$1")
+          .toLowerCase()}`;
 
         if (enabled) {
           root.classList.add(className);
@@ -237,7 +240,7 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
    * Set workspace default view
    */
   const setDefaultView = useCallback(
-    (view: 'grid' | 'list' | 'kanban' | 'calendar') => {
+    (view: "grid" | "list" | "kanban" | "calendar") => {
       updateWorkspace({ defaultView: view });
     },
     [updateWorkspace]
@@ -279,12 +282,13 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
    */
   const exportPreferences = useCallback(() => {
     const dataStr = JSON.stringify(preferences, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const dataUri =
+      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
     const exportFileDefaultName = `preferences_${new Date().toISOString()}.json`;
 
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
+    const linkElement = document.createElement("a");
+    linkElement.setAttribute("href", dataUri);
+    linkElement.setAttribute("download", exportFileDefaultName);
     linkElement.click();
   }, [preferences]);
 
@@ -299,7 +303,7 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
           const importedPrefs = JSON.parse(e.target?.result as string);
           dispatch(loadPreferences(importedPrefs));
         } catch (error) {
-          console.error('Failed to import preferences:', error);
+          console.error("Failed to import preferences:", error);
         }
       };
       reader.readAsText(file);
@@ -311,9 +315,11 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
    * Reset preferences
    */
   const resetAllPreferences = useCallback(() => {
-    if (confirm('Are you sure you want to reset all preferences to defaults?')) {
+    if (
+      confirm("Are you sure you want to reset all preferences to defaults?")
+    ) {
       dispatch(resetPreferences());
-      localStorage.removeItem('userPreferences');
+      localStorage.removeItem("userPreferences");
     }
   }, [dispatch]);
 
@@ -321,7 +327,14 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
    * Reset specific category
    */
   const resetPreferenceCategory = useCallback(
-    (category: 'notifications' | 'display' | 'accessibility' | 'workspace' | 'privacy') => {
+    (
+      category:
+        | "notifications"
+        | "display"
+        | "accessibility"
+        | "workspace"
+        | "privacy"
+    ) => {
       dispatch(resetCategory(category));
     },
     [dispatch]
@@ -332,23 +345,25 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
    */
   const loadFromServer = useCallback(async () => {
     try {
-      const response = await fetch('/api/v1/preferences');
+      const response = await fetch("/preferences");
       if (response.ok) {
         const serverPrefs = await response.json();
         dispatch(loadPreferences(serverPrefs));
       }
     } catch (error) {
-      console.error('Failed to load preferences from server:', error);
+      console.error("Failed to load preferences from server:", error);
     }
   }, [dispatch]);
 
   // Apply accessibility preferences on mount
   useEffect(() => {
-    if (typeof window !== 'undefined' && accessibilityPrefs) {
+    if (typeof window !== "undefined" && accessibilityPrefs) {
       const root = document.documentElement;
 
       Object.entries(accessibilityPrefs).forEach(([key, enabled]) => {
-        const className = `a11y-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+        const className = `a11y-${key
+          .replace(/([A-Z])/g, "-$1")
+          .toLowerCase()}`;
         if (enabled) {
           root.classList.add(className);
         } else {
@@ -360,15 +375,18 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
 
   // Listen for system theme changes
   useEffect(() => {
-    if (theme === 'system' && typeof window !== 'undefined') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    if (theme === "system" && typeof window !== "undefined") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
       const handleChange = (e: MediaQueryListEvent) => {
-        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+        document.documentElement.setAttribute(
+          "data-theme",
+          e.matches ? "dark" : "light"
+        );
       };
 
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
     }
   }, [theme]);
 
@@ -384,8 +402,10 @@ export const usePreferences = (options: PreferenceSyncOptions = {}) => {
   );
 
   const effectiveTheme = useMemo(() => {
-    if (theme === 'system' && typeof window !== 'undefined') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    if (theme === "system" && typeof window !== "undefined") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
     }
     return theme;
   }, [theme]);
