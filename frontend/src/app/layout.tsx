@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { StoreProvider } from '@/components/providers/StoreProvider';
 import { SSEProvider } from '@/components/providers/SSEProvider';
 import { ClerkApiProvider } from '@/components/providers/ClerkApiProvider';
+import { Toaster } from 'sonner';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -84,6 +85,27 @@ export default function RootLayout({
             <ClerkApiProvider>
               <SSEProvider autoConnect={true} enableLogging={process.env.NODE_ENV === 'development'}>
                 {children}
+                <Toaster
+                  position="top-right"
+                  theme="light"
+                  richColors
+                  closeButton
+                  duration={4000}
+                  expand={false}
+                  visibleToasts={5}
+                  gap={12}
+                  offset="1rem"
+                  dir="ltr"
+                  toastOptions={{
+                    className: 'font-sans',
+                    style: {
+                      borderRadius: '0.5rem',
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+                    },
+                    closeButtonAriaLabel: 'Close notification',
+                  }}
+                  containerAriaLabel="Notifications"
+                />
               </SSEProvider>
             </ClerkApiProvider>
           </StoreProvider>

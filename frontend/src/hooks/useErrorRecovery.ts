@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { ApiError, isRetryableError } from '@/lib/api/errors';
 import { logger } from '@/lib/errors/errorLogger';
 import { retryWithBackoff } from '@/lib/errors/errorHandler';

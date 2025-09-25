@@ -9,7 +9,7 @@ import { ErrorAlert } from '@/components/ui/error-alert';
 import { UserForm } from './UserForm';
 import { User } from '@/types';
 import { PlusIcon, TrashIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export const UserList: React.FC = () => {
   const [page, setPage] = useState(1);

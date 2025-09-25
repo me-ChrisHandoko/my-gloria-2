@@ -5,7 +5,7 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from 'axios';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { API_CONFIG, API_HEADERS, HTTP_STATUS } from './constants';
 import {
   ApiError,

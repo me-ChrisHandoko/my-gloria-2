@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/nextjs';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 /**
  * Error severity levels

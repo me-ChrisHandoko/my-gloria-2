@@ -29,7 +29,7 @@ import {
   updateNotification,
   removeNotification as deleteNotification,
 } from '@/store/slices/notificationSlice';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 /**
  * SSE Context

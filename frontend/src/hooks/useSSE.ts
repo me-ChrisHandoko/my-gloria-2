@@ -16,7 +16,7 @@ import {
   WorkflowSSEData,
   SystemAnnouncementSSEData,
 } from "@/types/sse";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 /**
  * Hook options

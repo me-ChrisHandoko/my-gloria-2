@@ -7,7 +7,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { wsClient, ConnectionState, WebSocketClient } from '@/lib/websocket/client';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 /**
  * WebSocket event data types
