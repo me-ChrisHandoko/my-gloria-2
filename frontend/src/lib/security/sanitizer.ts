@@ -63,7 +63,6 @@ class InputSanitizer {
       KEEP_CONTENT: opts.stripTags,
       RETURN_DOM: false,
       RETURN_DOM_FRAGMENT: false,
-      RETURN_DOM_IMPORT: false,
     }) as string;
 
     return sanitized;
@@ -386,7 +385,7 @@ class InputSanitizer {
       if (error instanceof z.ZodError) {
         return {
           valid: false,
-          errors: error.errors.map(err => ({
+          errors: error.issues.map(err => ({
             field: err.path.join('.'),
             message: err.message,
             value: input,

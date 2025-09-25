@@ -117,7 +117,7 @@ const baseQueryWithReauth: BaseQueryFn<
       console.error("Permission denied:", result.error);
     } else if (result.error.status === 429) {
       console.error("Rate limit exceeded:", result.error);
-    } else if (result.error.status >= 500) {
+    } else if (typeof result.error.status === 'number' && result.error.status >= 500) {
       console.error("Server error:", result.error);
     }
   }

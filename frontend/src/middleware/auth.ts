@@ -191,7 +191,7 @@ async function verifyToken(token: string): Promise<any> {
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 export function rateLimitMiddleware(request: NextRequest) {
-  const ip = request.ip || request.headers.get("x-forwarded-for") || "unknown";
+  const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown" || request.headers.get("x-forwarded-for") || "unknown";
   const key = `${ip}:${request.nextUrl.pathname}`;
   const now = Date.now();
 

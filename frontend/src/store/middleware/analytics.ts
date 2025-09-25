@@ -17,7 +17,7 @@ declare global {
  * Analytics middleware for tracking user actions and events
  * Integrates with various analytics services
  */
-export const analyticsMiddleware: Middleware = (store) => (next) => (action) => {
+export const analyticsMiddleware: Middleware = (store) => (next) => (action: any) => {
   // Track specific actions for analytics
   const trackedActions: Record<string, string> = {
     // Auth events

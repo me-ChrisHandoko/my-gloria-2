@@ -377,7 +377,7 @@ export class UserAnalytics {
    * Set up click tracking
    */
   private setupClickTracking(): void {
-    const clickHandler = (event: MouseEvent) => {
+    const clickHandler = (event: Event) => {
       const target = event.target as HTMLElement;
 
       // Track button clicks
@@ -389,8 +389,8 @@ export class UserAnalytics {
           category: 'UI',
           action: 'click',
           label: text || href,
-          element: target.tagName,
           properties: {
+            element: target.tagName,
             text,
             href,
             id: target.id,

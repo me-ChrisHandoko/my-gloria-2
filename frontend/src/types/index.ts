@@ -102,12 +102,16 @@ export interface Notification {
   title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
   userId: string;
   read: boolean;
-  readAt?: Date;
+  readAt?: Date | string;
   metadata?: Record<string, any>;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  actionUrl?: string;
+  actionLabel?: string;
+  silent?: boolean;
 }
 
 // Audit types
@@ -192,6 +196,9 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   totalPages: number;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
+  hasMore?: boolean;
 }
 
 export interface QueryParams {

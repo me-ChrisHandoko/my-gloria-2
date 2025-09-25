@@ -184,7 +184,7 @@ export class APIKeyManager {
     }
 
     // Check usage limit
-    if (metadata.maxUsageCount > 0 && metadata.usageCount >= metadata.maxUsageCount) {
+    if (metadata?.maxUsageCount && metadata.maxUsageCount > 0 && metadata.usageCount >= metadata.maxUsageCount) {
       return {
         valid: false,
         reason: 'API key usage limit exceeded',
@@ -227,7 +227,7 @@ export class APIKeyManager {
     this.trackUsage(hashedKey, metadata);
 
     // Calculate remaining usage and expiration
-    const remainingUsage = metadata.maxUsageCount > 0 ?
+    const remainingUsage = metadata?.maxUsageCount && metadata.maxUsageCount > 0 ?
       metadata.maxUsageCount - metadata.usageCount :
       undefined;
 
@@ -563,7 +563,7 @@ export const apiKeySchema = z.object({
   expirationDays: z.number().min(0).max(3650).optional(),
   maxUsageCount: z.number().min(0).optional(),
   ipWhitelist: z.array(z.string()).optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
   rateLimit: z.object({
     requests: z.number().min(1),
     windowMs: z.number().min(1000),

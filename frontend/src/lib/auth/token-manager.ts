@@ -234,9 +234,9 @@ class TokenManager {
 
       const response = await this.authService.refreshToken();
 
-      if (response.token) {
-        this.setTokens(response.token, response.refreshToken, response.expiresIn);
-        return response.token;
+      if (response.data.token) {
+        this.setTokens(response.data.token, (response.data as any).refreshToken, response.data.expiresIn);
+        return response.data.token;
       }
 
       return null;

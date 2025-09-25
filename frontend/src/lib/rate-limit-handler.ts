@@ -275,7 +275,7 @@ class RateLimitHandler {
           // unless the message indicates a non-retryable condition
           const nonRetryableKeywords = ['unauthorized', 'forbidden', 'not found', 'bad request', 'invalid', 'access denied'];
           const messageIsNonRetryable = nonRetryableKeywords.some(keyword =>
-            lastError.message.toLowerCase().includes(keyword)
+            lastError || new Error("Unknown error").message.toLowerCase().includes(keyword)
           );
           isRetryable = !messageIsNonRetryable;
         } else {

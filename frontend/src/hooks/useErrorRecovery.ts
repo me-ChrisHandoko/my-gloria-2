@@ -51,7 +51,7 @@ export function useErrorRecovery(options: UseErrorRecoveryOptions = {}) {
     recoverySuccess: false,
   });
 
-  const retryTimeoutRef = useRef<NodeJS.Timeout>();
+  const retryTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const isMountedRef = useRef(true);
 
   useEffect(() => {
@@ -377,7 +377,7 @@ export function useCircuitBreaker(
   const [isOpen, setIsOpen] = useState(false);
   const [failures, setFailures] = useState(0);
   const [lastFailure, setLastFailure] = useState<Date | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const recordSuccess = useCallback(() => {
     setFailures(0);

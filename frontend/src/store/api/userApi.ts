@@ -52,13 +52,13 @@ export const userApi = apiSlice.injectEndpoints({
         const optimisticUser = {
           ...user,
           id: tempId,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
         } as User;
 
         // Add user to list immediately
         const patchResult = dispatch(
-          userApi.util.updateQueryData('getUsers', undefined, (draft) => {
+          userApi.util.updateQueryData('getUsers', {} as QueryParams, (draft) => {
             if (draft?.data) {
               draft.data.unshift(optimisticUser);
               draft.total += 1;
@@ -70,7 +70,7 @@ export const userApi = apiSlice.injectEndpoints({
           const { data } = await queryFulfilled;
           // Replace temporary user with real user
           dispatch(
-            userApi.util.updateQueryData('getUsers', undefined, (draft) => {
+            userApi.util.updateQueryData('getUsers', {} as QueryParams, (draft) => {
               if (draft?.data) {
                 const index = draft.data.findIndex((u) => u.id === tempId);
                 if (index !== -1) {
@@ -105,7 +105,7 @@ export const userApi = apiSlice.injectEndpoints({
 
         // Also update the user in the list if present
         const listPatchResult = dispatch(
-          userApi.util.updateQueryData('getUsers', undefined, (draft) => {
+          userApi.util.updateQueryData('getUsers', {} as QueryParams, (draft) => {
             const user = draft?.data?.find((u) => u.id === id);
             if (user) {
               Object.assign(user, data);
@@ -137,7 +137,7 @@ export const userApi = apiSlice.injectEndpoints({
       async onQueryStarted(id, { dispatch, queryFulfilled }) {
         // Remove user from list immediately
         const patchResult = dispatch(
-          userApi.util.updateQueryData('getUsers', undefined, (draft) => {
+          userApi.util.updateQueryData('getUsers', {} as QueryParams, (draft) => {
             if (draft?.data) {
               draft.data = draft.data.filter((user) => user.id !== id);
               draft.total = Math.max(0, draft.total - 1);
@@ -180,16 +180,16 @@ export const userApi = apiSlice.injectEndpoints({
         // Update the user status immediately
         const userPatchResult = dispatch(
           userApi.util.updateQueryData('getUserById', id, (draft) => {
-            draft.isActive = isActive;
+            (draft as any).isActive = isActive;
           })
         );
 
         // Also update in the list
         const listPatchResult = dispatch(
-          userApi.util.updateQueryData('getUsers', undefined, (draft) => {
+          userApi.util.updateQueryData('getUsers', {} as QueryParams, (draft) => {
             const user = draft?.data?.find((u) => u.id === id);
             if (user) {
-              user.isActive = isActive;
+              (user as any).isActive = isActive;
             }
           })
         );

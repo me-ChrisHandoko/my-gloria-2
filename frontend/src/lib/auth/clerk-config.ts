@@ -94,7 +94,8 @@ export const useClerkApiSync = () => {
  * Hook to handle Clerk session changes
  */
 export const useClerkSessionSync = () => {
-  const { session } = useAuth();
+  const auth = useAuth() as any;
+  const session = auth.session;
 
   useEffect(() => {
     if (!session) return;

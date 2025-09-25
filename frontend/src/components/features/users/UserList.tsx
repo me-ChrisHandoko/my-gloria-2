@@ -58,13 +58,17 @@ export const UserList: React.FC = () => {
   const handleResetPassword = useCallback((user: User) => {
     // In production, this would open a password reset dialog
     console.log('Reset password for:', user);
-    toast.info('Password reset functionality coming soon');
+    toast('Password reset functionality coming soon', {
+      icon: 'ℹ️',
+    });
   }, []);
 
   const handleManagePermissions = useCallback((user: User) => {
     // In production, this would open a permissions management dialog
     console.log('Manage permissions for:', user);
-    toast.info('Permission management functionality coming soon');
+    toast('Permission management functionality coming soon', {
+      icon: 'ℹ️',
+    });
   }, []);
 
   const handleBulkDelete = useCallback(async () => {
@@ -90,12 +94,16 @@ export const UserList: React.FC = () => {
 
   const handleExport = useCallback(() => {
     // In production, this would trigger an export
-    toast.info('Export functionality coming soon');
+    toast('Export functionality coming soon', {
+      icon: 'ℹ️',
+    });
   }, []);
 
   const handleImport = useCallback(() => {
     // In production, this would open an import dialog
-    toast.info('Import functionality coming soon');
+    toast('Import functionality coming soon', {
+      icon: 'ℹ️',
+    });
   }, []);
 
   const handleAddUser = useCallback(() => {

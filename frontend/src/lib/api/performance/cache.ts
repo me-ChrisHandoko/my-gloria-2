@@ -204,11 +204,11 @@ export class AdvancedCache<T = any> {
     // Prepare entry
     const entry: CacheEntry<T> = {
       key: fullKey,
-      value: shouldCompress ? await compress(value) : value,
+      value: shouldCompress ? await compress(value as string | Uint8Array) as T : value,
       timestamp: Date.now(),
       expiresAt: ttl > 0 ? Date.now() + ttl : undefined,
       version: this.options.version || 1,
-      compressed: shouldCompress,
+      compressed: shouldCompress ?? false,
       metadata: options?.metadata,
       accessCount: 0,
       lastAccessed: Date.now(),
@@ -564,7 +564,7 @@ export class AdvancedCache<T = any> {
    */
   private async extractValue(entry: CacheEntry<T>): Promise<T> {
     if (entry.compressed) {
-      return await decompress(entry.value);
+      return await decompress(entry.value as string | Uint8Array) as T;
     }
     return entry.value;
   }

@@ -193,7 +193,7 @@ class ApiMonitor {
       // Send immediate alert
       if (typeof Sentry !== 'undefined' && Sentry.captureException) {
         Sentry.captureException(new Error(alert), {
-          extra: metrics,
+          extra: metrics as Record<string, any>,
         });
       }
     }

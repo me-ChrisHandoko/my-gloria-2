@@ -166,7 +166,7 @@ export const useInfiniteUsers = () => {
         const newUsers = data.data.filter((u) => !existingIds.has(u.id));
         return [...prev, ...newUsers];
       });
-      setHasMore(data.hasMore);
+      setHasMore(data.hasMore ?? false);
     }
   }, [data, page]);
 

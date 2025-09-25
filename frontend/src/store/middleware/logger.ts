@@ -4,7 +4,7 @@ import { Middleware } from '@reduxjs/toolkit';
  * Logger middleware for development environment
  * Logs actions and state changes for debugging
  */
-export const loggerMiddleware: Middleware = (store) => (next) => (action) => {
+export const loggerMiddleware: Middleware = (store) => (next) => (action: any) => {
   if (process.env.NODE_ENV === 'development') {
     const startTime = performance.now();
 

@@ -127,7 +127,6 @@ const DashboardSidebar = memo(function DashboardSidebar({ user }: DashboardSideb
       <div className="p-4 border-t border-gray-200">
         <div className="flex items-center space-x-3">
           <UserButton
-            fallbackRedirectUrl="/sign-in"
             appearance={{
               elements: {
                 avatarBox: 'w-10 h-10',

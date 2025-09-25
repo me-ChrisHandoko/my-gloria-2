@@ -15,6 +15,7 @@ export interface PaginatedResponse<T = any> {
   totalPages: number;
   hasNext: boolean;
   hasPrevious: boolean;
+  hasMore: boolean;
 }
 
 export interface ErrorResponse {
@@ -96,4 +97,82 @@ export interface BatchResponse<T = any> {
     data?: T;
     error?: ErrorResponse;
   }>;
+}
+
+// Authentication types
+export interface LoginRequest {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  token?: string; // For backward compatibility
+  expiresIn: number;
+  user: User;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  name: string;
+  confirmPassword: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  imageUrl?: string;
+  avatar?: string;
+  role: string;
+  roles?: string[];
+  permissions?: string[];
+  department?: string;
+  position?: string;
+  organizationId?: string;
+  organizationName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  token?: string; // For backward compatibility
+  expiresIn: number;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface TwoFactorSetupResponse {
+  qrCode: string;
+  secret: string;
+  backupCodes: string[];
+}
+
+export interface TwoFactorVerifyRequest {
+  code: string;
+}
+
+export interface Session {
+  id: string;
+  userId: string;
+  deviceInfo: string;
+  ipAddress: string;
+  lastActivity: string;
+  createdAt: string;
 }

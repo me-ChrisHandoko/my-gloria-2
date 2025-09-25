@@ -51,26 +51,7 @@ const baseQuery = fetchBaseQuery({
 // Enhanced base query with retry logic using RTK Query's retry wrapper
 const baseQueryWithRetry = retry(baseQuery, {
   maxRetries: 3,
-  // Custom retry condition
-  retryCondition: (error, args, { attempt }) => {
-    // Don't retry on client errors (4xx) except 429 (rate limit)
-    if (
-      error.status &&
-      error.status >= 400 &&
-      error.status < 500 &&
-      error.status !== 429
-    ) {
-      return false;
-    }
-
-    // Don't retry after max attempts
-    if (attempt > 3) {
-      return false;
-    }
-
-    // Retry on network errors, server errors (5xx), and rate limits (429)
-    return true;
-  },
+  // Let RTK Query handle retries by default
   // Calculate backoff with exponential delay and jitter
   backoff: (attempt, maxRetries) => {
     const baseDelay = 1000; // 1 second
@@ -143,7 +124,7 @@ const baseQueryWithReauth: BaseQueryFn<
       console.error("Permission denied:", result.error);
     } else if (result.error.status === 429) {
       console.error("Rate limit exceeded:", result.error);
-    } else if (result.error.status >= 500) {
+    } else if (typeof result.error.status === 'number' && result.error.status >= 500) {
       console.error("Server error:", result.error);
     }
   }

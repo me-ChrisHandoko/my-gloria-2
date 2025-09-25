@@ -76,14 +76,16 @@ export const useUsers = (options: UseUsersOptions = {}) => {
   }, [updateFilters]);
 
   const nextPage = useCallback(() => {
-    if (data && filters.page < data.totalPages) {
-      updateFilters({ page: filters.page + 1 });
+    const currentPage = filters.page ?? 1;
+    if (data && currentPage < data.totalPages) {
+      updateFilters({ page: currentPage + 1 });
     }
   }, [data, filters.page, updateFilters]);
 
   const previousPage = useCallback(() => {
-    if (filters.page > 1) {
-      updateFilters({ page: filters.page - 1 });
+    const currentPage = filters.page ?? 1;
+    if (currentPage > 1) {
+      updateFilters({ page: currentPage - 1 });
     }
   }, [filters.page, updateFilters]);
 
@@ -139,26 +141,30 @@ export const useUsers = (options: UseUsersOptions = {}) => {
 
   // Computed values
   const hasNextPage = useMemo(() => {
-    return data ? filters.page < data.totalPages : false;
+    const currentPage = filters.page ?? 1;
+    return data ? currentPage < data.totalPages : false;
   }, [data, filters.page]);
 
   const hasPreviousPage = useMemo(() => {
-    return filters.page > 1;
+    const currentPage = filters.page ?? 1;
+    return currentPage > 1;
   }, [filters.page]);
 
   const pageInfo = useMemo(() => {
     if (!data) return null;
 
-    const startIndex = (filters.page - 1) * filters.limit + 1;
-    const endIndex = Math.min(filters.page * filters.limit, data.total);
+    const currentPage = filters.page ?? 1;
+    const pageLimit = filters.limit ?? 10;
+    const startIndex = (currentPage - 1) * pageLimit + 1;
+    const endIndex = Math.min(currentPage * pageLimit, data.total);
 
     return {
       startIndex,
       endIndex,
       total: data.total,
-      currentPage: filters.page,
+      currentPage: currentPage,
       totalPages: data.totalPages,
-      pageSize: filters.limit,
+      pageSize: pageLimit,
     };
   }, [data, filters.page, filters.limit]);
 
@@ -218,7 +224,7 @@ export const useUser = (userId: string, options: { skip?: boolean } = {}) => {
     refetch,
     isSuccess,
     isError,
-  } = useGetUserByIdQuery(userId, {
+  } = useGetUsersQuery({ id: userId }, {
     skip: skip || !userId,
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
@@ -236,4 +242,4 @@ export const useUser = (userId: string, options: { skip?: boolean } = {}) => {
 };
 
 // Export additional hooks for specific use cases
-export { useGetUserByIdQuery } from '@/store/api/userApi';
+// Note: useGetUserByIdQuery is not directly exported, use useUser hook instead

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { wsClient, WebSocketClient, ConnectionState, WebSocketConfig, WebSocketError } from '@/lib/websocket/client';
 
-interface WebSocketContextValue {
+export interface WebSocketContextValue {
   client: WebSocketClient;
   connectionState: ConnectionState;
   isConnected: boolean;

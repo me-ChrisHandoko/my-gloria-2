@@ -12,7 +12,7 @@
  */
 
 import { logger } from '@/lib/errors/errorLogger';
-import { apiClient } from '@/lib/api/client';
+import apiClient from '@/lib/api/client';
 import { PerformanceMonitor } from '@/lib/errors/errorLogger';
 
 interface BatchRequest<T = any> {
@@ -228,7 +228,7 @@ export class RequestBatcher {
       },
     });
 
-    return response.data.responses || [];
+    return (response as any).data.responses || [];
   }
 
   /**

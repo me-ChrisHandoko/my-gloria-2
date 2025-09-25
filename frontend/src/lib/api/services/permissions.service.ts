@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import { API_ENDPOINTS } from '../constants';
+import { API_ENDPOINTS } from '../endpoints';
 import type { PaginatedResponse, QueryParams } from '../types';
 
 // Permission types
@@ -64,7 +64,7 @@ class PermissionService {
   async getPermissions(params?: QueryParams): Promise<PaginatedResponse<Permission>> {
     const queryString = apiClient.buildQueryString(params);
     return apiClient.get<PaginatedResponse<Permission>>(
-      `${API_ENDPOINTS.PERMISSIONS.BASE}${queryString}`
+      API_ENDPOINTS.permissions.permissions.list(params)
     );
   }
 
@@ -72,21 +72,21 @@ class PermissionService {
    * Get permission by ID
    */
   async getPermissionById(id: string): Promise<Permission> {
-    return apiClient.get<Permission>(API_ENDPOINTS.PERMISSIONS.BY_ID(id));
+    return apiClient.get<Permission>(API_ENDPOINTS.permissions.permissions.byId(id));
   }
 
   /**
    * Check single permission
    */
   async checkPermission(check: PermissionCheck): Promise<PermissionCheckResult> {
-    return apiClient.post<PermissionCheckResult>(API_ENDPOINTS.PERMISSIONS.CHECK, check);
+    return apiClient.post<PermissionCheckResult>(API_ENDPOINTS.permissions.permissions.checkAccess(), check);
   }
 
   /**
    * Check multiple permissions
    */
   async checkBulkPermissions(checks: PermissionCheck[]): Promise<PermissionCheckResult[]> {
-    return apiClient.post<PermissionCheckResult[]>(API_ENDPOINTS.PERMISSIONS.BULK_CHECK, {
+    return apiClient.post<PermissionCheckResult[]>(API_ENDPOINTS.permissions.permissions.bulkCheck(), {
       checks,
     });
   }
@@ -96,7 +96,7 @@ class PermissionService {
    */
   async getRoles(params?: QueryParams): Promise<PaginatedResponse<Role>> {
     const queryString = apiClient.buildQueryString(params);
-    return apiClient.get<PaginatedResponse<Role>>(`/roles${queryString}`);
+    return apiClient.get<PaginatedResponse<Role>>(API_ENDPOINTS.permissions.roles.list(params));
   }
 
   /**

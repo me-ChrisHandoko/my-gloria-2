@@ -654,7 +654,7 @@ export class ErrorTracking {
     Sentry.withScope((scope) => {
       // Set context
       scope.setLevel(error.level as any);
-      scope.setContext('custom', error.context);
+      scope.setContext('custom', error.context as Record<string, any>);
       scope.setTags(error.context.tags || {});
       scope.setExtras(error.context.extra || {});
       scope.setFingerprint([error.fingerprint]);
@@ -696,12 +696,16 @@ export class ErrorTracking {
       case 'warning':
         logger.warn('Error tracked:', logData);
         break;
-      case 'error':
-        logger.error('Error tracked:', error.error || error.message, logData);
+      case 'error': {
+        const errorObj = error.error instanceof Error ? error.error : new Error(error.message);
+        logger.error('Error tracked:', errorObj, logData);
         break;
-      case 'fatal':
-        logger.fatal('Fatal error tracked:', error.error || error.message, logData);
+      }
+      case 'fatal': {
+        const fatalErrorObj = error.error instanceof Error ? error.error : new Error(error.message);
+        logger.fatal('Fatal error tracked:', fatalErrorObj, logData);
         break;
+      }
     }
   }
 

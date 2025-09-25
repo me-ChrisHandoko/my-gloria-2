@@ -86,9 +86,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           apiClient.setAuthToken(token, 3600); // 1 hour expiry
 
           // Fetch user data from backend
-          const userData = await authService.getCurrentUser();
+          const response = await authService.getCurrentUser();
 
-          if (userData) {
+          if (response && response.data) {
+            const userData = response.data;
             // Update Redux store
             dispatch(setUser({
               id: userData.id,
@@ -165,13 +166,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const response = await authService.login({ email, password });
 
-      if (response.token) {
-        apiClient.setAuthToken(response.token, response.expiresIn || 3600);
+      if (response.data && response.data.token) {
+        apiClient.setAuthToken(response.data.token, response.data.expiresIn || 3600);
 
         // Fetch user data
-        const userData = await authService.getCurrentUser();
+        const userResponse = await authService.getCurrentUser();
 
-        if (userData) {
+        if (userResponse && userResponse.data) {
+          const userData = userResponse.data;
           dispatch(setUser({
             id: userData.id,
             email: userData.email,
@@ -243,8 +245,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         // Refresh backend token
         const response = await authService.refreshToken();
-        if (response.token) {
-          apiClient.setAuthToken(response.token, response.expiresIn || 3600);
+        if (response.data && response.data.token) {
+          apiClient.setAuthToken(response.data.token, response.data.expiresIn || 3600);
         }
       }
     } catch (error: any) {
@@ -259,9 +261,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       dispatch(setLoading(true));
 
-      const userData = await authService.getCurrentUser();
+      const response = await authService.getCurrentUser();
 
-      if (userData) {
+      if (response && response.data) {
+        const userData = response.data;
         dispatch(setUser({
           id: userData.id,
           email: userData.email,

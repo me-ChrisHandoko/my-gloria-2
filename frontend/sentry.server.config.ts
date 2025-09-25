@@ -21,13 +21,10 @@ if (SENTRY_DSN) {
     // Release tracking
     release: process.env.NEXT_PUBLIC_RELEASE || 'unknown',
 
-    // Server-specific options
-    autoSessionTracking: true,
-
     // Integrations
     integrations: [
-      // HTTP integration for tracing
-      new Sentry.Integrations.Http({ tracing: true }),
+      // HTTP integration (tracing option is deprecated)
+      Sentry.httpIntegration(),
     ],
 
     // Filtering

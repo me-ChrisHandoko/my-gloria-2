@@ -76,14 +76,14 @@ export const useAppState = () => {
   // Permission checks
   const hasPermission = useCallback(
     (permission: string) => {
-      return permissions.some(p => p.name === permission);
+      return permissions.includes(permission);
     },
     [permissions]
   );
 
   const hasRole = useCallback(
     (role: string) => {
-      return roles.some(r => r.name === role);
+      return roles.includes(role);
     },
     [roles]
   );
@@ -139,7 +139,7 @@ export const useAppState = () => {
       duration?: number;
     }) => {
       const id = `toast-${Date.now()}-${Math.random()}`;
-      dispatch(showToast({ id, ...toast }));
+      dispatch(showToast({ ...toast }));
       return id;
     },
     [dispatch]

@@ -26,7 +26,7 @@ export const useStateSync = (config: SyncConfig) => {
   const dispatch = useAppDispatch();
   const channelRef = useRef<BroadcastChannel | null>(null);
   const tabIdRef = useRef<string>(`tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
-  const debounceTimerRef = useRef<NodeJS.Timeout>();
+  const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     if (!config.enableCrossTab || typeof BroadcastChannel === 'undefined') {
@@ -66,7 +66,7 @@ export const useStateSync = (config: SyncConfig) => {
         case 'INVALIDATE_CACHE':
           // Invalidate RTK Query cache tags
           if (data.tags) {
-            dispatch(apiSlice.util.invalidateTags(data.tags));
+            dispatch(apiSlice.util.invalidateTags(data.tags as any));
           }
           break;
 
@@ -84,12 +84,13 @@ export const useStateSync = (config: SyncConfig) => {
 
         case 'CLEAR_CACHE':
           // Clear specific cache entries
-          if (data.payload) {
-            dispatch(apiSlice.util.updateQueryData(
-              data.payload.endpoint,
-              data.payload.args,
-              () => undefined
-            ));
+          if (data.payload && data.payload.endpoint && data.payload.args !== undefined) {
+            try {
+              // Use invalidateTags instead of updateQueryData for cache clearing
+              dispatch(apiSlice.util.invalidateTags([{ type: data.payload.endpoint, id: data.payload.args }]));
+            } catch (err) {
+              console.error('Failed to clear cache:', err);
+            }
           }
           break;
 
@@ -101,10 +102,7 @@ export const useStateSync = (config: SyncConfig) => {
       }
     };
 
-    // Handle errors
-    channel.onerror = (error) => {
-      console.error('BroadcastChannel error:', error);
-    };
+    // BroadcastChannel doesn't have an onerror property in the spec
 
     return () => {
       clearTimeout(debounceTimerRef.current);

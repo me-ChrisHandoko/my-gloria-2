@@ -179,8 +179,8 @@ export class PerformanceMetricsCollector {
 
     // First Input Delay (FID)
     this.createObserver('first-input', (entries) => {
-      const firstEntry = entries[0];
-      if (firstEntry) {
+      const firstEntry = entries[0] as any; // PerformanceEventTiming type
+      if (firstEntry && firstEntry.processingStart) {
         const fid = firstEntry.processingStart - firstEntry.startTime;
         this.updateMetric('fid', fid);
       }

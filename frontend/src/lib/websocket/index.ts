@@ -27,4 +27,4 @@ export {
 
 // Re-export context hooks from context file for convenience
 // Note: These should be imported from @/contexts/WebSocketContext in components
-export type { WebSocketContextValue } from '@/contexts/WebSocketContext';
+export type { WebSocketContextValue as WSContextValue } from '@/contexts/WebSocketContext';

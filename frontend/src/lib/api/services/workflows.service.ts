@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import { API_ENDPOINTS } from '../constants';
+import { API_ENDPOINTS } from '../endpoints';
 import type { PaginatedResponse, QueryParams } from '../types';
 
 // Workflow types
@@ -101,7 +101,7 @@ class WorkflowService {
   async getWorkflows(params?: QueryParams): Promise<PaginatedResponse<Workflow>> {
     const queryString = apiClient.buildQueryString(params);
     return apiClient.get<PaginatedResponse<Workflow>>(
-      `${API_ENDPOINTS.WORKFLOWS.BASE}${queryString}`
+      API_ENDPOINTS.workflows.workflows.list(params)
     );
   }
 
@@ -109,35 +109,35 @@ class WorkflowService {
    * Get workflow by ID
    */
   async getWorkflowById(id: string): Promise<Workflow> {
-    return apiClient.get<Workflow>(API_ENDPOINTS.WORKFLOWS.BY_ID(id));
+    return apiClient.get<Workflow>(API_ENDPOINTS.workflows.workflows.byId(id));
   }
 
   /**
    * Create a new workflow
    */
   async createWorkflow(data: CreateWorkflowDto): Promise<Workflow> {
-    return apiClient.post<Workflow>(API_ENDPOINTS.WORKFLOWS.BASE, data);
+    return apiClient.post<Workflow>(API_ENDPOINTS.workflows.workflows.create(), data);
   }
 
   /**
    * Update workflow
    */
   async updateWorkflow(id: string, data: UpdateWorkflowDto): Promise<Workflow> {
-    return apiClient.patch<Workflow>(API_ENDPOINTS.WORKFLOWS.BY_ID(id), data);
+    return apiClient.patch<Workflow>(API_ENDPOINTS.workflows.workflows.update(id), data);
   }
 
   /**
    * Delete workflow
    */
   async deleteWorkflow(id: string): Promise<void> {
-    return apiClient.delete<void>(API_ENDPOINTS.WORKFLOWS.BY_ID(id));
+    return apiClient.delete<void>(API_ENDPOINTS.workflows.workflows.delete(id));
   }
 
   /**
    * Execute workflow
    */
   async executeWorkflow(id: string, data?: ExecuteWorkflowDto): Promise<WorkflowExecution> {
-    return apiClient.post<WorkflowExecution>(API_ENDPOINTS.WORKFLOWS.EXECUTE(id), data || {});
+    return apiClient.post<WorkflowExecution>(API_ENDPOINTS.workflows.workflows.execute(id), data || {});
   }
 
   /**
@@ -149,7 +149,7 @@ class WorkflowService {
   ): Promise<PaginatedResponse<WorkflowExecution>> {
     const queryString = apiClient.buildQueryString(params);
     return apiClient.get<PaginatedResponse<WorkflowExecution>>(
-      `${API_ENDPOINTS.WORKFLOWS.HISTORY(workflowId)}${queryString}`
+      API_ENDPOINTS.workflows.workflows.history(workflowId, params)
     );
   }
 
@@ -158,7 +158,7 @@ class WorkflowService {
    */
   async getExecutionById(workflowId: string, executionId: string): Promise<WorkflowExecution> {
     return apiClient.get<WorkflowExecution>(
-      `${API_ENDPOINTS.WORKFLOWS.BY_ID(workflowId)}/executions/${executionId}`
+      `${API_ENDPOINTS.workflows.workflows.byId(workflowId)}/executions/${executionId}`
     );
   }
 
@@ -167,7 +167,7 @@ class WorkflowService {
    */
   async cancelExecution(workflowId: string, executionId: string): Promise<void> {
     return apiClient.post<void>(
-      `${API_ENDPOINTS.WORKFLOWS.BY_ID(workflowId)}/executions/${executionId}/cancel`
+      API_ENDPOINTS.workflows.workflows.cancel(workflowId)
     );
   }
 
@@ -176,7 +176,7 @@ class WorkflowService {
    */
   async retryExecution(workflowId: string, executionId: string): Promise<WorkflowExecution> {
     return apiClient.post<WorkflowExecution>(
-      `${API_ENDPOINTS.WORKFLOWS.BY_ID(workflowId)}/executions/${executionId}/retry`
+      `${API_ENDPOINTS.workflows.workflows.byId(workflowId)}/executions/${executionId}/retry`
     );
   }
 
@@ -186,7 +186,7 @@ class WorkflowService {
   async getTemplates(params?: QueryParams): Promise<PaginatedResponse<Workflow>> {
     const queryString = apiClient.buildQueryString(params);
     return apiClient.get<PaginatedResponse<Workflow>>(
-      `${API_ENDPOINTS.WORKFLOWS.TEMPLATES}${queryString}`
+      API_ENDPOINTS.workflows.templates.list(params)
     );
   }
 
@@ -194,7 +194,7 @@ class WorkflowService {
    * Clone workflow from template
    */
   async cloneFromTemplate(templateId: string, data: { name: string; description?: string }): Promise<Workflow> {
-    return apiClient.post<Workflow>(`${API_ENDPOINTS.WORKFLOWS.TEMPLATES}/${templateId}/clone`, data);
+    return apiClient.post<Workflow>(API_ENDPOINTS.workflows.templates.createWorkflow(templateId), data);
   }
 
   /**
@@ -202,7 +202,7 @@ class WorkflowService {
    */
   async validateWorkflow(definition: WorkflowDefinition): Promise<{ valid: boolean; errors?: string[] }> {
     return apiClient.post<{ valid: boolean; errors?: string[] }>(
-      `${API_ENDPOINTS.WORKFLOWS.BASE}/validate`,
+      `${API_ENDPOINTS.workflows.workflows.create()}/validate`,
       { definition }
     );
   }
@@ -212,7 +212,7 @@ class WorkflowService {
    */
   async exportWorkflow(id: string): Promise<Blob> {
     const response = await apiClient.get<ArrayBuffer>(
-      `${API_ENDPOINTS.WORKFLOWS.BY_ID(id)}/export`,
+      API_ENDPOINTS.workflows.workflows.export(id),
       { responseType: 'arraybuffer' }
     );
     return new Blob([response], { type: 'application/json' });
@@ -222,14 +222,14 @@ class WorkflowService {
    * Import workflow from JSON
    */
   async importWorkflow(file: File): Promise<Workflow> {
-    return apiClient.uploadFile(`${API_ENDPOINTS.WORKFLOWS.BASE}/import`, file);
+    return apiClient.uploadFile(API_ENDPOINTS.workflows.workflows.import(), file);
   }
 
   /**
    * Get workflow statistics
    */
   async getStatistics(workflowId: string): Promise<any> {
-    return apiClient.get(`${API_ENDPOINTS.WORKFLOWS.BY_ID(workflowId)}/statistics`);
+    return apiClient.get(API_ENDPOINTS.workflows.workflows.stats(workflowId));
   }
 }
 

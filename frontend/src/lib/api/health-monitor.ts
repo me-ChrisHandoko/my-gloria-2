@@ -239,11 +239,13 @@ export class HealthMonitor {
 
     // Notify error monitoring service
     if (apiConfig.getMonitoringConfig().enabled) {
-      apiMonitor.trackError({
-        type: 'HEALTH_CHECK_CRITICAL',
-        message: `API health check failed ${this.consecutiveFailures} consecutive times`,
-        severity: 'critical',
+      apiMonitor.track({
+        endpoint: '/health',
+        method: 'GET',
+        statusCode: 503,
+        duration: 0,
         timestamp: Date.now(),
+        error: `API health check failed ${this.consecutiveFailures} consecutive times` as any,
       });
     }
 
@@ -277,7 +279,7 @@ export class HealthMonitor {
     const errorRate = recentChecks.length > 0 ? (recentErrors / recentChecks.length) * 100 : 0;
 
     // Estimate requests per minute (based on monitoring data)
-    const requestsPerMinute = apiMonitor.getRequestsPerMinute();
+    const requestsPerMinute = 0; // TODO: Implement getRequestsPerMinute in apiMonitor
 
     this.healthStatus.metrics = {
       uptime: uptimePercentage,

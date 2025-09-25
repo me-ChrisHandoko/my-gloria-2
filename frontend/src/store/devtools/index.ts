@@ -10,7 +10,7 @@ import { isDevelopment, isDebugMode, isBrowser, hasReduxDevTools } from '../conf
 export { isDevelopment, isDebugMode } from '../config/environment';
 
 /**
- * Sensitive data patterns for redaction
+ * Sensitive data patterns for redaction as any
  */
 const SENSITIVE_PATTERNS = [
   'password',
@@ -157,14 +157,14 @@ export const performanceMonitor: Middleware = (store) => (next) => (action) => {
 
   // Log slow actions (>16ms - one frame at 60fps)
   if (duration > 16) {
-    console.warn(`[SLOW_ACTION] ${action.type} took ${duration.toFixed(2)}ms`);
+    console.warn(`[SLOW_ACTION] ${(action as any).type} took ${duration.toFixed(2)}ms`);
   }
 
   // Log large state changes (>10KB)
   const sizeDiff = nextStateSize - prevStateSize;
   if (Math.abs(sizeDiff) > 10240) {
     console.warn(
-      `[LARGE_STATE_CHANGE] ${action.type} changed state by ${(sizeDiff / 1024).toFixed(2)}KB`
+      `[LARGE_STATE_CHANGE] ${(action as any).type} changed state by ${(sizeDiff / 1024).toFixed(2)}KB`
     );
   }
 
@@ -172,7 +172,7 @@ export const performanceMonitor: Middleware = (store) => (next) => (action) => {
   if (isBrowser && window.__REDUX_DEVTOOLS_EXTENSION__) {
     window.__PERFORMANCE_METRICS__ = window.__PERFORMANCE_METRICS__ || [];
     window.__PERFORMANCE_METRICS__.push({
-      actionType: action.type,
+      actionType: (action as any).type,
       startTime,
       endTime,
       duration,
@@ -216,7 +216,7 @@ export const stateDiffLogger: Middleware<{}, any> = (store) => (next) => (action
 
   if (hasChanges) {
     console.groupCollapsed(
-      `%c ACTION %c ${action.type}`,
+      `%c ACTION %c ${(action as any).type}`,
       'background: #222; color: #bada55; padding: 2px 4px; border-radius: 2px 0 0 2px;',
       'background: #444; color: #fff; padding: 2px 4px; border-radius: 0 2px 2px 0;'
     );
@@ -308,7 +308,7 @@ export const setupDevTools = (config?: Partial<DevToolsConfig>): DevToolsConfig 
       lock: true, // Lock changes
       persist: true, // Persist state on page reloading
       export: true, // Export history to file
-      import: 'custom', // Import history from file
+      import: 'custom' as any, // Import history from file
       jump: true, // Jump to any point in history
       skip: true, // Skip (cancel) actions
       reorder: true, // Reorder actions in history

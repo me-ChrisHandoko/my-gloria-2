@@ -315,7 +315,7 @@ function transformAxiosError(error: AxiosError): ApiError {
 
   // Handle specific HTTP status codes
   const status = error.response.status;
-  const data = error.response.data;
+  const data = error.response.data as any;
 
   // Check for rate limiting
   if (status === 429) {

@@ -230,11 +230,6 @@ export const useCrossTabSync = (config?: CrossTabSyncConfig) => {
       // Set up message handler
       channel.onmessage = handleMessage;
 
-      // Set up error handler
-      channel.onerror = (error) => {
-        console.error('BroadcastChannel error:', error);
-      };
-
       log('Channel initialized');
 
       // Send initial heartbeat

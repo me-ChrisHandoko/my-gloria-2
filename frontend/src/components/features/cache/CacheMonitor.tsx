@@ -128,7 +128,7 @@ export function CacheMonitor() {
           </h3>
 
           <div className="space-y-4">
-            {Array.from(detailedStats.byStrategy.entries()).map(([strategy, strategyStats]) => (
+            {Array.from(detailedStats.byStrategy.entries() as [string, any][]).map(([strategy, strategyStats]) => (
               <div key={strategy} className="border-l-4 border-blue-500 pl-4">
                 <div className="flex justify-between items-center">
                   <h4 className="font-medium text-gray-900 dark:text-white capitalize">

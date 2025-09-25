@@ -27,25 +27,12 @@ if (SENTRY_DSN) {
 
     // Integrations
     integrations: [
-      new Sentry.BrowserTracing({
-        // Set tracingOrigins to control what URLs are traced
-        tracingOrigins: [
-          'localhost',
-          process.env.NEXT_PUBLIC_APP_URL || '',
-          /^\//,
-        ],
-        // Disable automatic route change tracking in Next.js
-        routingInstrumentation: Sentry.nextRouterInstrumentation,
-      }),
-      new Sentry.Replay({
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration({
         // Mask sensitive content
         maskAllText: true,
         maskAllInputs: true,
         blockAllMedia: false,
-
-        // Sampling
-        sessionSampleRate: IS_PRODUCTION ? 0.1 : 0,
-        errorSampleRate: 1.0,
 
         // Network details
         networkDetailAllowUrls: [
@@ -148,8 +135,8 @@ if (SENTRY_DSN) {
       }
 
       // Don't log navigation to sign-in/sign-up pages (may contain sensitive URLs)
-      if (breadcrumb.category === 'navigation') {
-        const url = breadcrumb.data?.to;
+      if (breadcrumb.category === 'navigation' && breadcrumb.data) {
+        const url = breadcrumb.data.to;
         if (url && (url.includes('/sign-in') || url.includes('/sign-up'))) {
           breadcrumb.data.to = '[REDACTED]';
         }

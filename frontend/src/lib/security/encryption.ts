@@ -84,7 +84,7 @@ export class EncryptionService {
     // Get auth tag for GCM mode
     let tag: string | undefined;
     if (this.config.algorithm.includes('gcm')) {
-      tag = cipher.getAuthTag().toString(this.config.encoding);
+      tag = (cipher as any).getAuthTag().toString(this.config.encoding);
     }
 
     return {
@@ -124,7 +124,7 @@ export class EncryptionService {
     // Set auth tag for GCM mode
     if (encryptedData.tag && encryptedData.algorithm.includes('gcm')) {
       const tag = Buffer.from(encryptedData.tag, this.config.encoding);
-      decipher.setAuthTag(tag);
+      (decipher as any).setAuthTag(tag);
     }
 
     // Decrypt data
@@ -224,7 +224,7 @@ export class EncryptionService {
     const hash = crypto
       .createHash(this.config.digest)
       .update(data + saltBuffer.toString('hex'))
-      .digest(this.config.encoding);
+      .digest(this.config.encoding as crypto.BinaryToTextEncoding);
 
     return {
       hash,
@@ -620,9 +620,4 @@ export class SecureRandom {
 export const encryptionService = new EncryptionService();
 export const tokenizationService = new TokenizationService();
 
-// Export types
-export type {
-  EncryptedData,
-  EncryptionConfig,
-  KeyDerivationOptions,
-};
+// Types are already exported at the top of the file

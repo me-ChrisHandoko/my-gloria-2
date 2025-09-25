@@ -100,7 +100,7 @@ export const organizationApi = apiSlice.injectEndpoints({
       // Optimistic update
       async onQueryStarted(organization, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
-          organizationApi.util.updateQueryData('getOrganizations', undefined, (draft) => {
+          organizationApi.util.updateQueryData('getOrganizations', {} as QueryParams, (draft) => {
             const tempOrg = {
               ...organization,
               id: `temp-${Date.now()}`,

@@ -80,7 +80,7 @@ export function DynamicComponent<P extends object>({
  */
 export function LazyRoute({
   component,
-  fallback = <LoadingState variant="page" />,
+  fallback = <LoadingState variant="spinner" />,
   ...props
 }: {
   component: () => Promise<{ default: ComponentType<any> }>;

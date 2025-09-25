@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import { API_ENDPOINTS } from '../constants';
+import { API_ENDPOINTS } from '../endpoints';
 import type { PaginatedResponse, QueryParams } from '../types';
 
 // Organization types
@@ -69,9 +69,8 @@ class OrganizationService {
    * Get paginated list of organizations
    */
   async getOrganizations(params?: QueryParams): Promise<PaginatedResponse<Organization>> {
-    const queryString = apiClient.buildQueryString(params);
     return apiClient.get<PaginatedResponse<Organization>>(
-      `${API_ENDPOINTS.ORGANIZATIONS.BASE}${queryString}`
+      API_ENDPOINTS.organizations.schools.list(params)
     );
   }
 
@@ -79,28 +78,28 @@ class OrganizationService {
    * Get organization by ID
    */
   async getOrganizationById(id: string): Promise<Organization> {
-    return apiClient.get<Organization>(API_ENDPOINTS.ORGANIZATIONS.BY_ID(id));
+    return apiClient.get<Organization>(API_ENDPOINTS.organizations.schools.byId(id));
   }
 
   /**
    * Create a new organization
    */
   async createOrganization(data: CreateOrganizationDto): Promise<Organization> {
-    return apiClient.post<Organization>(API_ENDPOINTS.ORGANIZATIONS.BASE, data);
+    return apiClient.post<Organization>(API_ENDPOINTS.organizations.schools.create(), data);
   }
 
   /**
    * Update organization by ID
    */
   async updateOrganization(id: string, data: UpdateOrganizationDto): Promise<Organization> {
-    return apiClient.patch<Organization>(API_ENDPOINTS.ORGANIZATIONS.BY_ID(id), data);
+    return apiClient.patch<Organization>(API_ENDPOINTS.organizations.schools.update(id), data);
   }
 
   /**
    * Delete organization by ID
    */
   async deleteOrganization(id: string): Promise<void> {
-    return apiClient.delete<void>(API_ENDPOINTS.ORGANIZATIONS.BY_ID(id));
+    return apiClient.delete<void>(API_ENDPOINTS.organizations.schools.delete(id));
   }
 
   /**
@@ -112,7 +111,7 @@ class OrganizationService {
   ): Promise<PaginatedResponse<OrganizationMember>> {
     const queryString = apiClient.buildQueryString(params);
     return apiClient.get<PaginatedResponse<OrganizationMember>>(
-      `${API_ENDPOINTS.ORGANIZATIONS.MEMBERS(organizationId)}${queryString}`
+      API_ENDPOINTS.organizations.schools.users(organizationId, params)
     );
   }
 
@@ -125,7 +124,7 @@ class OrganizationService {
     role: 'ADMIN' | 'MEMBER' | 'VIEWER'
   ): Promise<OrganizationMember> {
     return apiClient.post<OrganizationMember>(
-      API_ENDPOINTS.ORGANIZATIONS.MEMBERS(organizationId),
+      API_ENDPOINTS.organizations.schools.users(organizationId),
       { userId, role }
     );
   }
@@ -139,7 +138,7 @@ class OrganizationService {
     role: 'ADMIN' | 'MEMBER' | 'VIEWER'
   ): Promise<OrganizationMember> {
     return apiClient.patch<OrganizationMember>(
-      `${API_ENDPOINTS.ORGANIZATIONS.MEMBERS(organizationId)}/${memberId}`,
+      `${API_ENDPOINTS.organizations.schools.users(organizationId)}/${memberId}`,
       { role }
     );
   }
@@ -149,7 +148,7 @@ class OrganizationService {
    */
   async removeMember(organizationId: string, memberId: string): Promise<void> {
     return apiClient.delete<void>(
-      `${API_ENDPOINTS.ORGANIZATIONS.MEMBERS(organizationId)}/${memberId}`
+      `${API_ENDPOINTS.organizations.schools.users(organizationId)}/${memberId}`
     );
   }
 
@@ -158,7 +157,7 @@ class OrganizationService {
    */
   async inviteUser(organizationId: string, data: InviteUserDto): Promise<{ message: string }> {
     return apiClient.post<{ message: string }>(
-      API_ENDPOINTS.ORGANIZATIONS.INVITES(organizationId),
+      `${API_ENDPOINTS.organizations.schools.byId(organizationId)}/invites`,
       data
     );
   }
@@ -167,7 +166,7 @@ class OrganizationService {
    * Get organization invites
    */
   async getInvites(organizationId: string): Promise<any[]> {
-    return apiClient.get<any[]>(API_ENDPOINTS.ORGANIZATIONS.INVITES(organizationId));
+    return apiClient.get<any[]>(`${API_ENDPOINTS.organizations.schools.byId(organizationId)}/invites`);
   }
 
   /**
@@ -175,7 +174,7 @@ class OrganizationService {
    */
   async cancelInvite(organizationId: string, inviteId: string): Promise<void> {
     return apiClient.delete<void>(
-      `${API_ENDPOINTS.ORGANIZATIONS.INVITES(organizationId)}/${inviteId}`
+      `${API_ENDPOINTS.organizations.schools.byId(organizationId)}/invites/${inviteId}`
     );
   }
 
@@ -193,7 +192,7 @@ class OrganizationService {
    */
   async uploadLogo(organizationId: string, file: File): Promise<{ url: string }> {
     return apiClient.uploadFile(
-      `${API_ENDPOINTS.ORGANIZATIONS.BY_ID(organizationId)}/logo`,
+      `${API_ENDPOINTS.organizations.schools.byId(organizationId)}/logo`,
       file
     );
   }
@@ -202,7 +201,7 @@ class OrganizationService {
    * Get organization statistics
    */
   async getOrganizationStats(organizationId: string): Promise<any> {
-    return apiClient.get(`${API_ENDPOINTS.ORGANIZATIONS.BY_ID(organizationId)}/stats`);
+    return apiClient.get(API_ENDPOINTS.organizations.schools.stats(organizationId));
   }
 }
 

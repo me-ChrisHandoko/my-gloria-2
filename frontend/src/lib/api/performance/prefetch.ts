@@ -11,7 +11,7 @@
  * - Predictive prefetching using ML patterns
  */
 
-import { apiClient } from '@/lib/api/client';
+import apiClient from '@/lib/api/client';
 import { persistentCache } from './cache';
 import { requestDeduplicator } from './deduplicator';
 import { logger } from '@/lib/errors/errorLogger';
@@ -389,7 +389,7 @@ export class PrefetchService {
     // This is a placeholder - in real implementation,
     // this would map keys to actual API endpoints
     const response = await apiClient.get(`/api/resources/${key}`);
-    return response.data;
+    return (response as any).data;
   }
 
   /**

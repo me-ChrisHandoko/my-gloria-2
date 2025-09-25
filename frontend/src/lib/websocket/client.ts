@@ -359,7 +359,7 @@ class WebSocketClient extends EventEmitter {
       // Emit a specific connection_error event instead
       this.emit('connection_error', {
         message: error.message,
-        type: error.type || 'TransportError',
+        type: (error as any).type || 'TransportError',
         details: error,
       });
     });
@@ -426,7 +426,7 @@ class WebSocketClient extends EventEmitter {
   /**
    * Send a message
    */
-  emit(event: string, data?: any, callback?: (response: any) => void): void {
+  emit(event: string, data?: any, callback?: (response: any) => void): boolean {
     const message: WebSocketMessage = {
       event,
       data,
@@ -437,12 +437,12 @@ class WebSocketClient extends EventEmitter {
     if (this.state !== ConnectionState.CONNECTED) {
       this.log('Not connected, queueing message');
       this.messageQueue.push(message);
-      return;
+      return false as any;
     }
 
     if (!this.socket) {
       this.handleError('Socket not initialized', null);
-      return;
+      return false as any;
     }
 
     try {
@@ -460,6 +460,7 @@ class WebSocketClient extends EventEmitter {
     } catch (error) {
       this.handleError(`Failed to send message: ${event}`, error);
     }
+    return true;
   }
 
   /**
@@ -486,10 +487,10 @@ class WebSocketClient extends EventEmitter {
    * Remove event listener
    */
   off(event: string, callback?: (...args: any[]) => void): this {
-    if (this.socket) {
+    if (this.socket && callback) {
       this.socket.off(event, callback as any);
     }
-    return super.off(event, callback);
+    return super.off(event, callback as any);
   }
 
   /**

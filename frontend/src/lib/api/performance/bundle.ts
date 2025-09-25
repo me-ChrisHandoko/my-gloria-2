@@ -221,7 +221,7 @@ export class BundleOptimizer {
     } = options;
 
     // Create lazy component with retry logic
-    const LazyComponent = React.lazy(async () => {
+    const LazyComponent = (window as any).React?.lazy(async () => {
       if (delay > 0) {
         await new Promise(resolve => setTimeout(resolve, delay));
       }

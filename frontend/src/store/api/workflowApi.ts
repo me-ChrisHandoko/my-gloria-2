@@ -161,7 +161,8 @@ export const workflowApi = apiSlice.injectEndpoints({
       completedToday: number;
       averageCompletionTime: number;
       successRate: number;
-    }, { organizationId?: string }>({\n      query: (params = {}) => ({
+    }, { organizationId?: string }>({
+      query: (params = {}) => ({
         url: '/workflows/stats',
         params,
       }),

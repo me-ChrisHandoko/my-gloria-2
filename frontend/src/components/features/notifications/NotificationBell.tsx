@@ -165,7 +165,6 @@ export const NotificationBell: React.FC = () => {
         icon: icon || '/icon-192x192.png',
         badge: '/icon-72x72.png',
         tag: 'gloria-notification',
-        renotify: true,
       });
     }
   }, [desktop]);

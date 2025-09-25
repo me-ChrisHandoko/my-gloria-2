@@ -16,7 +16,7 @@ import { z } from 'zod';
 const envSchema = z.object({
   // API Configuration
   NEXT_PUBLIC_API_URL: z.string().url().min(1),
-  NEXT_PUBLIC_API_TIMEOUT: z.string().transform(Number).pipe(z.number().min(1000).max(120000)).default('30000'),
+  NEXT_PUBLIC_API_TIMEOUT: z.string().default('30000').transform(Number).pipe(z.number().min(1000).max(120000)),
   NEXT_PUBLIC_API_VERSION: z.string().default('v1'),
 
   // Clerk Authentication
@@ -36,23 +36,23 @@ const envSchema = z.object({
 
   // Monitoring & Analytics
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
-  NEXT_PUBLIC_ENABLE_ANALYTICS: z.string().transform((val) => val === 'true').default('false'),
+  NEXT_PUBLIC_ENABLE_ANALYTICS: z.string().default('false').transform((val) => val === 'true'),
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
   NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
 
   // Feature Flags
-  NEXT_PUBLIC_ENABLE_PWA: z.string().transform((val) => val === 'true').default('false'),
-  NEXT_PUBLIC_ENABLE_MAINTENANCE_MODE: z.string().transform((val) => val === 'true').default('false'),
-  NEXT_PUBLIC_ENABLE_BETA_FEATURES: z.string().transform((val) => val === 'true').default('false'),
-  NEXT_PUBLIC_ENABLE_DEBUG_MODE: z.string().transform((val) => val === 'true').default('false'),
+  NEXT_PUBLIC_ENABLE_PWA: z.string().default('false').transform((val) => val === 'true'),
+  NEXT_PUBLIC_ENABLE_MAINTENANCE_MODE: z.string().default('false').transform((val) => val === 'true'),
+  NEXT_PUBLIC_ENABLE_BETA_FEATURES: z.string().default('false').transform((val) => val === 'true'),
+  NEXT_PUBLIC_ENABLE_DEBUG_MODE: z.string().default('false').transform((val) => val === 'true'),
 
   // Security & Session
   SESSION_SECRET: z.string().min(32).optional(),
-  SESSION_MAX_AGE: z.string().transform(Number).pipe(z.number().min(0)).default('86400'),
+  SESSION_MAX_AGE: z.string().default('86400').transform(Number).pipe(z.number().min(0)),
   CORS_ALLOWED_ORIGINS: z.string().optional(),
-  RATE_LIMIT_WINDOW_MS: z.string().transform(Number).pipe(z.number().min(0)).default('900000'),
-  RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).pipe(z.number().min(1)).default('100'),
+  RATE_LIMIT_WINDOW_MS: z.string().default('900000').transform(Number).pipe(z.number().min(0)),
+  RATE_LIMIT_MAX_REQUESTS: z.string().default('100').transform(Number).pipe(z.number().min(1)),
 
   // Storage & CDN
   NEXT_PUBLIC_CDN_URL: z.string().url().optional().or(z.literal('')),
@@ -64,7 +64,7 @@ const envSchema = z.object({
   // Redis Configuration
   REDIS_URL: z.string().optional(),
   REDIS_PASSWORD: z.string().optional(),
-  REDIS_DB: z.string().transform(Number).pipe(z.number().min(0).max(15)).default('0'),
+  REDIS_DB: z.string().default('0').transform(Number).pipe(z.number().min(0).max(15)),
 
   // Email Service
   EMAIL_FROM: z.string().email().optional(),
@@ -75,7 +75,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_SUPPORTED_LOCALES: z.string().default('en,id'),
 
   // Development Tools
-  ANALYZE: z.string().transform((val) => val === 'true').default('false'),
+  ANALYZE: z.string().default('false').transform((val) => val === 'true'),
   VERCEL_URL: z.string().optional(),
   VERCEL_ENV: z.string().optional(),
 });
@@ -112,7 +112,7 @@ function validateEnv(): EnvConfig {
     return env;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errorMessage = error.errors
+      const errorMessage = error.issues
         .map((err) => `${err.path.join('.')}: ${err.message}`)
         .join('\n');
 

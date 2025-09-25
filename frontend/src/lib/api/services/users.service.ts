@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import { API_ENDPOINTS } from '../constants';
+import { API_ENDPOINTS } from '../endpoints';
 import type { PaginatedResponse, QueryParams } from '../types';
 
 // User types
@@ -67,86 +67,87 @@ class UserService {
    */
   async getUsers(params?: QueryParams): Promise<PaginatedResponse<User>> {
     const queryString = apiClient.buildQueryString(params);
-    return apiClient.get<PaginatedResponse<User>>(`${API_ENDPOINTS.USERS.BASE}${queryString}`);
+    return apiClient.get<PaginatedResponse<User>>(API_ENDPOINTS.users.list(params));
   }
 
   /**
    * Get user by ID
    */
   async getUserById(id: string): Promise<User> {
-    return apiClient.get<User>(API_ENDPOINTS.USERS.BY_ID(id));
+    return apiClient.get<User>(API_ENDPOINTS.users.byId(id));
   }
 
   /**
    * Get current authenticated user
    */
   async getCurrentUser(): Promise<User> {
-    return apiClient.get<User>(API_ENDPOINTS.USERS.ME);
+    return apiClient.get<User>(API_ENDPOINTS.users.me());
   }
 
   /**
    * Create a new user
    */
   async createUser(data: CreateUserDto): Promise<User> {
-    return apiClient.post<User>(API_ENDPOINTS.USERS.BASE, data);
+    return apiClient.post<User>(API_ENDPOINTS.users.create(), data);
   }
 
   /**
    * Update user by ID
    */
   async updateUser(id: string, data: UpdateUserDto): Promise<User> {
-    return apiClient.patch<User>(API_ENDPOINTS.USERS.BY_ID(id), data);
+    return apiClient.patch<User>(API_ENDPOINTS.users.update(id), data);
   }
 
   /**
    * Delete user by ID
    */
   async deleteUser(id: string): Promise<void> {
-    return apiClient.delete<void>(API_ENDPOINTS.USERS.BY_ID(id));
+    return apiClient.delete<void>(API_ENDPOINTS.users.delete(id));
   }
 
   /**
    * Update user avatar
    */
   async updateAvatar(userId: string, file: File): Promise<{ url: string }> {
-    return apiClient.uploadFile(API_ENDPOINTS.USERS.AVATAR(userId), file);
+    return apiClient.uploadFile(API_ENDPOINTS.users.uploadAvatar(userId), file);
   }
 
   /**
    * Get user preferences
    */
   async getUserPreferences(): Promise<UserPreferences> {
-    return apiClient.get<UserPreferences>(API_ENDPOINTS.USERS.PREFERENCES);
+    return apiClient.get<UserPreferences>(API_ENDPOINTS.users.preferences('me'));
   }
 
   /**
    * Update user preferences
    */
   async updateUserPreferences(preferences: Partial<UserPreferences>): Promise<UserPreferences> {
-    return apiClient.patch<UserPreferences>(API_ENDPOINTS.USERS.PREFERENCES, preferences);
+    return apiClient.patch<UserPreferences>(API_ENDPOINTS.users.updatePreferences('me'), preferences);
   }
 
   /**
    * Bulk create users
    */
   async bulkCreateUsers(users: CreateUserDto[]): Promise<User[]> {
-    return apiClient.post<User[]>(`${API_ENDPOINTS.USERS.BASE}/bulk`, { users });
+    return apiClient.post<User[]>(API_ENDPOINTS.users.bulkCreate(), { users });
   }
 
   /**
    * Bulk delete users
    */
   async bulkDeleteUsers(userIds: string[]): Promise<void> {
-    return apiClient.post<void>(`${API_ENDPOINTS.USERS.BASE}/bulk-delete`, { ids: userIds });
+    return apiClient.post<void>(API_ENDPOINTS.users.bulkDelete(), { ids: userIds });
   }
 
   /**
    * Export users to CSV
    */
-  async exportUsers(params?: QueryParams): Promise<Blob> {
-    const queryString = apiClient.buildQueryString(params);
+  async exportUsers(params?: {
+    format?: 'csv' | 'xlsx' | 'json';
+  }): Promise<Blob> {
     const response = await apiClient.get<ArrayBuffer>(
-      `${API_ENDPOINTS.USERS.BASE}/export${queryString}`,
+      API_ENDPOINTS.users.export(params),
       { responseType: 'arraybuffer' }
     );
     return new Blob([response], { type: 'text/csv' });
@@ -156,7 +157,7 @@ class UserService {
    * Search users by query
    */
   async searchUsers(query: string, limit: number = 10): Promise<User[]> {
-    return apiClient.get<User[]>(`${API_ENDPOINTS.USERS.BASE}/search`, {
+    return apiClient.get<User[]>(API_ENDPOINTS.users.search(query, { limit }), {
       params: { q: query, limit },
     });
   }
@@ -165,7 +166,7 @@ class UserService {
    * Check if email is available
    */
   async checkEmailAvailability(email: string): Promise<{ available: boolean }> {
-    return apiClient.post<{ available: boolean }>(`${API_ENDPOINTS.USERS.BASE}/check-email`, {
+    return apiClient.post<{ available: boolean }>(API_ENDPOINTS.users.create(), {
       email,
     });
   }

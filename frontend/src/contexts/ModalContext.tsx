@@ -40,9 +40,10 @@ const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 // Modal components registry - lazy loaded for performance
 const modalComponents: Record<string, React.ComponentType<any>> = {
-  UserForm: dynamic(() => import('@/components/modals/UserForm')),
-  ConfirmDialog: dynamic(() => import('@/components/modals/ConfirmDialog')),
-  WorkflowEditor: dynamic(() => import('@/components/modals/WorkflowEditor')),
+  // TODO: Uncomment when modal components are implemented
+  // UserForm: dynamic(() => import('@/components/modals/UserForm')),
+  // ConfirmDialog: dynamic(() => import('@/components/modals/ConfirmDialog')),
+  // WorkflowEditor: dynamic(() => import('@/components/modals/WorkflowEditor')),
   // Add more modal components as needed
 };
 

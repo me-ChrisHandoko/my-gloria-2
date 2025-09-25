@@ -42,11 +42,15 @@ class AuthServiceClass {
    */
   async login(data: LoginRequest): Promise<ApiResponse<LoginResponse>> {
     try {
-      const response = await apiClient.post<ApiResponse<LoginResponse>>(
+      const response = await apiClient.post<LoginResponse>(
         authEndpoints.login(),
         data
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -57,10 +61,12 @@ class AuthServiceClass {
    */
   async logout(): Promise<ApiResponse<void>> {
     try {
-      const response = await apiClient.post<ApiResponse<void>>(
-        authEndpoints.logout()
-      );
-      return response.data;
+      await apiClient.post(authEndpoints.logout());
+      return {
+        data: undefined as any,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -72,13 +78,16 @@ class AuthServiceClass {
   async refreshToken(): Promise<ApiResponse<RefreshTokenResponse>> {
     try {
       const response = await retryWithBackoff(
-        () => apiClient.post<ApiResponse<RefreshTokenResponse>>(
+        () => apiClient.post<RefreshTokenResponse>(
           authEndpoints.refresh()
         ),
-        3,
-        1000
+        { maxRetries: 3 }
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -89,10 +98,14 @@ class AuthServiceClass {
    */
   async getCurrentUser(): Promise<ApiResponse<User>> {
     try {
-      const response = await apiClient.get<ApiResponse<User>>(
+      const response = await apiClient.get<User>(
         authEndpoints.me()
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -103,10 +116,14 @@ class AuthServiceClass {
    */
   async checkHealth(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
     try {
-      const response = await apiClient.get<ApiResponse<{ status: string; timestamp: string }>>(
+      const response = await apiClient.get<{ status: string; timestamp: string }>(
         authEndpoints.health()
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -117,11 +134,15 @@ class AuthServiceClass {
    */
   async register(data: RegisterRequest): Promise<ApiResponse<User>> {
     try {
-      const response = await apiClient.post<ApiResponse<User>>(
+      const response = await apiClient.post<User>(
         authEndpoints.register(),
         data
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -132,11 +153,15 @@ class AuthServiceClass {
    */
   async forgotPassword(email: string): Promise<ApiResponse<{ message: string }>> {
     try {
-      const response = await apiClient.post<ApiResponse<{ message: string }>>(
+      const response = await apiClient.post<{ message: string }>(
         authEndpoints.forgotPassword(),
         { email }
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -147,11 +172,15 @@ class AuthServiceClass {
    */
   async resetPassword(data: ResetPasswordRequest): Promise<ApiResponse<{ message: string }>> {
     try {
-      const response = await apiClient.post<ApiResponse<{ message: string }>>(
+      const response = await apiClient.post<{ message: string }>(
         authEndpoints.resetPassword(),
         data
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -162,11 +191,15 @@ class AuthServiceClass {
    */
   async verifyEmail(token: string): Promise<ApiResponse<{ message: string }>> {
     try {
-      const response = await apiClient.post<ApiResponse<{ message: string }>>(
+      const response = await apiClient.post<{ message: string }>(
         authEndpoints.verifyEmail(),
         { token }
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -177,11 +210,15 @@ class AuthServiceClass {
    */
   async resendVerification(email: string): Promise<ApiResponse<{ message: string }>> {
     try {
-      const response = await apiClient.post<ApiResponse<{ message: string }>>(
+      const response = await apiClient.post<{ message: string }>(
         authEndpoints.resendVerification(),
         { email }
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -192,11 +229,15 @@ class AuthServiceClass {
    */
   async changePassword(data: ChangePasswordRequest): Promise<ApiResponse<{ message: string }>> {
     try {
-      const response = await apiClient.post<ApiResponse<{ message: string }>>(
+      const response = await apiClient.post<{ message: string }>(
         authEndpoints.changePassword(),
         data
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -207,10 +248,14 @@ class AuthServiceClass {
    */
   async setupTwoFactor(): Promise<ApiResponse<TwoFactorSetupResponse>> {
     try {
-      const response = await apiClient.post<ApiResponse<TwoFactorSetupResponse>>(
+      const response = await apiClient.post<TwoFactorSetupResponse>(
         authEndpoints.twoFactorSetup()
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -221,11 +266,15 @@ class AuthServiceClass {
    */
   async verifyTwoFactor(data: TwoFactorVerifyRequest): Promise<ApiResponse<{ verified: boolean }>> {
     try {
-      const response = await apiClient.post<ApiResponse<{ verified: boolean }>>(
+      const response = await apiClient.post<{ verified: boolean }>(
         authEndpoints.twoFactorVerify(),
         data
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -236,11 +285,15 @@ class AuthServiceClass {
    */
   async disableTwoFactor(password: string): Promise<ApiResponse<{ message: string }>> {
     try {
-      const response = await apiClient.post<ApiResponse<{ message: string }>>(
+      const response = await apiClient.post<{ message: string }>(
         authEndpoints.twoFactorDisable(),
         { password }
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -251,10 +304,14 @@ class AuthServiceClass {
    */
   async getSessions(): Promise<ApiResponse<Session[]>> {
     try {
-      const response = await apiClient.get<ApiResponse<Session[]>>(
+      const response = await apiClient.get<Session[]>(
         authEndpoints.sessions()
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }
@@ -265,10 +322,14 @@ class AuthServiceClass {
    */
   async revokeSession(sessionId: string): Promise<ApiResponse<{ message: string }>> {
     try {
-      const response = await apiClient.post<ApiResponse<{ message: string }>>(
+      const response = await apiClient.post<{ message: string }>(
         authEndpoints.revokeSession(sessionId)
       );
-      return response.data;
+      return {
+        data: response,
+        status: 'success' as const,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
       throw handleApiError(error);
     }

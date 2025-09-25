@@ -274,7 +274,9 @@ class ApiClient {
 
       if (parseInt(remaining) === 0 && reset) {
         const resetTime = new Date(parseInt(reset) * 1000);
-        toast.warning(`Rate limit reached. Resets at ${resetTime.toLocaleTimeString()}`);
+        toast(`Rate limit reached. Resets at ${resetTime.toLocaleTimeString()}`, {
+          icon: '⚠️',
+        });
       }
     }
   }

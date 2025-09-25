@@ -317,11 +317,12 @@ export class ApiMonitor extends EventEmitter {
    * Handle error request
    */
   private handleErrorRequest(metrics: ApiMetrics): void {
-    logger.error('API request error', {
+    const errorMessage = new Error('API request error');
+    logger.error(errorMessage.message, errorMessage, {
       endpoint: metrics.endpoint,
       method: metrics.method,
       statusCode: metrics.statusCode,
-      error: metrics.error,
+      error: metrics.error?.message || metrics.error,
     });
 
     this.emit('error-request', metrics);

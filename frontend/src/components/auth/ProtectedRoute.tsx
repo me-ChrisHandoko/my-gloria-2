@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useRequireAuth } from '@/hooks/useAuth';
+import { useRequireAuth, useAuth, useRequireGuest } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -150,7 +150,3 @@ export const GuestRoute: React.FC<GuestRouteProps> = ({
   // Render guest content
   return <>{children}</>;
 };
-
-// Import hooks
-import { useAuth } from '@/contexts/AuthContext';
-import { useRequireAuth, useRequireGuest } from '@/hooks/useAuth';

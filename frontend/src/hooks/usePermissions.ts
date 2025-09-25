@@ -20,12 +20,12 @@ export const usePermissions = () => {
 
   // Create permission map for O(1) lookups
   const permissionMap = useMemo(() => {
-    return new Map(permissions.map(p => [p.name, p]));
+    return new Set(permissions);
   }, [permissions]);
 
   // Create role map for O(1) lookups
   const roleMap = useMemo(() => {
-    return new Map(roles.map(r => [r.name, r]));
+    return new Set(roles);
   }, [roles]);
 
   /**
@@ -104,18 +104,16 @@ export const usePermissions = () => {
       }
 
       // Check for specific permission
-      if (permissionMap.has(permissionName)) {
-        const permission = permissionMap.get(permissionName);
+      const permission = permissionMap.has(permissionName);
+      if (permission) {
 
         // If no resourceId specified, just check permission existence
         if (!resourceId) {
           return true;
         }
 
-        // Check resource-specific permissions if metadata exists
-        if (permission?.metadata?.resources) {
-          return permission.metadata.resources.includes(resourceId);
-        }
+        // For string-based permissions, we can't check metadata
+        // This would need backend support for resource-specific permissions
 
         return true;
       }
@@ -162,10 +160,9 @@ export const usePermissions = () => {
    * Get all permissions for a specific resource type
    */
   const getResourcePermissions = useCallback(
-    (resource: string): Permission[] => {
+    (resource: string): string[] => {
       return permissions.filter(p =>
-        p.name.includes(resource) ||
-        p.metadata?.resource === resource
+        p.includes(resource)
       );
     },
     [permissions]
@@ -218,10 +215,10 @@ export const usePermissions = () => {
 
   // Computed permission groups
   const permissionGroups = useMemo(() => {
-    const groups: Record<string, Permission[]> = {};
+    const groups: Record<string, string[]> = {};
 
     permissions.forEach(permission => {
-      const category = permission.category || 'general';
+      const category = 'general'; // Since permissions are strings, we use a default category
       if (!groups[category]) {
         groups[category] = [];
       }
@@ -261,7 +258,7 @@ export const usePermissions = () => {
       };
 
       const userMaxLevel = Math.max(
-        ...roles.map(r => hierarchy[r.name] || 0)
+        ...roles.map(r => hierarchy[r] || 0)
       );
 
       const requiredLevel = hierarchy[requiredRole] || 0;

@@ -92,7 +92,7 @@ const devToolsConfig = setupDevTools({
     lock: true,
     persist: true,
     export: true,
-    import: 'custom',
+    import: 'custom' as any,
     jump: true,
     skip: true,
     reorder: true,

@@ -186,7 +186,7 @@ class CompressionService {
     const stream = new CompressionStream(format);
     const writer = stream.writable.getWriter();
 
-    writer.write(data);
+    writer.write(data as any);
     writer.close();
 
     const chunks: Uint8Array[] = [];
@@ -211,7 +211,7 @@ class CompressionService {
     const stream = new DecompressionStream(format);
     const writer = stream.writable.getWriter();
 
-    writer.write(data);
+    writer.write(data as any);
     writer.close();
 
     const chunks: Uint8Array[] = [];
@@ -406,13 +406,13 @@ class CompressionService {
     }
 
     const compressionStream = new CompressionStream(format);
-    const reader = stream.pipeThrough(compressionStream).getReader();
+    const reader = stream.pipeThrough(compressionStream as any).getReader();
 
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        yield value;
+        yield value as Uint8Array;
       }
     } finally {
       reader.releaseLock();
@@ -431,13 +431,13 @@ class CompressionService {
     }
 
     const decompressionStream = new DecompressionStream(format);
-    const reader = stream.pipeThrough(decompressionStream).getReader();
+    const reader = stream.pipeThrough(decompressionStream as any).getReader();
 
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        yield value;
+        yield value as Uint8Array;
       }
     } finally {
       reader.releaseLock();

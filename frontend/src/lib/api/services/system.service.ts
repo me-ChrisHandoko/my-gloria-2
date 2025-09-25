@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import { API_ENDPOINTS } from '../constants';
+import { API_ENDPOINTS } from '../endpoints';
 import type { PaginatedResponse, QueryParams } from '../types';
 
 // System types
@@ -115,42 +115,42 @@ class SystemService {
    * Get system health status
    */
   async getHealth(): Promise<SystemHealth> {
-    return apiClient.get<SystemHealth>(API_ENDPOINTS.SYSTEM.HEALTH);
+    return apiClient.get<SystemHealth>(API_ENDPOINTS.health.check());
   }
 
   /**
    * Get system status (detailed)
    */
   async getStatus(): Promise<SystemHealth> {
-    return apiClient.get<SystemHealth>(API_ENDPOINTS.SYSTEM.STATUS);
+    return apiClient.get<SystemHealth>(API_ENDPOINTS.health.metrics());
   }
 
   /**
    * Get system configuration
    */
   async getConfig(): Promise<SystemConfig> {
-    return apiClient.get<SystemConfig>(API_ENDPOINTS.SYSTEM.CONFIG);
+    return apiClient.get<SystemConfig>(API_ENDPOINTS.systemConfig.get());
   }
 
   /**
    * Update system configuration (admin only)
    */
   async updateConfig(config: Partial<SystemConfig>): Promise<SystemConfig> {
-    return apiClient.patch<SystemConfig>(API_ENDPOINTS.SYSTEM.CONFIG, config);
+    return apiClient.patch<SystemConfig>(API_ENDPOINTS.systemConfig.update(), config);
   }
 
   /**
    * Get feature flags
    */
   async getFeatureFlags(): Promise<FeatureFlag[]> {
-    return apiClient.get<FeatureFlag[]>(API_ENDPOINTS.SYSTEM.FEATURES);
+    return apiClient.get<FeatureFlag[]>(API_ENDPOINTS.featureFlags.list());
   }
 
   /**
    * Get feature flag by key
    */
   async getFeatureFlag(key: string): Promise<FeatureFlag> {
-    return apiClient.get<FeatureFlag>(`${API_ENDPOINTS.SYSTEM.FEATURES}/${key}`);
+    return apiClient.get<FeatureFlag>(API_ENDPOINTS.featureFlags.byKey(key));
   }
 
   /**
@@ -158,7 +158,7 @@ class SystemService {
    */
   async isFeatureEnabled(key: string, context?: Record<string, any>): Promise<boolean> {
     const response = await apiClient.post<{ enabled: boolean }>(
-      `${API_ENDPOINTS.SYSTEM.FEATURES}/${key}/check`,
+      API_ENDPOINTS.featureFlags.evaluate(),
       { context }
     );
     return response.enabled;
@@ -168,7 +168,7 @@ class SystemService {
    * Update feature flag (admin only)
    */
   async updateFeatureFlag(key: string, data: Partial<FeatureFlag>): Promise<FeatureFlag> {
-    return apiClient.patch<FeatureFlag>(`${API_ENDPOINTS.SYSTEM.FEATURES}/${key}`, data);
+    return apiClient.patch<FeatureFlag>(API_ENDPOINTS.featureFlags.update(key), data);
   }
 
   /**
@@ -177,7 +177,7 @@ class SystemService {
   async getAuditLogs(params?: QueryParams): Promise<PaginatedResponse<AuditLog>> {
     const queryString = apiClient.buildQueryString(params);
     return apiClient.get<PaginatedResponse<AuditLog>>(
-      `${API_ENDPOINTS.SYSTEM.AUDIT_LOGS}${queryString}`
+      API_ENDPOINTS.audit.list(params)
     );
   }
 
@@ -185,16 +185,20 @@ class SystemService {
    * Get audit log by ID
    */
   async getAuditLogById(id: string): Promise<AuditLog> {
-    return apiClient.get<AuditLog>(`${API_ENDPOINTS.SYSTEM.AUDIT_LOGS}/${id}`);
+    return apiClient.get<AuditLog>(API_ENDPOINTS.audit.byId(id));
   }
 
   /**
    * Export audit logs
    */
-  async exportAuditLogs(params?: QueryParams): Promise<Blob> {
-    const queryString = apiClient.buildQueryString(params);
+  async exportAuditLogs(params?: {
+    format?: 'csv' | 'xlsx' | 'json' | 'pdf';
+    dateFrom?: string;
+    dateTo?: string;
+    userId?: string;
+  }): Promise<Blob> {
     const response = await apiClient.get<ArrayBuffer>(
-      `${API_ENDPOINTS.SYSTEM.AUDIT_LOGS}/export${queryString}`,
+      API_ENDPOINTS.audit.export(params),
       { responseType: 'arraybuffer' }
     );
     return new Blob([response], { type: 'text/csv' });

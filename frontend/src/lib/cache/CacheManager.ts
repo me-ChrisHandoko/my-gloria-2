@@ -128,7 +128,7 @@ export class CacheManager {
     config?: Partial<CacheConfig>
   ): Promise<T | null> {
     const strategy = config?.strategy ?? this.defaultConfig.strategy;
-    const storage = this.getStorage(strategy);
+    const storage = this.getStorage(strategy!);
 
     try {
       // Try hybrid strategy (memory first, then persistent storage)
@@ -137,7 +137,7 @@ export class CacheManager {
         if (memoryResult !== null) {
           this.stats.hits++;
           this.emit('hit', { key, value: memoryResult });
-          return memoryResult;
+          return memoryResult as T;
         }
 
         // Try persistent storage
@@ -147,7 +147,7 @@ export class CacheManager {
           await this.storages.get(CacheStrategy.MEMORY)?.set(key, persistentResult, config);
           this.stats.hits++;
           this.emit('hit', { key, value: persistentResult });
-          return persistentResult;
+          return persistentResult as T;
         }
       } else {
         const result = await storage.get<T>(key);
@@ -219,7 +219,7 @@ export class CacheManager {
           Array.from(this.storages.values()).map(storage => storage.delete(key))
         );
       } else {
-        const storage = this.getStorage(targetStrategy);
+        const storage = this.getStorage(targetStrategy!);
         await storage.delete(key);
       }
 
@@ -251,7 +251,7 @@ export class CacheManager {
           Array.from(this.storages.values()).map(storage => storage.clear())
         );
       } else {
-        const storage = this.getStorage(targetStrategy);
+        const storage = this.getStorage(targetStrategy!);
         await storage.clear();
       }
 
@@ -284,7 +284,7 @@ export class CacheManager {
 
   async has(key: string, strategy?: CacheStrategy): Promise<boolean> {
     const targetStrategy = strategy ?? this.defaultConfig.strategy;
-    const storage = this.getStorage(targetStrategy);
+    const storage = this.getStorage(targetStrategy!);
 
     try {
       return await storage.has(key);
