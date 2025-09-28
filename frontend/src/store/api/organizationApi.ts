@@ -31,14 +31,43 @@ export const organizationApi = apiSlice.injectEndpoints({
       // Cache for 5 minutes
       keepUnusedDataFor: 300,
       // Transform response to ensure data consistency
-      transformResponse: (response: PaginatedResponse<Organization>) => ({
-        ...response,
-        data: response.data.map(org => ({
-          ...org,
-          createdAt: new Date(org.createdAt),
-          updatedAt: new Date(org.updatedAt),
-        })),
-      }),
+      transformResponse: (response: any) => {
+        // Handle wrapped response from backend TransformInterceptor
+        let actualResponse: PaginatedResponse<Organization>;
+
+        if (response && response.success && response.data) {
+          // Unwrap the response from TransformInterceptor
+          actualResponse = response.data;
+
+          // Check if it's double-wrapped
+          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
+            actualResponse = (actualResponse as any).data;
+          }
+        } else {
+          // Use response directly if not wrapped
+          actualResponse = response;
+        }
+
+        // Ensure we have valid data
+        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+          return {
+            data: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 0,
+          };
+        }
+
+        return {
+          ...actualResponse,
+          data: actualResponse.data.map(org => ({
+            ...org,
+            createdAt: new Date(org.createdAt),
+            updatedAt: new Date(org.updatedAt),
+          })),
+        };
+      },
     }),
 
     // Get single organization with related data

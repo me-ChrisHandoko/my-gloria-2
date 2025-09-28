@@ -51,8 +51,14 @@ const baseQuery = fetchBaseQuery({
       // Get token from Clerk
       const token = await getClerkToken();
 
+      console.log('[API] Preparing headers - Token exists:', !!token);
+      console.log('[API] Token (first 20 chars):', token ? token.slice(0, 20) + '...' : 'No token');
+
       if (token) {
         headers.set("authorization", `Bearer ${token}`);
+        console.log('[API] Authorization header set');
+      } else {
+        console.warn('[API] No authentication token available');
       }
 
       // Add request ID for tracing
@@ -87,7 +93,14 @@ const baseQueryWithReauth: BaseQueryFn<
   // Wait until the mutex is available without locking it
   await mutex.waitForUnlock();
 
+  console.log('[API] Making request to:', args);
   let result = await baseQuery(args, api, extraOptions);
+
+  console.log('[API] Response received:', {
+    data: result.data,
+    error: result.error,
+    meta: result.meta
+  });
 
   if (result.error && result.error.status === 401) {
     // Check if the mutex is locked

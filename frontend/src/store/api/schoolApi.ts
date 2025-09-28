@@ -30,14 +30,43 @@ export const schoolApi = apiSlice.injectEndpoints({
             ]
           : [{ type: 'School', id: 'LIST' }],
       keepUnusedDataFor: 300,
-      transformResponse: (response: PaginatedResponse<School>) => ({
-        ...response,
-        data: response.data.map(school => ({
-          ...school,
-          createdAt: new Date(school.createdAt),
-          updatedAt: new Date(school.updatedAt),
-        })),
-      }),
+      transformResponse: (response: any) => {
+        // Handle wrapped response from backend TransformInterceptor
+        let actualResponse: PaginatedResponse<School>;
+
+        if (response && response.success && response.data) {
+          // Unwrap the response from TransformInterceptor
+          actualResponse = response.data;
+
+          // Check if it's double-wrapped
+          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
+            actualResponse = (actualResponse as any).data;
+          }
+        } else {
+          // Use response directly if not wrapped
+          actualResponse = response;
+        }
+
+        // Ensure we have valid data
+        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+          return {
+            data: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 0,
+          };
+        }
+
+        return {
+          ...actualResponse,
+          data: actualResponse.data.map(school => ({
+            ...school,
+            createdAt: new Date(school.createdAt),
+            updatedAt: new Date(school.updatedAt),
+          })),
+        };
+      },
     }),
 
     // Get single school with details
