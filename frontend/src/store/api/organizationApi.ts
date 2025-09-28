@@ -1,4 +1,4 @@
-import { apiSlice } from './apiSlice';
+import { apiSlice } from './apiSliceWithHook';
 import { Organization, PaginatedResponse, QueryParams } from '@/types';
 
 // Enhanced Organization API with production-ready features

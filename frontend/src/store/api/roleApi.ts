@@ -1,4 +1,4 @@
-import { apiSlice } from './apiSlice';
+import { apiSlice } from './apiSliceWithHook';
 import { Role, Permission, PaginatedResponse, QueryParams } from '@/types';
 
 // Role and Permission API with RBAC support

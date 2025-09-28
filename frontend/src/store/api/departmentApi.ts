@@ -1,4 +1,4 @@
-import { apiSlice } from './apiSlice';
+import { apiSlice } from './apiSliceWithHook';
 import { Department, PaginatedResponse, QueryParams } from '@/types';
 
 // Department API with hierarchical structure support

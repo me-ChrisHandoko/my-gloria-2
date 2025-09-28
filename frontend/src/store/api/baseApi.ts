@@ -5,15 +5,14 @@ import type {
   FetchBaseQueryError,
 } from "@reduxjs/toolkit/query";
 import { Mutex } from "async-mutex";
+import { apiConfig } from "@/config/api";
 
 // Create a new mutex for token refresh
 const mutex = new Mutex();
 
 // Custom base query with authentication
 const baseQuery = fetchBaseQuery({
-  baseUrl: `${
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
-  }/api/v1`,
+  baseUrl: apiConfig.baseUrl,
   prepareHeaders: async (headers) => {
     try {
       // Get token from Clerk or your auth provider

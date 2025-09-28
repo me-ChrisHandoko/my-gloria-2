@@ -1,4 +1,4 @@
-import { apiSlice } from './apiSlice';
+import { apiSlice } from './apiSliceWithHook';
 import { School, PaginatedResponse, QueryParams } from '@/types';
 
 // School API with comprehensive CRUD operations and relationships

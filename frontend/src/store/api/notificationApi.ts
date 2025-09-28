@@ -1,4 +1,4 @@
-import { apiSlice } from './apiSlice';
+import { apiSlice } from './apiSliceWithHook';
 import { Notification, PaginatedResponse, QueryParams } from '@/types';
 
 // Enhanced Notification types

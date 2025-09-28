@@ -1,4 +1,4 @@
-import { apiSlice } from './apiSlice';
+import { apiSlice } from './apiSliceWithHook';
 import { AuditLog, FeatureFlag, SystemConfig, PaginatedResponse, QueryParams } from '@/types';
 
 // System Configuration API for audit logs, feature flags, and system settings

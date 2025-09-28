@@ -1,4 +1,4 @@
-import { apiSlice } from './apiSlice';
+import { apiSlice } from './apiSliceWithHook';
 import { Position, PaginatedResponse, QueryParams } from '@/types';
 
 // Position API with permission management

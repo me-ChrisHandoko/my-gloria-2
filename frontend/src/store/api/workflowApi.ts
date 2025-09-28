@@ -1,4 +1,4 @@
-import { apiSlice } from './apiSlice';
+import { apiSlice } from './apiSliceWithHook';
 import { Workflow, PaginatedResponse, QueryParams } from '@/types';
 
 // Enhanced Workflow types for comprehensive workflow management
