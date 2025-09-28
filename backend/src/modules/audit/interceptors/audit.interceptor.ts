@@ -71,13 +71,16 @@ export class AuditInterceptor implements NestInterceptor {
       context.getHandler(),
     );
 
+    // Get the URL path (Fastify uses 'url' instead of 'path')
+    const requestPath = (request as any).url?.split('?')[0] || '';
+
     const module =
       this.reflector.get<string>(AUDIT_MODULE_KEY, context.getClass()) ||
-      this.getModuleFromPath(request.path);
+      this.getModuleFromPath(requestPath);
 
     const entityType =
       this.reflector.get<string>(AUDIT_ENTITY_KEY, context.getHandler()) ||
-      this.getEntityTypeFromPath(request.path);
+      this.getEntityTypeFromPath(requestPath);
 
     // Skip if no action specified
     if (!action) {
