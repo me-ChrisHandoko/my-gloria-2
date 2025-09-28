@@ -20,41 +20,30 @@ export const userApi = apiSlice.injectEndpoints({
         // Debug logging to understand the response structure
         console.log('Raw API Response:', response);
 
-        // Handle DOUBLE-wrapped response (wrapped by TransformInterceptor twice)
-        if (response && response.success && response.data) {
-          let unwrappedData = response.data;
-          console.log('First unwrap:', unwrappedData);
-
-          // Check if it's wrapped again
-          if (unwrappedData && unwrappedData.success && unwrappedData.data) {
-            unwrappedData = unwrappedData.data;
-            console.log('Second unwrap (double-wrapped):', unwrappedData);
-          }
-
-          // Now check if unwrapped data has the expected paginated structure
-          if (unwrappedData && unwrappedData.pagination && Array.isArray(unwrappedData.data)) {
-            const result = {
-              data: unwrappedData.data,
-              total: unwrappedData.pagination.total || 0,
-              page: unwrappedData.pagination.page || 1,
-              limit: unwrappedData.pagination.limit || 10,
-              totalPages: unwrappedData.pagination.totalPages || 0,
-            };
-            console.log('Returning paginated response:', result);
-            return result;
-          }
-        }
-
-        // Handle backend response structure with nested pagination (fallback for non-wrapped)
-        if (response && response.pagination) {
+        // Handle SINGLE-wrapped response from backend (after fix)
+        // The backend now returns: { success, data: [...], pagination: {...}, timestamp, path, requestId }
+        if (response && response.success && response.pagination && Array.isArray(response.data)) {
           const result = {
-            data: Array.isArray(response.data) ? response.data : [],
+            data: response.data,
             total: response.pagination.total || 0,
             page: response.pagination.page || 1,
             limit: response.pagination.limit || 10,
             totalPages: response.pagination.totalPages || 0,
           };
-          console.log('Returning paginated response:', result);
+          console.log('Returning single-wrapped paginated response:', result);
+          return result;
+        }
+
+        // Handle non-wrapped response with pagination (direct from controller)
+        if (response && response.pagination && Array.isArray(response.data)) {
+          const result = {
+            data: response.data,
+            total: response.pagination.total || 0,
+            page: response.pagination.page || 1,
+            limit: response.pagination.limit || 10,
+            totalPages: response.pagination.totalPages || 0,
+          };
+          console.log('Returning direct paginated response:', result);
           return result;
         }
 
