@@ -86,7 +86,7 @@ const DashboardHeader = memo(function DashboardHeader({
 
         {/* Right side actions */}
         <div className="flex items-center space-x-3">
-          {/* Notifications with real-time SSE updates */}
+          {/* Notifications */}
           <NotificationBell />
 
           {/* Help */}

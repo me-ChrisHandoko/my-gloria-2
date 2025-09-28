@@ -1,16 +1,23 @@
 /**
  * Notification Slice
- * Redux slice for managing notifications with SSE integration
+ * Redux slice for managing notifications
  */
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../index';
-import { NotificationSSEData } from '@/types/sse';
 
 /**
- * Notification interface extending SSE data
+ * Notification interface
  */
-export interface Notification extends NotificationSSEData {
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  read: boolean;
+  createdAt: string;
+  metadata?: Record<string, any>;
   timestamp?: number;
   actionUrl?: string;
   actionLabel?: string;
@@ -55,7 +62,7 @@ const notificationSlice = createSlice({
   name: 'notifications',
   initialState,
   reducers: {
-    // Add notification (from SSE or manual)
+    // Add notification
     addNotification: (state, action: PayloadAction<Notification>) => {
       const notification = {
         ...action.payload,
@@ -180,7 +187,7 @@ const notificationSlice = createSlice({
       state.desktop = !state.desktop;
     },
 
-    // Bulk update from SSE
+    // Bulk update
     bulkUpdateNotifications: (state, action: PayloadAction<Notification[]>) => {
       action.payload.forEach(update => {
         const index = state.notifications.findIndex(n => n.id === update.id);

@@ -29,7 +29,6 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AuditModule as AuditFeatureModule } from './modules/audit/audit.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { SystemConfigModule } from './modules/system-config/system-config.module';
-import { SSEModule } from './modules/sse/sse.module';
 
 // Core Performance & Security
 import { PerformanceModule } from './core/performance/performance.module';
@@ -325,11 +324,6 @@ function getFeatureModules(): any[] {
   // System Configuration Module
   if (process.env.ENABLE_SYSTEM_CONFIG_MODULE !== 'false') {
     modules.push(SystemConfigModule);
-  }
-
-  // SSE Module for Server-Sent Events
-  if (process.env.ENABLE_SSE_MODULE !== 'false') {
-    modules.push(SSEModule);
   }
 
   return modules;

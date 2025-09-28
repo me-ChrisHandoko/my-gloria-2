@@ -1,6 +1,6 @@
 /**
  * NotificationBell Component
- * Real-time notification bell with SSE integration
+ * Notification bell with real-time updates
  */
 
 'use client';

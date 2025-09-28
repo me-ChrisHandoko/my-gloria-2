@@ -343,16 +343,6 @@ class ApiConfiguration {
     };
   }
 
-  // SSE configuration
-  public getSSEConfig() {
-    return {
-      url: `${this.config.baseUrl}/events`,
-      reconnect: true,
-      reconnectDelay: 3000,
-      maxReconnectAttempts: 10,
-      heartbeatInterval: 45000,
-    };
-  }
 
   // Health check configuration
   public getHealthCheckConfig() {

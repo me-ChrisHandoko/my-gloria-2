@@ -226,7 +226,6 @@ export class ApiPaths {
         live: this.buildPath('health', 'live'),
         ready: this.buildPath('health', 'ready'),
       },
-      sse: this.buildPath('sse'),
       monitoring: this.buildPath('monitoring'),
     };
   }

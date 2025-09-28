@@ -13,7 +13,6 @@ export { useAuth } from './useAuth';
 export { usePermissions } from './usePermissions';
 
 // Real-time & Communication
-export { useSSE } from './useSSE';
 export { useWebSocket } from './useWebSocket';
 export { useCrossTabSync } from './useCrossTabSync';
 

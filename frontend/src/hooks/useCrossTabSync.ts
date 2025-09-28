@@ -172,7 +172,7 @@ export const useCrossTabSync = (config?: CrossTabSyncConfig) => {
    */
   const onBecomeLeader = useCallback(() => {
     // Leader-specific initialization
-    // For example, start SSE connections, WebSocket connections, etc.
+    // For example, start WebSocket connections, etc.
     log('Became leader tab');
   }, [log]);
 

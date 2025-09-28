@@ -22,7 +22,6 @@ import userReducer from './slices/userSlice';
 import preferencesReducer from './slices/preferencesSlice';
 import notificationReducer from './slices/notificationSlice';
 import workflowReducer from './slices/workflowSlice';
-import sseReducer from './slices/sseSlice';
 
 // Middleware
 import { cacheMiddleware } from '@/lib/cache/rtkQueryCache';
@@ -63,7 +62,6 @@ const rootReducer = combineReducers({
   preferences: preferencesReducer,
   notifications: notificationReducer,
   workflow: workflowReducer,
-  sse: sseReducer,
 });
 
 // Persisted Reducer

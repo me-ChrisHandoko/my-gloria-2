@@ -3178,15 +3178,9 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/api/auth-provider.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/cache-life.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/validator.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/page.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(auth)/layout.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(auth)/sign-in/[[...sign-in]]/page.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(auth)/sign-up/[[...sign-up]]/page.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/dashboard/page.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/dashboard/test-sse/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/layout.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/layout.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/users/page.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/auth/callback/page.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/auth/validate/page.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@babel/types/lib/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@types/babel__generator/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@babel/parser/typings/babel-parser.d.ts

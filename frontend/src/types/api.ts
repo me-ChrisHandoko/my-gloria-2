@@ -163,7 +163,7 @@ export interface FileUploadResponse {
 // ============================================================
 
 /**
- * WebSocket/SSE event structure
+ * WebSocket event structure
  */
 export interface RealtimeEvent<T = any> {
   id: string;
