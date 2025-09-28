@@ -229,7 +229,7 @@ export class UserRepository {
               id: true,
               name: true,
               code: true,
-              level: true,
+              hierarchyLevel: true,
             },
           },
         },

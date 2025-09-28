@@ -16,8 +16,38 @@ export const userApi = apiSlice.injectEndpoints({
           ...params,
         },
       }),
+      transformResponse: (response: any): PaginatedResponse<User> => {
+        // Handle backend response structure with nested pagination
+        if (response && response.pagination) {
+          return {
+            data: Array.isArray(response.data) ? response.data : [],
+            total: response.pagination.total || 0,
+            page: response.pagination.page || 1,
+            limit: response.pagination.limit || 10,
+            totalPages: response.pagination.totalPages || 0,
+          };
+        }
+        // Handle if response is already in correct format
+        if (response && Array.isArray(response.data)) {
+          return {
+            data: response.data,
+            total: response.total || 0,
+            page: response.page || 1,
+            limit: response.limit || 10,
+            totalPages: response.totalPages || 0,
+          };
+        }
+        // Fallback for malformed or empty responses
+        return {
+          data: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+        };
+      },
       providesTags: (result) =>
-        result
+        result && result.data && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: "User" as const, id })),
               { type: "User", id: "LIST" },
@@ -28,7 +58,7 @@ export const userApi = apiSlice.injectEndpoints({
     // Get single user by ID
     getUserById: builder.query<User, string>({
       query: (id) => `/users/${id}`,
-      providesTags: (result, error, id) => [{ type: "User", id }],
+      providesTags: (_result, _error, id) => [{ type: "User", id }],
     }),
 
     // Get current authenticated user
@@ -62,9 +92,9 @@ export const userApi = apiSlice.injectEndpoints({
             "getUsers",
             {} as QueryParams,
             (draft) => {
-              if (draft?.data) {
+              if (draft?.data && Array.isArray(draft.data)) {
                 draft.data.unshift(optimisticUser);
-                draft.total += 1;
+                draft.total = (draft.total || 0) + 1;
               }
             }
           )
@@ -78,7 +108,7 @@ export const userApi = apiSlice.injectEndpoints({
               "getUsers",
               {} as QueryParams,
               (draft) => {
-                if (draft?.data) {
+                if (draft?.data && Array.isArray(draft.data)) {
                   const index = draft.data.findIndex((u) => u.id === tempId);
                   if (index !== -1) {
                     draft.data[index] = data;
@@ -117,9 +147,11 @@ export const userApi = apiSlice.injectEndpoints({
             "getUsers",
             {} as QueryParams,
             (draft) => {
-              const user = draft?.data?.find((u) => u.id === id);
-              if (user) {
-                Object.assign(user, data);
+              if (draft?.data && Array.isArray(draft.data)) {
+                const user = draft.data.find((u) => u.id === id);
+                if (user) {
+                  Object.assign(user, data);
+                }
               }
             }
           )
@@ -133,7 +165,7 @@ export const userApi = apiSlice.injectEndpoints({
           listPatchResult.undo();
         }
       },
-      invalidatesTags: (result, error, { id }) => [
+      invalidatesTags: (_result, _error, { id }) => [
         { type: "User", id },
         { type: "User", id: "LIST" },
       ],
@@ -154,9 +186,9 @@ export const userApi = apiSlice.injectEndpoints({
               "getUsers",
               {} as QueryParams,
               (draft) => {
-                if (draft?.data) {
+                if (draft?.data && Array.isArray(draft.data)) {
                   draft.data = draft.data.filter((user) => user.id !== id);
-                  draft.total = Math.max(0, draft.total - 1);
+                  draft.total = Math.max(0, (draft.total || 0) - 1);
                 }
               }
             )
@@ -169,7 +201,7 @@ export const userApi = apiSlice.injectEndpoints({
             patchResult.undo();
           }
         },
-        invalidatesTags: (result, error, id) => [
+        invalidatesTags: (_result, _error, id) => [
           { type: "User", id },
           { type: "User", id: "LIST" },
         ],
@@ -212,9 +244,11 @@ export const userApi = apiSlice.injectEndpoints({
               "getUsers",
               {} as QueryParams,
               (draft) => {
-                const user = draft?.data?.find((u) => u.id === id);
-                if (user) {
-                  (user as any).isActive = isActive;
+                if (draft?.data && Array.isArray(draft.data)) {
+                  const user = draft.data.find((u) => u.id === id);
+                  if (user) {
+                    (user as any).isActive = isActive;
+                  }
                 }
               }
             )
@@ -228,7 +262,7 @@ export const userApi = apiSlice.injectEndpoints({
             listPatchResult.undo();
           }
         },
-        invalidatesTags: (result, error, { id }) => [
+        invalidatesTags: (_result, _error, { id }) => [
           { type: "User", id },
           { type: "User", id: "LIST" },
         ],
@@ -245,13 +279,13 @@ export const userApi = apiSlice.injectEndpoints({
         method: "POST",
         body: { newPassword },
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: "User", id }],
+      invalidatesTags: (_result, _error, { id }) => [{ type: "User", id }],
     }),
 
     // Get user permissions
     getUserPermissions: builder.query<string[], string>({
       query: (id) => `/users/${id}/permissions`,
-      providesTags: (result, error, id) => [
+      providesTags: (_result, _error, id) => [
         { type: "User", id: `${id}-permissions` },
       ],
     }),
@@ -266,7 +300,7 @@ export const userApi = apiSlice.injectEndpoints({
         method: "PUT",
         body: { permissions },
       }),
-      invalidatesTags: (result, error, { id }) => [
+      invalidatesTags: (_result, _error, { id }) => [
         { type: "User", id: `${id}-permissions` },
         { type: "User", id },
       ],

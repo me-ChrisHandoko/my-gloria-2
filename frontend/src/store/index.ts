@@ -105,9 +105,50 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-        ignoredActionPaths: ['meta.arg', 'payload.timestamp'],
-        ignoredPaths: ['items.dates'],
+        ignoredActions: [
+          FLUSH,
+          REHYDRATE,
+          PAUSE,
+          PERSIST,
+          PURGE,
+          REGISTER,
+          // Ignore RTK Query actions (have to list them explicitly as regex isn't supported)
+          `${apiSlice.reducerPath}/executeQuery/fulfilled`,
+          `${apiSlice.reducerPath}/executeQuery/pending`,
+          `${apiSlice.reducerPath}/executeQuery/rejected`,
+          `${apiSlice.reducerPath}/executeMutation/fulfilled`,
+          `${apiSlice.reducerPath}/executeMutation/pending`,
+          `${apiSlice.reducerPath}/executeMutation/rejected`,
+        ],
+        ignoredActionPaths: [
+          'meta.arg',
+          'payload.timestamp',
+          // Ignore RTK Query meta fields that contain non-serializable values
+          'meta.baseQueryMeta.request',
+          'meta.baseQueryMeta.response',
+          'meta.baseQueryMeta',
+          'meta.arg.originalArgs',
+          'meta.arg.endpointName',
+        ],
+        ignoredPaths: [
+          'items.dates',
+          // Ignore the entire api reducer state as it may contain non-serializable values
+          `${apiSlice.reducerPath}.queries`,
+          `${apiSlice.reducerPath}.mutations`,
+          `${apiSlice.reducerPath}.provided`,
+          `${apiSlice.reducerPath}.subscriptions`,
+          `${apiSlice.reducerPath}.config`,
+        ],
+        // Also ignore non-serializable values in state
+        warnAfter: 128, // Warn if the action takes longer than 128ms
+      },
+      immutableCheck: {
+        // Also ignore the same paths for immutability checks
+        ignoredPaths: [
+          `${apiSlice.reducerPath}.queries`,
+          `${apiSlice.reducerPath}.mutations`,
+        ],
+        warnAfter: 128,
       },
     })
     .concat(apiSlice.middleware)
