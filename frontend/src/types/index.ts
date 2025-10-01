@@ -8,6 +8,13 @@ export interface User {
   departmentId?: string;
   positionId?: string;
   nip?: string;
+  isSuperadmin?: boolean;
+  isActive?: boolean;
+  dataKaryawan?: {
+    nama: string;
+    email: string;
+    nip: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }

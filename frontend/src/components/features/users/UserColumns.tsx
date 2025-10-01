@@ -60,45 +60,13 @@ export const createUserColumns = ({
     accessorKey: 'name',
     header: 'Name',
     cell: ({ row }) => {
-      const user = row.original;
+      const name = row.getValue('name') as string;
       return (
         <div className="flex flex-col">
           <span className="font-medium text-gray-900 dark:text-gray-100">
-            {user.name}
-          </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {user.email}
+            {name || '-'}
           </span>
         </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'role',
-    header: 'Role',
-    cell: ({ row }) => {
-      const role = row.getValue('role') as UserRole;
-      const roleConfig = {
-        [UserRole.ADMIN]: {
-          label: 'Admin',
-          variant: 'destructive' as const,
-        },
-        [UserRole.USER]: {
-          label: 'User',
-          variant: 'default' as const,
-        },
-        [UserRole.VIEWER]: {
-          label: 'Viewer',
-          variant: 'secondary' as const,
-        },
-      };
-
-      const config = roleConfig[role] || roleConfig[UserRole.VIEWER];
-
-      return (
-        <Badge variant={config.variant}>
-          {config.label}
-        </Badge>
       );
     },
   },
@@ -106,7 +74,7 @@ export const createUserColumns = ({
     accessorKey: 'nip',
     header: 'NIP',
     cell: ({ row }) => {
-      const nip = row.getValue('nip') as string | undefined;
+      const nip = row.getValue('nip') as string;
       return nip ? (
         <span className="font-mono text-sm">{nip}</span>
       ) : (
@@ -115,40 +83,41 @@ export const createUserColumns = ({
     },
   },
   {
-    accessorKey: 'departmentId',
-    header: 'Department',
+    accessorKey: 'email',
+    header: 'Email',
     cell: ({ row }) => {
-      const departmentId = row.getValue('departmentId') as string | undefined;
-      // In production, this would fetch the department name from the API
-      return departmentId ? (
-        <span className="text-sm">Department {departmentId.slice(0, 8)}</span>
-      ) : (
-        <span className="text-gray-400">-</span>
-      );
-    },
-  },
-  {
-    accessorKey: 'positionId',
-    header: 'Position',
-    cell: ({ row }) => {
-      const positionId = row.getValue('positionId') as string | undefined;
-      // In production, this would fetch the position name from the API
-      return positionId ? (
-        <span className="text-sm">Position {positionId.slice(0, 8)}</span>
-      ) : (
-        <span className="text-gray-400">-</span>
-      );
-    },
-  },
-  {
-    accessorKey: 'createdAt',
-    header: 'Created',
-    cell: ({ row }) => {
-      const date = row.getValue('createdAt') as Date;
+      const email = row.getValue('email') as string;
       return (
         <span className="text-sm text-gray-600 dark:text-gray-400">
-          {format(new Date(date), 'dd MMM yyyy')}
+          {email || '-'}
         </span>
+      );
+    },
+  },
+  {
+    accessorKey: 'isSuperadmin',
+    header: 'Super Admin',
+    cell: ({ row }) => {
+      const isSuperadmin = row.getValue('isSuperadmin') as boolean;
+      return isSuperadmin ? (
+        <Badge variant="destructive">
+          <ShieldCheckIcon className="mr-1 h-3 w-3" />
+          Super Admin
+        </Badge>
+      ) : (
+        <span className="text-gray-400">No</span>
+      );
+    },
+  },
+  {
+    accessorKey: 'isActive',
+    header: 'Status',
+    cell: ({ row }) => {
+      const isActive = row.getValue('isActive') as boolean;
+      return (
+        <Badge variant={isActive ? 'default' : 'secondary'}>
+          {isActive ? 'Active' : 'Inactive'}
+        </Badge>
       );
     },
   },

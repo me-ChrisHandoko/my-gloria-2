@@ -92,21 +92,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
             url: "/users",
             isActive: pathname === "/users",
           },
-          {
-            title: "Teams",
-            url: "/users/teams",
-            isActive: pathname === "/users/teams",
-          },
-          {
-            title: "Roles",
-            url: "/users/roles",
-            isActive: pathname === "/users/roles",
-          },
-          {
-            title: "Activity",
-            url: "/users/activity",
-            isActive: pathname === "/users/activity",
-          },
         ],
       },
       {
@@ -245,24 +230,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         ],
       },
     ],
-
-    projects: [
-      {
-        name: "Government Portal",
-        url: "/projects/portal",
-        icon: FolderOpen,
-      },
-      {
-        name: "Annual Reports",
-        url: "/projects/reports",
-        icon: BarChart3,
-      },
-      {
-        name: "Public Services",
-        url: "/projects/services",
-        icon: UserCircle,
-      },
-    ],
   };
 
   return (
@@ -272,7 +239,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navData.navMain} />
-        <NavProjects projects={navData.projects} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={navData.user} />

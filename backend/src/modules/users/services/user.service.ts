@@ -93,7 +93,14 @@ export class UserService {
         sortOptions,
       );
 
-      const transformedData = plainToInstance(UserResponseDto, result.data, {
+      // Map dataKaryawan fields to user fields for proper display
+      const mappedData = result.data.map((user: any) => ({
+        ...user,
+        name: user.dataKaryawan?.nama || '',
+        email: user.dataKaryawan?.email || '',
+      }));
+
+      const transformedData = plainToInstance(UserResponseDto, mappedData, {
         excludeExtraneousValues: true,
       });
 
@@ -115,7 +122,14 @@ export class UserService {
         throw new UserNotFoundException(id);
       }
 
-      return plainToInstance(UserResponseDto, user, {
+      // Map dataKaryawan fields to user fields
+      const mappedUser = {
+        ...user,
+        name: user.dataKaryawan?.nama || '',
+        email: user.dataKaryawan?.email || '',
+      };
+
+      return plainToInstance(UserResponseDto, mappedUser, {
         excludeExtraneousValues: true,
       });
     } catch (error) {
@@ -142,7 +156,14 @@ export class UserService {
       // Update last active timestamp
       await this.userRepository.updateLastActive(user.id);
 
-      return plainToInstance(UserResponseDto, user, {
+      // Map dataKaryawan fields to user fields
+      const mappedUser = {
+        ...user,
+        name: user.dataKaryawan?.nama || '',
+        email: user.dataKaryawan?.email || '',
+      };
+
+      return plainToInstance(UserResponseDto, mappedUser, {
         excludeExtraneousValues: true,
       });
     } catch (error) {
@@ -166,7 +187,14 @@ export class UserService {
         throw new UserNotFoundException(nip);
       }
 
-      return plainToInstance(UserResponseDto, user, {
+      // Map dataKaryawan fields to user fields
+      const mappedUser = {
+        ...user,
+        name: user.dataKaryawan?.nama || '',
+        email: user.dataKaryawan?.email || '',
+      };
+
+      return plainToInstance(UserResponseDto, mappedUser, {
         excludeExtraneousValues: true,
       });
     } catch (error) {

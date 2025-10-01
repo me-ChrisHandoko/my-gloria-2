@@ -24,6 +24,20 @@ export class UserResponseDto {
   nip: string;
 
   @ApiProperty({
+    description: 'User name',
+    example: 'John Doe',
+  })
+  @Expose()
+  name: string;
+
+  @ApiProperty({
+    description: 'User email',
+    example: 'john.doe@example.com',
+  })
+  @Expose()
+  email: string;
+
+  @ApiProperty({
     description: 'Superadmin status',
     example: false,
   })
