@@ -9,22 +9,64 @@ export const departmentApi = apiSlice.injectEndpoints({
     // Get paginated departments
     getDepartments: builder.query<PaginatedResponse<Department>, QueryParams & {
       schoolId?: string;
-      organizationId?: string;
+      includeSchool?: boolean;
+      includeParent?: boolean;
     }>({
       query: (params = {}) => ({
-        url: '/departments',
+        url: '/organizations/departments',
         params: {
           page: params.page || 1,
           limit: params.limit || 10,
-          search: params.search || '',
+          // Map 'search' to 'name' for partial name matching as backend expects
+          name: params.search || undefined,
           sortBy: params.sortBy || 'name',
           sortOrder: params.sortOrder || 'asc',
           schoolId: params.schoolId,
-          organizationId: params.organizationId,
           isActive: params.isActive,
-          ...params
+          includeSchool: params.includeSchool,
+          includeParent: params.includeParent,
+          // Only send parameters that backend QueryDepartmentDto accepts
+          // Removed: organizationId, search, and spread operator ...params
         },
       }),
+      // Transform response to handle wrapped response from backend TransformInterceptor
+      transformResponse: (response: any) => {
+        // Handle wrapped response from backend TransformInterceptor
+        let actualResponse: PaginatedResponse<Department>;
+
+        if (response && response.success && response.data) {
+          // Unwrap the response from TransformInterceptor
+          actualResponse = response.data;
+
+          // Check if it's double-wrapped
+          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
+            actualResponse = (actualResponse as any).data;
+          }
+        } else {
+          // Use response directly if not wrapped
+          actualResponse = response;
+        }
+
+        // Ensure we have valid data
+        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+          return {
+            data: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 0,
+          };
+        }
+
+        return {
+          ...actualResponse,
+          data: actualResponse.data.map(dept => ({
+            ...dept,
+            createdAt: new Date(dept.createdAt),
+            updatedAt: new Date(dept.updatedAt),
+          })),
+        };
+      },
       providesTags: (result) =>
         result
           ? [
@@ -37,13 +79,13 @@ export const departmentApi = apiSlice.injectEndpoints({
 
     // Get single department
     getDepartmentById: builder.query<Department, string>({
-      query: (id) => `/departments/${id}`,
+      query: (id) => `/organizations/departments/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Department', id }],
     }),
 
     // Get department hierarchy
     getDepartmentHierarchy: builder.query<Department[], string>({
-      query: (id) => `/departments/${id}/hierarchy`,
+      query: (id) => `/organizations/departments/${id}/hierarchy`,
       providesTags: (_result, _error, id) => [
         { type: 'Department', id: `${id}-hierarchy` }
       ],
@@ -59,7 +101,7 @@ export const departmentApi = apiSlice.injectEndpoints({
 
     // Get department positions
     getDepartmentPositions: builder.query<any[], string>({
-      query: (departmentId) => `/departments/${departmentId}/positions`,
+      query: (departmentId) => `/organizations/departments/${departmentId}/positions`,
       providesTags: (_result, _error, departmentId) => [
         { type: 'Department', id: `${departmentId}-positions` },
         'Position'
@@ -68,7 +110,7 @@ export const departmentApi = apiSlice.injectEndpoints({
 
     // Get department members
     getDepartmentMembers: builder.query<any[], string>({
-      query: (departmentId) => `/departments/${departmentId}/members`,
+      query: (departmentId) => `/organizations/departments/${departmentId}/members`,
       providesTags: (_result, _error, departmentId) => [
         { type: 'Department', id: `${departmentId}-members` }
       ],
@@ -81,7 +123,7 @@ export const departmentApi = apiSlice.injectEndpoints({
       activeProjects: number;
       completionRate: number;
     }, string>({
-      query: (id) => `/departments/${id}/stats`,
+      query: (id) => `/organizations/departments/${id}/stats`,
       providesTags: (_result, _error, id) => [
         { type: 'Department', id: `${id}-stats` }
       ],
@@ -93,7 +135,7 @@ export const departmentApi = apiSlice.injectEndpoints({
     // Create department
     createDepartment: builder.mutation<Department, Partial<Department>>({
       query: (department) => ({
-        url: '/departments',
+        url: '/organizations/departments',
         method: 'POST',
         body: department,
       }),
@@ -126,7 +168,7 @@ export const departmentApi = apiSlice.injectEndpoints({
     // Update department
     updateDepartment: builder.mutation<Department, { id: string; data: Partial<Department> }>({
       query: ({ id, data }) => ({
-        url: `/departments/${id}`,
+        url: `/organizations/departments/${id}`,
         method: 'PATCH',
         body: data,
       }),
@@ -153,7 +195,7 @@ export const departmentApi = apiSlice.injectEndpoints({
     // Delete department
     deleteDepartment: builder.mutation<{ success: boolean; message: string }, string>({
       query: (id) => ({
-        url: `/departments/${id}`,
+        url: `/organizations/departments/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: (_result, _error, id) => [

@@ -502,9 +502,23 @@ class ApiClient {
   }
 
   // Utility method for file uploads
-  async uploadFile(url: string, file: File, onProgress?: (progress: number) => void): Promise<any> {
+  async uploadFile(
+    url: string,
+    file: File,
+    additionalData?: Record<string, any>,
+    onProgress?: (progress: number) => void
+  ): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
+
+    // Append additional data if provided
+    if (additionalData) {
+      Object.entries(additionalData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, value.toString());
+        }
+      });
+    }
 
     return this.post(url, formData, {
       headers: {
@@ -517,6 +531,27 @@ class ApiClient {
         }
       },
     });
+  }
+
+  // Utility method for file downloads
+  async downloadFile(url: string, filename?: string): Promise<Blob> {
+    const response = await this.get<Blob>(url, {
+      responseType: 'blob',
+    });
+
+    // If filename is provided, trigger browser download
+    if (filename && typeof window !== 'undefined') {
+      const urlObject = window.URL.createObjectURL(response);
+      const link = document.createElement('a');
+      link.href = urlObject;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(urlObject);
+    }
+
+    return response;
   }
 
   // Batch request support

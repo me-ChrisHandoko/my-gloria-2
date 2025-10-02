@@ -9,16 +9,18 @@ export const organizationApi = apiSlice.injectEndpoints({
     // Get paginated list of organizations with advanced filtering
     getOrganizations: builder.query<PaginatedResponse<Organization>, QueryParams>({
       query: (params = {}) => ({
-        url: '/organizations',
+        url: '/organizations/schools',
         params: {
           page: params.page || 1,
           limit: params.limit || 10,
-          search: params.search || '',
-          sortBy: params.sortBy || 'createdAt',
-          sortOrder: params.sortOrder || 'desc',
-          status: params.status,
-          type: params.type,
-          ...params
+          // Map 'search' to 'name' for partial name matching as backend expects
+          name: params.search || undefined,
+          // Backend expects specific sortBy values: 'name', 'code', 'createdAt', 'updatedAt'
+          sortBy: params.sortBy || 'name',
+          sortOrder: params.sortOrder || 'asc',
+          isActive: params.isActive,
+          // Only send parameters that backend QuerySchoolDto accepts
+          // Removed: status, type, and spread operator ...params
         },
       }),
       providesTags: (result) =>
@@ -72,7 +74,7 @@ export const organizationApi = apiSlice.injectEndpoints({
 
     // Get single organization with related data
     getOrganizationById: builder.query<Organization, string>({
-      query: (id) => `/organizations/${id}`,
+      query: (id) => `/organizations/schools/${id}`,
       providesTags: (result, error, id) => [{ type: 'Organization', id }],
       transformResponse: (response: Organization) => ({
         ...response,
@@ -83,7 +85,7 @@ export const organizationApi = apiSlice.injectEndpoints({
 
     // Get organization hierarchy (parent/child relationships)
     getOrganizationHierarchy: builder.query<Organization[], string>({
-      query: (id) => `/organizations/${id}/hierarchy`,
+      query: (id) => `/organizations/schools/${id}/hierarchy`,
       providesTags: (result, error, id) => [
         { type: 'Organization', id: `${id}-hierarchy` }
       ],
@@ -96,7 +98,7 @@ export const organizationApi = apiSlice.injectEndpoints({
       totalDepartments: number;
       activeWorkflows: number;
     }, string>({
-      query: (id) => `/organizations/${id}/stats`,
+      query: (id) => `/organizations/schools/${id}/stats`,
       providesTags: (result, error, id) => [
         { type: 'Organization', id: `${id}-stats` }
       ],
@@ -121,7 +123,7 @@ export const organizationApi = apiSlice.injectEndpoints({
     // Create new organization with validation
     createOrganization: builder.mutation<Organization, Partial<Organization>>({
       query: (organization) => ({
-        url: '/organizations',
+        url: '/organizations/schools',
         method: 'POST',
         body: organization,
       }),
@@ -151,7 +153,7 @@ export const organizationApi = apiSlice.injectEndpoints({
     // Update organization with optimistic updates
     updateOrganization: builder.mutation<Organization, { id: string; data: Partial<Organization> }>({
       query: ({ id, data }) => ({
-        url: `/organizations/${id}`,
+        url: `/organizations/schools/${id}`,
         method: 'PATCH',
         body: data,
       }),
@@ -179,7 +181,7 @@ export const organizationApi = apiSlice.injectEndpoints({
     // Delete organization with confirmation
     deleteOrganization: builder.mutation<{ success: boolean; message: string }, string>({
       query: (id) => ({
-        url: `/organizations/${id}`,
+        url: `/organizations/schools/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [

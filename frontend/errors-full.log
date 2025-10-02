@@ -1469,10 +1469,8 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/store/slices/uiSlice.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/store/slices/userSlice.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/store/slices/preferencesSlice.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/types/sse.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/store/slices/notificationSlice.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/store/slices/workflowSlice.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/store/slices/sseSlice.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/cache/types.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/cache/storage/MemoryStorage.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/cache/storage/LocalStorage.ts
@@ -1514,8 +1512,6 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/hooks/useAuth.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/types/index.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/hooks/usePermissions.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/sse/SSEService.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/hooks/useSSE.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@socket.io/component-emitter/lib/cjs/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/engine.io-parser/build/esm/commons.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/engine.io-parser/build/esm/encodePacket.d.ts
@@ -1547,7 +1543,6 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/hooks/use-mobile.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/hooks/useThrottle.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/hooks/useDebounce.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/store/api/apiSlice.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/store/api/userApi.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/hooks/useInfiniteScroll.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/hooks/useCache.ts
@@ -1586,6 +1581,7 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/api/performance/prefetch.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/api/performance/monitor.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/api/performance/index.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/api/services/departments.service.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/api/services/index.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/api/services/notifications.service.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/api/services/organizations.service.ts
@@ -1638,7 +1634,6 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/next/dist/compiled/@next/font/dist/google/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/next/font/google/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/providers/StoreProvider.tsx
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/providers/SSEProvider.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/providers/ClerkApiProvider.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/layout.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-context/dist/index.d.mts
@@ -1696,10 +1691,6 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/auth/auth-guard.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/(dashboard)/layout.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/(dashboard)/dashboard/page.tsx
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/badge.tsx
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-scroll-area/dist/index.d.mts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/scroll-area.tsx
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/(dashboard)/dashboard/test-sse/page.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@tanstack/table-core/build/lib/utils.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@tanstack/table-core/build/lib/core/table.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@tanstack/table-core/build/lib/features/ColumnVisibility.d.ts
@@ -2062,6 +2053,19 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@heroicons/react/24/outline/XMarkIcon.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@heroicons/react/24/outline/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/data-table.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/textarea.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-switch/dist/index.d.mts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/switch.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/CreateDepartmentModal.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/EditDepartmentModal.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-alert-dialog/dist/index.d.mts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/alert-dialog.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/DeleteDepartmentModal.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/badge.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-tabs/dist/index.d.mts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/tabs.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-scroll-area/dist/index.d.mts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/scroll-area.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/date-fns/constants.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/date-fns/locale/types.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/date-fns/fp/types.d.ts
@@ -2320,6 +2324,11 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/date-fns/yearsToMonths.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/date-fns/yearsToQuarters.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/date-fns/index.d.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/ViewDepartmentModal.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/DepartmentHierarchyModal.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/DepartmentColumns.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/DepartmentList.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/(dashboard)/organizations/departments/page.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-checkbox/dist/index.d.mts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@heroicons/react/24/solid/AcademicCapIcon.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@heroicons/react/24/solid/AdjustmentsHorizontalIcon.d.ts
@@ -3012,8 +3021,6 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/layouts/DashboardHeader.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/layouts/DashboardSidebar.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/layouts/DashboardSkeleton.tsx
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-tabs/dist/index.d.mts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/tabs.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-progress/dist/index.d.mts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/progress.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/recharts/types/container/Surface.d.ts
@@ -3180,7 +3187,7 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/validator.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/layout.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/layout.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/users/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/organizations/departments/page.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@babel/types/lib/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@types/babel__generator/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@babel/parser/typings/babel-parser.d.ts
