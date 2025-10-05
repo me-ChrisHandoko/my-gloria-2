@@ -1,9 +1,9 @@
-import CustomSignIn from '@/components/auth/custom-sign-in';
-import { Metadata } from 'next';
+import CustomSignIn from "@/components/auth/custom-sign-in";
+import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Sign In - Gloria System',
-  description: 'Sign in to your Gloria System account to manage government workflows',
+  title: "Sign In - Gloria System",
+  description: "Sign in to your YPK Gloria account",
 };
 
 export default function SignInPage() {

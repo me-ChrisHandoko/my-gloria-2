@@ -7,6 +7,7 @@ This document provides a comprehensive, production-ready workflow for implementi
 ## 🏗️ System Architecture Overview
 
 ### Backend Architecture (Already Implemented)
+
 - **Framework**: NestJS with Fastify adapter
 - **Authentication**: Clerk authentication service
 - **Database**: PostgreSQL with Prisma ORM
@@ -16,6 +17,7 @@ This document provides a comprehensive, production-ready workflow for implementi
 - **Key Modules**: Users, Organizations, Permissions, Workflows, Notifications, Audit, Feature Flags, System Config
 
 ### Frontend Architecture (To Be Implemented)
+
 - **Framework**: Next.js 15 with App Router
 - **UI Library**: React 19 with TypeScript
 - **State Management**: Redux Toolkit with RTK Query
@@ -30,9 +32,11 @@ This document provides a comprehensive, production-ready workflow for implementi
 ### Phase 1: Foundation Setup (Week 1)
 
 #### Step 1.1: Environment Configuration ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Created comprehensive environment configuration files
   - `.env.example` - Template with all available variables and documentation
   - `.env.local` - Local development configuration
@@ -54,6 +58,7 @@ This document provides a comprehensive, production-ready workflow for implementi
   - Include template files for version control
 
 ##### Production-Ready Features:
+
 - Environment-specific validation requirements
 - Secure defaults and fallback values
 - Comprehensive error handling and reporting
@@ -78,10 +83,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 #### Step 1.2: Install Required Dependencies ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Installed core dependencies for frontend development
+
   - **Authentication**: @clerk/nextjs (v6.32.0), @clerk/themes (v2.4.19)
   - **HTTP Client**: axios (v1.12.1)
   - **State Management**: @reduxjs/toolkit (v2.9.0), react-redux (v9.2.0)
@@ -106,6 +114,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
   - **Type Definitions**: @types/react-datepicker (v6.2.0)
 
 ##### Production-Ready Features:
+
 - All dependencies installed with specific versions for consistency
 - Compatible with React 19.1.0 and Next.js 15.5.3
 - Modern package choices (e.g., @tanstack/react-table instead of legacy react-table)
@@ -113,6 +122,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - Type safety ensured with TypeScript definitions
 
 ##### Installation Command Used:
+
 ```bash
 # Core dependencies (single command for efficiency)
 npm install @clerk/nextjs @clerk/themes axios react-hook-form @hookform/resolvers zod @tanstack/react-query @tanstack/react-query-devtools recharts @tanstack/react-table date-fns react-datepicker react-hot-toast sonner
@@ -122,15 +132,19 @@ npm install -D @types/react-datepicker @testing-library/react @testing-library/j
 ```
 
 ##### Notes:
+
 - Excluded `react-table` as it's incompatible with React 19; using @tanstack/react-table instead
 - All packages successfully installed with no vulnerabilities found
 - Total packages audited: 935
 
 #### Step 1.3: Project Structure Setup ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Created complete project directory structure following Next.js 15 App Router conventions
+
   - **App Directory** with route groups for authentication and dashboard
     - `(auth)` route group for public authentication pages
     - `(dashboard)` route group for protected dashboard pages
@@ -173,6 +187,7 @@ npm install -D @types/react-datepicker @testing-library/react @testing-library/j
     - Updated `tsconfig.json` with path aliases for all directories
 
 ##### Production-Ready Features:
+
 - TypeScript strict mode enabled for type safety
 - Clerk authentication integrated with middleware protection
 - Redux Toolkit configured with proper TypeScript types
@@ -183,6 +198,7 @@ npm install -D @types/react-datepicker @testing-library/react @testing-library/j
 - Responsive layout structure with Tailwind CSS
 
 ##### Directory Structure Created:
+
 ```
 src/
 ├── app/                      # Next.js app router pages
@@ -226,6 +242,7 @@ src/
 ```
 
 ##### Notes:
+
 - All directories follow Next.js 15 and React 19 best practices
 - TypeScript configuration includes comprehensive path aliases
 - Authentication flow is pre-configured with Clerk
@@ -234,9 +251,11 @@ src/
 ### Phase 2: Core Infrastructure (Week 1-2)
 
 #### Step 2.1: API Client Setup ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Created production-ready API client with comprehensive error handling
   - Enhanced Axios instance with request/response interceptors
   - Request ID generation for distributed tracing
@@ -280,6 +299,7 @@ src/
   - Rate limiting configuration
 
 ##### Production-Ready Features:
+
 - Type-safe API calls with TypeScript generics
 - Automatic retry with exponential backoff
 - Request/response logging in development
@@ -292,6 +312,7 @@ src/
 - Comprehensive error recovery
 
 ##### File Structure Created:
+
 ```
 src/lib/api/
 ├── client.ts              # Main API client with interceptors
@@ -311,10 +332,11 @@ src/lib/api/
 ```
 
 ##### Usage Example:
+
 ```typescript
 // In a React component
-import { userService } from '@/lib/api/services';
-import { ApiAuthProvider } from '@/lib/api/auth-provider';
+import { userService } from "@/lib/api/services";
+import { ApiAuthProvider } from "@/lib/api/auth-provider";
 
 // Wrap your app with ApiAuthProvider
 function App() {
@@ -331,13 +353,15 @@ const currentUser = await userService.getCurrentUser();
 ```
 
 ##### Original Planned Implementation:
+
 ```typescript
 // src/lib/api/client.ts
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { getAuth } from '@clerk/nextjs/server';
-import toast from 'react-hot-toast';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+import { getAuth } from "@clerk/nextjs/server";
+import toast from "react-hot-toast";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
 
 class ApiClient {
   private client: AxiosInstance;
@@ -347,7 +371,7 @@ class ApiClient {
       baseURL: API_BASE_URL,
       timeout: 30000,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -365,7 +389,7 @@ class ApiClient {
         }
 
         // Add request ID for tracing
-        config.headers['X-Request-ID'] = this.generateRequestId();
+        config.headers["X-Request-ID"] = this.generateRequestId();
 
         return config;
       },
@@ -380,13 +404,13 @@ class ApiClient {
       async (error: AxiosError) => {
         if (error.response?.status === 401) {
           // Handle unauthorized
-          window.location.href = '/sign-in';
+          window.location.href = "/sign-in";
         } else if (error.response?.status === 403) {
-          toast.error('You do not have permission to perform this action');
+          toast.error("You do not have permission to perform this action");
         } else if (error.response?.status === 429) {
-          toast.error('Too many requests. Please try again later.');
+          toast.error("Too many requests. Please try again later.");
         } else if (error.response?.status >= 500) {
-          toast.error('Server error. Please try again later.');
+          toast.error("Server error. Please try again later.");
         }
 
         return Promise.reject(error);
@@ -414,17 +438,29 @@ class ApiClient {
     return response.data;
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async post<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
     const response = await this.client.post<T>(url, data, config);
     return response.data;
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async put<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
     const response = await this.client.put<T>(url, data, config);
     return response.data;
   }
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async patch<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
     const response = await this.client.patch<T>(url, data, config);
     return response.data;
   }
@@ -439,9 +475,11 @@ export default new ApiClient();
 ```
 
 #### Step 2.2: Authentication Setup with Clerk ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Configured ClerkProvider in root layout with custom theming
   - Custom color scheme matching Gloria System branding
   - Typography and spacing configurations
@@ -468,7 +506,7 @@ export default new ApiClient();
 - ✅ Enhanced authentication layout
   - Split-screen design with feature showcase
   - Branded visual identity
-  - Feature highlights for government workflows
+  - Feature highlights for YPK Gloria workflows
   - Responsive design for all screen sizes
   - Professional gradient backgrounds
 - ✅ Implemented protected dashboard layout
@@ -491,6 +529,7 @@ export default new ApiClient();
   - React Hook Form integration
 
 ##### Production-Ready Features:
+
 - Enterprise-grade authentication flow
 - Role-based access control preparation
 - User metadata management
@@ -503,6 +542,7 @@ export default new ApiClient();
 - Session management
 
 ##### File Structure Created:
+
 ```
 src/app/
 ├── layout.tsx                    # Root layout with ClerkProvider
@@ -520,6 +560,7 @@ src/app/
 ```
 
 ##### Usage Notes:
+
 - Clerk authentication is fully integrated and production-ready
 - Users are automatically redirected based on authentication state
 - New users go through onboarding flow after sign-up
@@ -528,9 +569,11 @@ src/app/
 - All authentication flows follow security best practices
 
 #### Step 2.3: Redux Store Configuration ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Created comprehensive Redux store configuration
   - Configured with Redux Toolkit for modern best practices
   - TypeScript types fully integrated
@@ -586,6 +629,7 @@ src/app/
   - Client/server component separation
 
 ##### Production-Ready Features:
+
 - Type-safe Redux implementation
 - RTK Query for efficient data fetching
 - Comprehensive state management
@@ -598,6 +642,7 @@ src/app/
 - Development tools integration
 
 ##### File Structure Created:
+
 ```
 src/
 ├── store/
@@ -617,10 +662,11 @@ src/
 ```
 
 ##### Usage Example:
+
 ```typescript
 // In a React component
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { setUser, selectIsAuthenticated } from '@/store/slices/authSlice';
+import { useAppDispatch, useAppSelector } from "@/hooks";
+import { setUser, selectIsAuthenticated } from "@/store/slices/authSlice";
 
 function MyComponent() {
   const dispatch = useAppDispatch();
@@ -634,9 +680,11 @@ function MyComponent() {
 ### Phase 3: Feature Implementation (Week 2-3)
 
 #### Step 3.1: User Management Module ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Created comprehensive RTK Query API endpoints for user management
   - `/src/store/api/userApi.ts` - Complete user API with CRUD operations
   - Query endpoints: getUsers, getUserById, getCurrentUser
@@ -659,6 +707,7 @@ function MyComponent() {
   - `/src/app/(dashboard)/users/page.tsx` - Users page with metadata and layout
 
 ##### Production-Ready Features:
+
 - Type-safe API calls with TypeScript
 - Comprehensive error handling and user feedback
 - Form validation with Zod schema
@@ -672,55 +721,56 @@ function MyComponent() {
 - Dark mode support
 
 ##### Code Example (Implemented):
+
 ```typescript
 // src/store/api/userApi.ts
-import { apiSlice } from './apiSlice';
-import { User, PaginatedResponse, QueryParams } from '@/types';
+import { apiSlice } from "./apiSlice";
+import { User, PaginatedResponse, QueryParams } from "@/types";
 
 export const userApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getUsers: builder.query<PaginatedResponse<User>, QueryParams>({
       query: (params) => ({
-        url: '/users',
+        url: "/users",
         params,
       }),
-      providesTags: ['User'],
+      providesTags: ["User"],
     }),
 
     getUserById: builder.query<User, string>({
       query: (id) => `/users/${id}`,
-      providesTags: (result, error, id) => [{ type: 'User', id }],
+      providesTags: (result, error, id) => [{ type: "User", id }],
     }),
 
     getCurrentUser: builder.query<User, void>({
-      query: () => '/users/me',
-      providesTags: ['User'],
+      query: () => "/users/me",
+      providesTags: ["User"],
     }),
 
     createUser: builder.mutation<User, Partial<User>>({
       query: (user) => ({
-        url: '/users',
-        method: 'POST',
+        url: "/users",
+        method: "POST",
         body: user,
       }),
-      invalidatesTags: ['User'],
+      invalidatesTags: ["User"],
     }),
 
     updateUser: builder.mutation<User, { id: string; data: Partial<User> }>({
       query: ({ id, data }) => ({
         url: `/users/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'User', id }],
+      invalidatesTags: (result, error, { id }) => [{ type: "User", id }],
     }),
 
     deleteUser: builder.mutation<void, string>({
       query: (id) => ({
         url: `/users/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['User'],
+      invalidatesTags: ["User"],
     }),
   }),
 });
@@ -736,10 +786,13 @@ export const {
 ```
 
 #### Step 3.2: Component Architecture ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Components:
+
 - ✅ **ErrorBoundary Component** (`/src/components/shared/ErrorBoundary.tsx`)
+
   - Production-ready error boundary with recovery options
   - Error logging and reporting integration ready
   - Custom fallback UI support
@@ -747,6 +800,7 @@ export const {
   - HOC wrapper for functional components
 
 - ✅ **PageHeader Component** (`/src/components/shared/PageHeader.tsx`)
+
   - Consistent page header layout
   - Breadcrumb navigation support
   - Action buttons integration
@@ -754,6 +808,7 @@ export const {
   - Responsive design
 
 - ✅ **Card Components** (`/src/components/ui/card.tsx`, `/src/components/shared/DataCard.tsx`)
+
   - Base card components (Card, CardHeader, CardTitle, etc.)
   - DataCard for metrics and KPIs display
   - StatCard for dashboard statistics
@@ -761,6 +816,7 @@ export const {
   - Interactive hover states
 
 - ✅ **Modal System** (`/src/components/ui/dialog.tsx`, `/src/components/shared/Modal.tsx`)
+
   - Base dialog components using Radix UI
   - Modal wrapper with size variants
   - ConfirmModal for confirmations
@@ -768,6 +824,7 @@ export const {
   - FormModal for form submissions
 
 - ✅ **SearchInput Component** (`/src/components/shared/SearchInput.tsx`)
+
   - Debounced search input
   - Loading states during search
   - Clear functionality
@@ -775,6 +832,7 @@ export const {
   - Custom debounce hook (`/src/hooks/useDebounce.ts`)
 
 - ✅ **EmptyState Component** (`/src/components/shared/EmptyState.tsx`)
+
   - Multiple empty state variants
   - Pre-configured states (NoData, NoResults, NoUsers, etc.)
   - Custom icons and actions
@@ -782,6 +840,7 @@ export const {
   - EmptyTableState for data tables
 
 - ✅ **LoadingState Components** (`/src/components/shared/LoadingState.tsx`)
+
   - Multiple loading variants (spinner, skeleton, dots, pulse)
   - PageSkeleton for full page loading
   - TableSkeleton for table data
@@ -789,6 +848,7 @@ export const {
   - FormSkeleton for forms
 
 - ✅ **Pagination Component** (`/src/components/shared/Pagination.tsx`)
+
   - Standard pagination with page numbers
   - SimplePagination with info display
   - LoadMorePagination for infinite scroll
@@ -796,6 +856,7 @@ export const {
   - Responsive design
 
 - ✅ **FilterBar Component** (`/src/components/shared/FilterBar.tsx`)
+
   - Multi-filter support
   - Single and multiple selection modes
   - Active filter display
@@ -810,6 +871,7 @@ export const {
   - Animated states (pulse, spin)
 
 ##### Production-Ready Features:
+
 - Type-safe components with TypeScript
 - Accessibility compliant (ARIA attributes, keyboard navigation)
 - Dark mode support across all components
@@ -822,6 +884,7 @@ export const {
 - Reusable and composable component architecture
 
 ##### Component Architecture Principles Applied:
+
 1. **Single Responsibility**: Each component has one clear purpose
 2. **Composition over Inheritance**: Components are composable and flexible
 3. **Type Safety**: Full TypeScript support with proper typing
@@ -832,14 +895,15 @@ export const {
 8. **Error Handling**: Graceful error states and recovery options
 
 ##### Usage Example:
+
 ```typescript
 // Example of using the new components in a page
-import { PageHeader } from '@/components/shared/PageHeader';
-import { FilterBar } from '@/components/shared/FilterBar';
-import { SearchInput } from '@/components/shared/SearchInput';
-import { DataCard } from '@/components/shared/DataCard';
-import { StatusIndicator } from '@/components/shared/StatusIndicator';
-import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { PageHeader } from "@/components/shared/PageHeader";
+import { FilterBar } from "@/components/shared/FilterBar";
+import { SearchInput } from "@/components/shared/SearchInput";
+import { DataCard } from "@/components/shared/DataCard";
+import { StatusIndicator } from "@/components/shared/StatusIndicator";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 
 export default function UsersPage() {
   return (
@@ -847,12 +911,8 @@ export default function UsersPage() {
       <PageHeader
         title="User Management"
         description="Manage system users and permissions"
-        breadcrumbs={[{ label: 'Users', href: '/users' }]}
-        actions={
-          <Button onClick={() => setShowAddUser(true)}>
-            Add User
-          </Button>
-        }
+        breadcrumbs={[{ label: "Users", href: "/users" }]}
+        actions={<Button onClick={() => setShowAddUser(true)}>Add User</Button>}
       />
 
       <div className="grid grid-cols-4 gap-4 mb-6">
@@ -878,7 +938,7 @@ export default function UsersPage() {
       />
 
       {/* User list with status indicators */}
-      {users.map(user => (
+      {users.map((user) => (
         <div key={user.id}>
           <StatusIndicator status={user.status} />
           {/* User details... */}
@@ -892,9 +952,11 @@ export default function UsersPage() {
 ### Phase 4: Advanced Features (Week 3-4)
 
 #### Step 4.1: Real-time Updates with Server-Sent Events ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Created comprehensive SSE type definitions (`/src/types/sse.ts`)
   - Event types enumeration for all system events
   - Connection status and options interfaces
@@ -934,6 +996,7 @@ export default function UsersPage() {
   - Added placeholder for notification sound files
 
 ##### Production-Ready Features:
+
 - Automatic reconnection with configurable retry limits
 - Comprehensive error handling and recovery
 - Type-safe event system with TypeScript
@@ -945,6 +1008,7 @@ export default function UsersPage() {
 - Redux integration for state management
 
 ##### Documentation:
+
 - Created comprehensive SSE implementation guide (`/docs/SSE_IMPLEMENTATION.md`)
 - Added notification sound requirements (`/public/sounds/README.md`)
 - Full TypeScript type definitions for all SSE events
@@ -956,9 +1020,11 @@ export default function UsersPage() {
 ```
 
 #### Step 4.2: Error Boundary and Global Error Handling ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Enhanced ErrorBoundary component with comprehensive error handling
   - `/src/components/shared/ErrorBoundary.tsx` - Production-ready error boundary with Sentry integration
   - Chunk load error detection and handling
@@ -1008,6 +1074,7 @@ export default function UsersPage() {
   - Application lifecycle logging
 
 ##### Production-Ready Features:
+
 - Comprehensive error categorization (Authentication, Network, Server, etc.)
 - Severity-based error handling (Low, Medium, High, Critical)
 - Automatic error reporting to Sentry with context
@@ -1021,6 +1088,7 @@ export default function UsersPage() {
 - Structured logging with multiple outputs
 
 ##### Error Handling Architecture:
+
 ```
 Application
 ├── Global Error Handlers (window.onerror, unhandledrejection)
@@ -1032,9 +1100,10 @@ Application
 ```
 
 ##### Usage Example:
+
 ```typescript
 // Using ErrorBoundary
-import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 
 function MyComponent() {
   return (
@@ -1045,7 +1114,7 @@ function MyComponent() {
 }
 
 // Using error hooks
-import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 function MyComponent() {
   const { handleError, handleApiError } = useErrorHandler();
@@ -1060,7 +1129,7 @@ function MyComponent() {
 }
 
 // Using error context
-import { useError } from '@/contexts/ErrorContext';
+import { useError } from "@/contexts/ErrorContext";
 
 function MyComponent() {
   const { addError, hasErrors } = useError();
@@ -1074,9 +1143,11 @@ function MyComponent() {
 ### Phase 5: Performance Optimization (Week 4)
 
 #### Step 5.1: Code Splitting and Lazy Loading ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Extracted dashboard components for lazy loading
   - `/src/components/layouts/DashboardSidebar.tsx` - Memoized sidebar component with active route detection
   - `/src/components/layouts/DashboardHeader.tsx` - Memoized header with search and notifications
@@ -1103,6 +1174,7 @@ function MyComponent() {
   - Long-term caching optimization
 
 ##### Production-Ready Features:
+
 - Component memoization with React.memo for performance
 - HeroIcons usage instead of inline SVGs for better bundling
 - Active route detection with visual indicators
@@ -1115,6 +1187,7 @@ function MyComponent() {
 - Security headers and cache control
 
 ##### Performance Improvements:
+
 - Reduced initial bundle size by ~40% through code splitting
 - Lazy loading of heavy components (charts, tables, forms)
 - Route-based preloading for faster navigation
@@ -1123,6 +1196,7 @@ function MyComponent() {
 - Optimized chunk sizes with webpack configuration
 
 ##### Bundle Optimization Configuration:
+
 ```javascript
 // Webpack split chunks configuration implemented:
 - framework chunk: React core libraries
@@ -1133,24 +1207,34 @@ function MyComponent() {
 ```
 
 ##### Usage Example:
+
 ```typescript
 // Dashboard layout now uses lazy loading
-import { Suspense, lazy } from 'react';
-import { DashboardSidebarSkeleton, DashboardHeaderSkeleton } from '@/components/layouts/DashboardSkeleton';
+import { Suspense, lazy } from "react";
+import {
+  DashboardSidebarSkeleton,
+  DashboardHeaderSkeleton,
+} from "@/components/layouts/DashboardSkeleton";
 
-const DashboardSidebar = lazy(() => import('@/components/layouts/DashboardSidebar'));
-const DashboardHeader = lazy(() => import('@/components/layouts/DashboardHeader'));
+const DashboardSidebar = lazy(
+  () => import("@/components/layouts/DashboardSidebar")
+);
+const DashboardHeader = lazy(
+  () => import("@/components/layouts/DashboardHeader")
+);
 
 // Components are loaded on-demand with loading states
 <Suspense fallback={<DashboardSidebarSkeleton />}>
   <DashboardSidebar user={user} />
-</Suspense>
+</Suspense>;
 ```
 
 #### Step 5.2: Caching Strategy ✅
+
 **Status: COMPLETED**
 
 ##### Implemented Features:
+
 - ✅ Created comprehensive cache manager with multiple storage strategies
   - Memory storage with LRU eviction
   - LocalStorage for persistent caching
@@ -1190,6 +1274,7 @@ const DashboardHeader = lazy(() => import('@/components/layouts/DashboardHeader'
   - Performance metrics tracking
 
 ##### Production-Ready Features:
+
 - Multi-strategy caching with intelligent selection
 - Automatic cache size management and eviction
 - Cross-tab synchronization with BroadcastChannel
@@ -1201,6 +1286,7 @@ const DashboardHeader = lazy(() => import('@/components/layouts/DashboardHeader'
 - Performance monitoring and analytics
 
 ##### Cache Configuration:
+
 ```typescript
 // Cache strategies implemented
 - Memory Cache: Fast in-memory storage with LRU eviction
@@ -1227,43 +1313,45 @@ const DashboardHeader = lazy(() => import('@/components/layouts/DashboardHeader'
 ```
 
 ##### Usage Example:
+
 ```typescript
-import { useCache } from '@/hooks/useCache';
-import { cacheManager } from '@/lib/cache/CacheManager';
+import { useCache } from "@/hooks/useCache";
+import { cacheManager } from "@/lib/cache/CacheManager";
 
 // Using cache hook in component
 function MyComponent() {
   const { data, loading, refresh, invalidate } = useCache(
-    'user-profile',
+    "user-profile",
     () => fetchUserProfile(),
     { ttl: CACHE_TTL.HOUR, priority: CachePriority.HIGH }
   );
 
   // Direct cache usage
-  await cacheManager.set('key', data, { ttl: CACHE_TTL.MEDIUM });
-  const cached = await cacheManager.get('key');
+  await cacheManager.set("key", data, { ttl: CACHE_TTL.MEDIUM });
+  const cached = await cacheManager.get("key");
 }
 ```
 
 ### Phase 6: Testing Strategy (Week 5)
 
 #### Step 6.1: Unit Testing Setup
+
 ```typescript
 // src/tests/unit/userApi.test.ts
-import { renderHook, waitFor } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { store } from '@/store';
-import { useGetUsersQuery } from '@/store/api/userApi';
-import { setupServer } from 'msw/node';
-import { rest } from 'msw';
+import { renderHook, waitFor } from "@testing-library/react";
+import { Provider } from "react-redux";
+import { store } from "@/store";
+import { useGetUsersQuery } from "@/store/api/userApi";
+import { setupServer } from "msw/node";
+import { rest } from "msw";
 
 const server = setupServer(
-  rest.get('/api/v1/users', (req, res, ctx) => {
+  rest.get("/api/v1/users", (req, res, ctx) => {
     return res(
       ctx.json({
         data: [
-          { id: '1', name: 'John Doe', email: 'john@example.com' },
-          { id: '2', name: 'Jane Smith', email: 'jane@example.com' },
+          { id: "1", name: "John Doe", email: "john@example.com" },
+          { id: "2", name: "Jane Smith", email: "jane@example.com" },
         ],
         total: 2,
         page: 1,
@@ -1277,56 +1365,66 @@ beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-describe('User API', () => {
-  it('should fetch users successfully', async () => {
+describe("User API", () => {
+  it("should fetch users successfully", async () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <Provider store={store}>{children}</Provider>
     );
 
-    const { result } = renderHook(() => useGetUsersQuery({ page: 1, limit: 10 }), { wrapper });
+    const { result } = renderHook(
+      () => useGetUsersQuery({ page: 1, limit: 10 }),
+      { wrapper }
+    );
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(result.current.data?.data).toHaveLength(2);
-    expect(result.current.data?.data[0].name).toBe('John Doe');
+    expect(result.current.data?.data[0].name).toBe("John Doe");
   });
 });
 ```
 
 #### Step 6.2: E2E Testing with Cypress
+
 ```typescript
 // cypress/e2e/user-management.cy.ts
-describe('User Management', () => {
+describe("User Management", () => {
   beforeEach(() => {
     cy.login(); // Custom command for authentication
-    cy.visit('/dashboard/users');
+    cy.visit("/dashboard/users");
   });
 
-  it('should display user list', () => {
-    cy.get('[data-testid="user-list"]').should('be.visible');
-    cy.get('[data-testid="user-row"]').should('have.length.at.least', 1);
+  it("should display user list", () => {
+    cy.get('[data-testid="user-list"]').should("be.visible");
+    cy.get('[data-testid="user-row"]').should("have.length.at.least", 1);
   });
 
-  it('should create new user', () => {
+  it("should create new user", () => {
     cy.get('[data-testid="add-user-btn"]').click();
-    cy.get('[data-testid="user-form"]').should('be.visible');
+    cy.get('[data-testid="user-form"]').should("be.visible");
 
-    cy.get('input[name="name"]').type('New User');
-    cy.get('input[name="email"]').type('newuser@example.com');
-    cy.get('select[name="role"]').select('User');
+    cy.get('input[name="name"]').type("New User");
+    cy.get('input[name="email"]').type("newuser@example.com");
+    cy.get('select[name="role"]').select("User");
 
     cy.get('[data-testid="submit-btn"]').click();
 
-    cy.get('[data-testid="success-toast"]').should('contain', 'User created successfully');
-    cy.get('[data-testid="user-list"]').should('contain', 'New User');
+    cy.get('[data-testid="success-toast"]').should(
+      "contain",
+      "User created successfully"
+    );
+    cy.get('[data-testid="user-list"]').should("contain", "New User");
   });
 
-  it('should handle validation errors', () => {
+  it("should handle validation errors", () => {
     cy.get('[data-testid="add-user-btn"]').click();
     cy.get('[data-testid="submit-btn"]').click();
 
-    cy.get('[data-testid="error-name"]').should('contain', 'Name is required');
-    cy.get('[data-testid="error-email"]').should('contain', 'Email is required');
+    cy.get('[data-testid="error-name"]').should("contain", "Name is required");
+    cy.get('[data-testid="error-email"]').should(
+      "contain",
+      "Email is required"
+    );
   });
 });
 ```
@@ -1334,12 +1432,13 @@ describe('User Management', () => {
 ### Phase 7: Production Deployment (Week 6)
 
 #### Step 7.1: Environment Variables and Configuration
+
 ```typescript
 // src/lib/config/index.ts
 const config = {
   api: {
     baseUrl: process.env.NEXT_PUBLIC_API_URL!,
-    timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000'),
+    timeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || "30000"),
   },
   clerk: {
     publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!,
@@ -1347,19 +1446,19 @@ const config = {
   },
   sentry: {
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    environment: process.env.NEXT_PUBLIC_ENV || 'development',
+    environment: process.env.NEXT_PUBLIC_ENV || "development",
   },
   features: {
-    enableAnalytics: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
-    enablePWA: process.env.NEXT_PUBLIC_ENABLE_PWA === 'true',
+    enableAnalytics: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === "true",
+    enablePWA: process.env.NEXT_PUBLIC_ENABLE_PWA === "true",
   },
 };
 
 // Validate required environment variables
 const requiredEnvVars = [
-  'NEXT_PUBLIC_API_URL',
-  'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
-  'CLERK_SECRET_KEY',
+  "NEXT_PUBLIC_API_URL",
+  "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  "CLERK_SECRET_KEY",
 ];
 
 for (const envVar of requiredEnvVars) {
@@ -1372,6 +1471,7 @@ export default config;
 ```
 
 #### Step 7.2: Build Optimization
+
 ```javascript
 // next.config.js
 /** @type {import('next').NextConfig} */
@@ -1380,13 +1480,13 @@ const nextConfig = {
   swcMinify: true,
 
   images: {
-    domains: ['images.clerk.dev'],
-    formats: ['image/avif', 'image/webp'],
+    domains: ["images.clerk.dev"],
+    formats: ["image/avif", "image/webp"],
   },
 
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['@radix-ui/react-*', 'lucide-react'],
+    optimizePackageImports: ["@radix-ui/react-*", "lucide-react"],
   },
 
   webpack: (config, { isServer }) => {
@@ -1399,12 +1499,13 @@ const nextConfig = {
     }
 
     // Bundle analyzer
-    if (process.env.ANALYZE === 'true') {
-      const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+    if (process.env.ANALYZE === "true") {
+      const BundleAnalyzerPlugin =
+        require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
       config.plugins.push(
         new BundleAnalyzerPlugin({
-          analyzerMode: 'static',
-          reportFilename: './analyze.html',
+          analyzerMode: "static",
+          reportFilename: "./analyze.html",
           openAnalyzer: true,
         })
       );
@@ -1415,27 +1516,27 @@ const nextConfig = {
 
   headers: async () => [
     {
-      source: '/(.*)',
+      source: "/(.*)",
       headers: [
         {
-          key: 'X-Content-Type-Options',
-          value: 'nosniff',
+          key: "X-Content-Type-Options",
+          value: "nosniff",
         },
         {
-          key: 'X-Frame-Options',
-          value: 'DENY',
+          key: "X-Frame-Options",
+          value: "DENY",
         },
         {
-          key: 'X-XSS-Protection',
-          value: '1; mode=block',
+          key: "X-XSS-Protection",
+          value: "1; mode=block",
         },
         {
-          key: 'Referrer-Policy',
-          value: 'strict-origin-when-cross-origin',
+          key: "Referrer-Policy",
+          value: "strict-origin-when-cross-origin",
         },
         {
-          key: 'Permissions-Policy',
-          value: 'camera=(), microphone=(), geolocation=()',
+          key: "Permissions-Policy",
+          value: "camera=(), microphone=(), geolocation=()",
         },
       ],
     },
@@ -1446,6 +1547,7 @@ module.exports = nextConfig;
 ```
 
 #### Step 7.3: Docker Configuration
+
 ```dockerfile
 # Dockerfile
 FROM node:20-alpine AS deps
@@ -1484,6 +1586,7 @@ CMD ["node", "server.js"]
 ## 🚀 CI/CD Pipeline
 
 ### GitHub Actions Workflow
+
 ```yaml
 # .github/workflows/deploy.yml
 name: Deploy to Production
@@ -1501,8 +1604,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -1529,8 +1632,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -1543,7 +1646,7 @@ jobs:
         with:
           build: npm run build
           start: npm run start
-          wait-on: 'http://localhost:3000'
+          wait-on: "http://localhost:3000"
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
@@ -1562,20 +1665,21 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: "--prod"
 ```
 
 ## 📊 Monitoring and Observability
 
 ### Sentry Integration
+
 ```typescript
 // src/lib/monitoring/sentry.ts
-import * as Sentry from '@sentry/nextjs';
+import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NEXT_PUBLIC_ENV,
-  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 
   beforeSend(event, hint) {
     // Filter out sensitive data
@@ -1596,16 +1700,19 @@ Sentry.init({
 ```
 
 ### Analytics Setup
+
 ```typescript
 // src/lib/analytics/index.ts
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
-export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   return (
     <>
       {children}
-      {process.env.NODE_ENV === 'production' && (
+      {process.env.NODE_ENV === "production" && (
         <>
           <Analytics />
           <SpeedInsights />
@@ -1619,21 +1726,25 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 ## 🔒 Security Best Practices
 
 ### Security Headers
+
 ```typescript
 // src/middleware/security.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function securityMiddleware(request: NextRequest) {
   const response = NextResponse.next();
 
   // Security headers
-  response.headers.set('X-DNS-Prefetch-Control', 'on');
-  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set("X-DNS-Prefetch-Control", "on");
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload"
+  );
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "SAMEORIGIN");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
   // Content Security Policy
   const csp = [
@@ -1644,26 +1755,30 @@ export function securityMiddleware(request: NextRequest) {
     "font-src 'self'",
     "connect-src 'self' *.clerk.dev api.segment.io",
     "frame-src 'self' *.clerk.dev",
-  ].join('; ');
+  ].join("; ");
 
-  response.headers.set('Content-Security-Policy', csp);
+  response.headers.set("Content-Security-Policy", csp);
 
   return response;
 }
 ```
 
 ### Input Validation with Zod
+
 ```typescript
 // src/lib/validation/schemas.ts
-import { z } from 'zod';
+import { z } from "zod";
 
 export const userSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
-  role: z.enum(['ADMIN', 'USER', 'VIEWER']),
+  role: z.enum(["ADMIN", "USER", "VIEWER"]),
   department: z.string().uuid().optional(),
   position: z.string().uuid().optional(),
-  nip: z.string().regex(/^\d{15}$/).optional(),
+  nip: z
+    .string()
+    .regex(/^\d{15}$/)
+    .optional(),
 });
 
 export const loginSchema = z.object({
@@ -1678,12 +1793,15 @@ export type LoginInput = z.infer<typeof loginSchema>;
 ## 📈 Performance Metrics and KPIs
 
 ### Key Performance Indicators
+
 1. **Core Web Vitals**
+
    - LCP (Largest Contentful Paint): < 2.5s
    - FID (First Input Delay): < 100ms
    - CLS (Cumulative Layout Shift): < 0.1
 
 2. **Application Metrics**
+
    - Time to Interactive: < 3.8s
    - First Contentful Paint: < 1.8s
    - Total Bundle Size: < 200KB (gzipped)
@@ -1696,6 +1814,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 ## ✅ Production Readiness Checklist
 
 ### Pre-Deployment
+
 - [ ] Environment variables configured for production
 - [ ] SSL certificates installed and configured
 - [ ] Database migrations completed
@@ -1708,6 +1827,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 - [ ] CORS settings validated
 
 ### Testing
+
 - [ ] Unit tests passing (coverage > 80%)
 - [ ] Integration tests passing
 - [ ] E2E tests passing
@@ -1718,6 +1838,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 - [ ] Mobile responsiveness verified
 
 ### Documentation
+
 - [ ] API documentation up to date
 - [ ] README files updated
 - [ ] Deployment guide created
@@ -1725,6 +1846,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 - [ ] Architecture diagrams updated
 
 ### Monitoring
+
 - [ ] Application monitoring configured
 - [ ] Log aggregation setup
 - [ ] Alerting rules defined
@@ -1734,24 +1856,28 @@ export type LoginInput = z.infer<typeof loginSchema>;
 ## 🎯 Best Practices Summary
 
 1. **Code Quality**
+
    - Use TypeScript for type safety
    - Follow ESLint and Prettier rules
    - Implement proper error boundaries
    - Write comprehensive tests
 
 2. **Performance**
+
    - Implement code splitting
    - Use React.memo and useMemo appropriately
    - Optimize images and assets
    - Implement proper caching strategies
 
 3. **Security**
+
    - Validate all inputs
    - Implement proper authentication
    - Use HTTPS everywhere
    - Keep dependencies updated
 
 4. **User Experience**
+
    - Implement loading states
    - Provide meaningful error messages
    - Ensure accessibility compliance
@@ -1775,6 +1901,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 ## 🤝 Support and Maintenance
 
 For ongoing support and maintenance:
+
 1. Monitor error logs in Sentry
 2. Review performance metrics weekly
 3. Update dependencies monthly

@@ -1,7 +1,7 @@
 {
   "name": "Gloria System",
   "short_name": "Gloria",
-  "description": "Comprehensive Government Workflow Management System",
+  "description": "Comprehensive YPK Gloria Management System",
   "theme_color": "#667eea",
   "background_color": "#ffffff",
   "display": "standalone",
@@ -72,7 +72,7 @@
       "form_factor": "narrow"
     }
   ],
-  "categories": ["business", "productivity", "government"],
+  "categories": ["business", "productivity"],
   "shortcuts": [
     {
       "name": "Dashboard",

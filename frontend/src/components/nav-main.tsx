@@ -77,7 +77,7 @@ export function NavMain({
                     )}
                     <span>{item.title}</span>
                     {isMainActive && (
-                      <div className="ml-auto w-1 h-5 bg-primary rounded-full" />
+                      <div className="ml-auto w-1 h-5 rounded-full" />
                     )}
                   </Link>
                 </SidebarMenuButton>
@@ -142,14 +142,6 @@ export function NavMain({
                                 "text-sidebar-accent-foreground",
                                 "font-medium",
                                 "relative",
-                                "before:absolute",
-                                "before:left-0",
-                                "before:top-1/2",
-                                "before:-translate-y-1/2",
-                                "before:w-1",
-                                "before:h-4",
-
-                                "before:rounded-full",
                               ]
                             )}
                           >
