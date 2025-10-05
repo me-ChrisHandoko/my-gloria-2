@@ -1,35 +1,41 @@
-'use client';
+"use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { Plus, Building2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/ui/data-table';
-import { Input } from '@/components/ui/input';
+import React, { useState, useCallback, useEffect } from "react";
+import { Plus, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
-import CreateDepartmentModal from './CreateDepartmentModal';
-import EditDepartmentModal from './EditDepartmentModal';
-import DeleteDepartmentModal from './DeleteDepartmentModal';
-import ViewDepartmentModal from './ViewDepartmentModal';
-import DepartmentHierarchyModal from './DepartmentHierarchyModal';
-import { createDepartmentColumns } from './DepartmentColumns';
-import { type Department } from '@/lib/api/services/departments.service';
-import { useGetDepartmentsQuery } from '@/store/api/departmentApi';
-import { useGetOrganizationsQuery } from '@/store/api/organizationApi';
-import { useDebounce } from '@/hooks/useDebounce';
-import { Skeleton } from '@/components/ui/skeleton';
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
+import CreateDepartmentModal from "./CreateDepartmentModal";
+import EditDepartmentModal from "./EditDepartmentModal";
+import DeleteDepartmentModal from "./DeleteDepartmentModal";
+import ViewDepartmentModal from "./ViewDepartmentModal";
+import DepartmentHierarchyModal from "./DepartmentHierarchyModal";
+import { createDepartmentColumns } from "./DepartmentColumns";
+import { type Department } from "@/lib/api/services/departments.service";
+import { useGetDepartmentsQuery } from "@/store/api/departmentApi";
+import { useGetOrganizationsQuery } from "@/store/api/organizationApi";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DepartmentList() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSchool, setSelectedSchool] = useState<string>('all');
-  const [isActiveFilter, setIsActiveFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSchool, setSelectedSchool] = useState<string>("all");
+  const [isActiveFilter, setIsActiveFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   // Modal states
@@ -38,17 +44,17 @@ export default function DepartmentList() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [hierarchyModalOpen, setHierarchyModalOpen] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
-  const [selectedSchoolForHierarchy, setSelectedSchoolForHierarchy] = useState<string>('');
+  const [selectedDepartment, setSelectedDepartment] =
+    useState<Department | null>(null);
+  const [selectedSchoolForHierarchy, setSelectedSchoolForHierarchy] =
+    useState<string>("");
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const itemsPerPage = 10;
 
   // RTK Query hooks
-  const {
-    data: organizationsData,
-    isLoading: isLoadingOrganizations
-  } = useGetOrganizationsQuery({ limit: 100 });
+  const { data: organizationsData, isLoading: isLoadingOrganizations } =
+    useGetOrganizationsQuery({ limit: 100 });
 
   const schools = organizationsData?.data || [];
 
@@ -58,26 +64,29 @@ export default function DepartmentList() {
     isLoading: isLoadingDepartments,
     isFetching,
     error: departmentsError,
-    refetch: refetchDepartments
+    refetch: refetchDepartments,
   } = useGetDepartmentsQuery({
     page: currentPage,
     limit: itemsPerPage,
     search: debouncedSearchTerm,
-    schoolId: selectedSchool === 'all' ? undefined : selectedSchool,
-    isActive: isActiveFilter === 'all' ? undefined : isActiveFilter === 'active',
+    schoolId: selectedSchool === "all" ? undefined : selectedSchool,
+    isActive:
+      isActiveFilter === "all" ? undefined : isActiveFilter === "active",
     includeSchool: true,
     includeParent: true,
   });
 
   const departments = departmentsData?.data || [];
-  const totalPages = departmentsData?.meta?.totalPages || departmentsData?.totalPages || 1;
-  const totalItems = departmentsData?.meta?.total || departmentsData?.total || 0;
+  const totalPages =
+    departmentsData?.meta?.totalPages || departmentsData?.totalPages || 1;
+  const totalItems =
+    departmentsData?.meta?.total || departmentsData?.total || 0;
 
   // Handle RTK Query errors
   useEffect(() => {
     if (departmentsError) {
-      console.error('Failed to fetch departments:', departmentsError);
-      toast.error('Failed to load departments');
+      console.error("Failed to fetch departments:", departmentsError);
+      toast.error("Failed to load departments");
     }
   }, [departmentsError]);
 
@@ -109,21 +118,21 @@ export default function DepartmentList() {
   const handleCreateSuccess = () => {
     setCreateModalOpen(false);
     refetchDepartments();
-    toast.success('Department created successfully');
+    toast.success("Department created successfully");
   };
 
   const handleEditSuccess = () => {
     setEditModalOpen(false);
     setSelectedDepartment(null);
     refetchDepartments();
-    toast.success('Department updated successfully');
+    toast.success("Department updated successfully");
   };
 
   const handleDeleteSuccess = () => {
     setDeleteModalOpen(false);
     setSelectedDepartment(null);
     refetchDepartments();
-    toast.success('Department deleted successfully');
+    toast.success("Department deleted successfully");
   };
 
   // Reset page when filters change
@@ -163,9 +172,14 @@ export default function DepartmentList() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-2xl font-bold">Departments</CardTitle>
-              <CardDescription>Manage organizational departments and hierarchy</CardDescription>
+              <CardDescription>
+                Manage organizational departments and hierarchy
+              </CardDescription>
             </div>
-            <Button onClick={handleCreate} className="gap-2">
+            <Button
+              onClick={handleCreate}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
               <Plus className="h-4 w-4" />
               Add Department
             </Button>
@@ -203,7 +217,7 @@ export default function DepartmentList() {
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
-            {selectedSchool && selectedSchool !== 'all' && (
+            {selectedSchool && selectedSchool !== "all" && (
               <Button
                 variant="outline"
                 onClick={() => handleViewHierarchy(selectedSchool)}
@@ -279,7 +293,7 @@ export default function DepartmentList() {
           schoolId={selectedSchoolForHierarchy}
           onClose={() => {
             setHierarchyModalOpen(false);
-            setSelectedSchoolForHierarchy('');
+            setSelectedSchoolForHierarchy("");
           }}
         />
       )}

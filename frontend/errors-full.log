@@ -2709,7 +2709,6 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/(dashboard)/users/page.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/auth/callback/page.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/auth/validate/page.tsx
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/dashboard/layout.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/DevTools/StateDevTools.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/auth/ProtectedRoute.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@jest/expect-utils/build/index.d.ts
@@ -3187,7 +3186,9 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/validator.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/layout.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/layout.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/dashboard/page.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/organizations/departments/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/users/page.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@babel/types/lib/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@types/babel__generator/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@babel/parser/typings/babel-parser.d.ts

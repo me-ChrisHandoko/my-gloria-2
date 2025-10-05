@@ -62,14 +62,9 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
 
     teams: [
       {
-        name: "Gloria System",
+        name: "YPK Gloria",
         logo: Building2,
-        plan: "Government",
-      },
-      {
-        name: "Department",
-        logo: Shield,
-        plan: "Regional",
+        plan: "Foundation",
       },
     ],
 

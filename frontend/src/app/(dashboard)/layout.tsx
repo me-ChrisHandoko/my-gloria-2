@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode, Suspense, useEffect, useState } from 'react';
+import React, { ReactNode, Suspense, useEffect } from 'react';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { redirect, usePathname } from 'next/navigation';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -96,35 +96,13 @@ function generateBreadcrumbs(pathname: string) {
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const pathname = usePathname();
-  const [defaultOpen, setDefaultOpen] = useState(true);
 
   // Breadcrumbs
   const breadcrumbs = generateBreadcrumbs(pathname);
 
-  // Handle mounting
-  useEffect(() => {
-    // Check for saved sidebar state
-    const savedState = localStorage.getItem('sidebar-state');
-    if (savedState !== null) {
-      setDefaultOpen(savedState === 'true');
-    } else {
-      // Default to open on desktop, closed on mobile
-      const isMobile = window.innerWidth < 1024;
-      setDefaultOpen(!isMobile);
-    }
-  }, []);
-
-  // Handle sidebar state persistence
-  const handleSidebarOpenChange = (open: boolean) => {
-    localStorage.setItem('sidebar-state', String(open));
-  };
-
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <SidebarProvider
-        defaultOpen={defaultOpen}
-        onOpenChange={handleSidebarOpenChange}
-      >
+      <SidebarProvider>
         <div className="flex min-h-screen w-full">
           {/* Sidebar with lazy loading */}
           <Suspense fallback={<SidebarSkeleton />}>
