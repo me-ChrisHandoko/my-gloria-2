@@ -55,7 +55,7 @@ export const createDepartmentColumns = ({
       );
     },
     cell: ({ row }) => {
-      return <div className="font-medium">{row.getValue('name')}</div>;
+      return <div className="font-medium max-w-[200px] truncate" title={row.getValue('name')}>{row.getValue('name')}</div>;
     },
   },
   {
@@ -89,22 +89,22 @@ export const createDepartmentColumns = ({
   {
     id: 'school',
     accessorFn: (row) => row.school?.name,
-    header: 'School',
+    header: () => <div className="hidden lg:table-cell">School</div>,
     cell: ({ row }) => {
       const school = row.original.school;
-      return <div>{school?.name || '-'}</div>;
+      return <div className="hidden lg:table-cell max-w-[150px] truncate" title={school?.name}>{school?.name || '-'}</div>;
     },
   },
   {
     id: 'parent',
     accessorFn: (row) => row.parent?.name,
-    header: 'Parent Department',
+    header: () => <div className="hidden md:table-cell">Parent Department</div>,
     cell: ({ row }) => {
       const parent = row.original.parent;
       return (
-        <div className="text-sm">
+        <div className="text-sm hidden md:table-cell max-w-[150px]">
           {parent ? (
-            <span>{parent.name}</span>
+            <span className="truncate block" title={parent.name}>{parent.name}</span>
           ) : (
             <span className="text-muted-foreground">-</span>
           )}
@@ -119,11 +119,13 @@ export const createDepartmentColumns = ({
     cell: ({ row }) => {
       const head = row.original.head;
       return (
-        <div className="text-sm">
+        <div className="text-sm max-w-[200px]">
           {head ? (
             <div>
-              <div>{head.name}</div>
-              <div className="text-xs text-muted-foreground">{head.email}</div>
+              <div className="truncate">{head.name}</div>
+              <div className="text-xs text-muted-foreground truncate" title={head.email}>
+                {head.email}
+              </div>
             </div>
           ) : (
             <span className="text-muted-foreground">-</span>
@@ -157,7 +159,7 @@ export const createDepartmentColumns = ({
     cell: ({ row }) => {
       const count = row.getValue('userCount') as number;
       return (
-        <div className="text-center">
+        <div className="text-center whitespace-nowrap">
           <Badge variant="secondary">{count || 0}</Badge>
         </div>
       );
@@ -188,7 +190,7 @@ export const createDepartmentColumns = ({
     cell: ({ row }) => {
       const isActive = row.getValue('isActive') as boolean;
       return (
-        <div className="text-center">
+        <div className="text-center whitespace-nowrap">
           <Badge
             variant={isActive ? 'success' : 'secondary'}
             className={cn(
@@ -214,7 +216,7 @@ export const createDepartmentColumns = ({
       const department = row.original;
 
       return (
-        <div className="text-right">
+        <div className="text-right whitespace-nowrap">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">

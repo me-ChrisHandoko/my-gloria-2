@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { ReactNode, Suspense, useEffect } from 'react';
-import { useAuth, useUser } from '@clerk/nextjs';
-import { redirect, usePathname } from 'next/navigation';
-import { ErrorBoundary } from 'react-error-boundary';
-import AuthGuard from '@/components/auth/auth-guard';
+import React, { ReactNode, Suspense, useEffect } from "react";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { redirect, usePathname } from "next/navigation";
+import { ErrorBoundary } from "react-error-boundary";
+import AuthGuard from "@/components/auth/auth-guard";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
@@ -51,18 +51,27 @@ function HeaderSkeleton() {
 }
 
 // Error Fallback Component
-function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
+function ErrorFallback({
+  error,
+  resetErrorBoundary,
+}: {
+  error: Error;
+  resetErrorBoundary: () => void;
+}) {
   useEffect(() => {
     // Log error to monitoring service (e.g., Sentry)
-    console.error('Dashboard Layout Error:', error);
+    console.error("Dashboard Layout Error:", error);
   }, [error]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-4 p-8">
-        <h2 className="text-2xl font-bold text-destructive">Something went wrong</h2>
+        <h2 className="text-2xl font-bold text-destructive">
+          Something went wrong
+        </h2>
         <p className="text-muted-foreground max-w-md">
-          We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+          We encountered an unexpected error. Please try refreshing the page or
+          contact support if the problem persists.
         </p>
         <button
           onClick={resetErrorBoundary}
@@ -77,16 +86,18 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetError
 
 // Breadcrumb generator based on pathname
 function generateBreadcrumbs(pathname: string) {
-  const segments = pathname.split('/').filter(Boolean);
+  const segments = pathname.split("/").filter(Boolean);
   const breadcrumbs = [];
 
   for (let i = 0; i < segments.length; i++) {
-    const path = '/' + segments.slice(0, i + 1).join('/');
-    const label = segments[i].charAt(0).toUpperCase() + segments[i].slice(1).replace(/-/g, ' ');
+    const path = "/" + segments.slice(0, i + 1).join("/");
+    const label =
+      segments[i].charAt(0).toUpperCase() +
+      segments[i].slice(1).replace(/-/g, " ");
     breadcrumbs.push({
       label,
       path,
-      isLast: i === segments.length - 1
+      isLast: i === segments.length - 1,
     });
   }
 
@@ -110,16 +121,13 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
           </Suspense>
 
           {/* Main content area */}
-          <SidebarInset className="flex flex-col w-full">
+          <SidebarInset>
             {/* Header with breadcrumb */}
             <Suspense fallback={<HeaderSkeleton />}>
               <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
                 <div className="flex items-center gap-2 px-4 w-full">
                   <SidebarTrigger className="-ml-1" />
-                  <Separator
-                    orientation="vertical"
-                    className="mr-2 h-4"
-                  />
+                  <Separator orientation="vertical" className="mr-2 h-4" />
 
                   {/* Breadcrumb Navigation */}
                   <Breadcrumb>
@@ -166,7 +174,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
                 FallbackComponent={ErrorFallback}
                 resetKeys={[pathname]}
               >
-                <div className="container mx-auto p-4 lg:p-6">
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
                   {children}
                 </div>
               </ErrorBoundary>
@@ -181,10 +189,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
 // Main export with Auth protection
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthGuard
-      requireAuth={true}
-      redirectTo="/sign-in"
-    >
+    <AuthGuard requireAuth={true} redirectTo="/sign-in">
       <DashboardLayoutContent>{children}</DashboardLayoutContent>
     </AuthGuard>
   );
