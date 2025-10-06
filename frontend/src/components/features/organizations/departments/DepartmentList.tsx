@@ -166,25 +166,30 @@ export default function DepartmentList() {
   }
 
   return (
-    <>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Departments
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Manage organizational departments and hierarchy
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleCreate}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Department
+          </button>
+        </div>
+      </div>
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl font-bold">Departments</CardTitle>
-              <CardDescription>
-                Manage organizational departments and hierarchy
-              </CardDescription>
-            </div>
-            <Button onClick={handleCreate} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Department
-            </Button>
-          </div>
-        </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="mb-6 flex flex-wrap gap-4">
+          <div className="mt-6 mb-6 flex flex-wrap gap-4">
             <Input
               placeholder="Search departments..."
               value={searchTerm}
@@ -294,6 +299,6 @@ export default function DepartmentList() {
           }}
         />
       )}
-    </>
+    </div>
   );
 }

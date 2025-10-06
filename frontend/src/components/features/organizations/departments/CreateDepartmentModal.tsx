@@ -13,16 +13,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Building2, FolderTree, User, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   type CreateDepartmentDto,
   type Department,
@@ -180,75 +175,204 @@ export default function CreateDepartmentModal({
               <Label htmlFor="school" className="required">
                 School
               </Label>
-              <Select
+              <Combobox
+                options={schools.map((school) => ({
+                  value: school.id,
+                  label: school.name,
+                  searchLabel: `${school.name} ${school.code}`,
+                }))}
                 value={formData.schoolId}
                 onValueChange={(value) => setFormData({ ...formData, schoolId: value })}
+                placeholder={isLoadingSchools ? 'Loading schools...' : 'Select a school'}
+                searchPlaceholder="Search schools..."
+                emptyMessage="No schools found."
                 disabled={isLoadingSchools}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={isLoadingSchools ? 'Loading...' : 'Select a school'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {schools.map((school) => (
-                    <SelectItem key={school.id} value={school.id}>
-                      {school.name} ({school.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                renderOption={(option, isSelected) => {
+                  const school = schools.find((s) => s.id === option.value);
+                  if (!school) return null;
+                  return (
+                    <>
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4 shrink-0",
+                          isSelected ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex items-start gap-2 w-full min-w-0">
+                        <Building2 className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                          <span className="font-medium truncate" title={school.name}>
+                            {school.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{school.code}</span>
+                        </div>
+                      </div>
+                    </>
+                  );
+                }}
+                renderTrigger={(selectedOption) => {
+                  if (!selectedOption) return null;
+                  const school = schools.find((s) => s.id === selectedOption.value);
+                  if (!school) return <span>{selectedOption.label}</span>;
+                  return (
+                    <div className="flex items-center gap-2 w-full min-w-0">
+                      <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{school.name}</span>
+                    </div>
+                  );
+                }}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="parent">Parent Department (Optional)</Label>
-                <Select
+                <Combobox
+                  options={[
+                    { value: 'none', label: 'None', searchLabel: 'none' },
+                    ...departments.map((dept) => ({
+                      value: dept.id,
+                      label: dept.name,
+                      searchLabel: `${dept.name} ${dept.code}`,
+                    })),
+                  ]}
                   value={formData.parentId || 'none'}
                   onValueChange={(value) =>
                     setFormData({ ...formData, parentId: value === 'none' ? undefined : value })
                   }
+                  placeholder={
+                    !formData.schoolId
+                      ? 'Select school first'
+                      : isLoadingDepartments
+                      ? 'Loading departments...'
+                      : 'Select parent department'
+                  }
+                  searchPlaceholder="Search departments..."
+                  emptyMessage="No departments found."
                   disabled={!formData.schoolId || isLoadingDepartments}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        !formData.schoolId
-                          ? 'Select school first'
-                          : isLoadingDepartments
-                          ? 'Loading...'
-                          : 'Select parent department'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
-                        {dept.name} ({dept.code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  renderOption={(option, isSelected) => {
+                    if (option.value === 'none') {
+                      return (
+                        <>
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4 shrink-0",
+                              isSelected ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <span className="text-muted-foreground italic">None</span>
+                        </>
+                      );
+                    }
+                    const dept = departments.find((d) => d.id === option.value);
+                    if (!dept) return null;
+                    return (
+                      <>
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4 shrink-0",
+                            isSelected ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <div className="flex items-center gap-2 w-full min-w-0">
+                          <FolderTree className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate flex-1" title={dept.name}>
+                            {dept.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            {dept.code}
+                          </span>
+                        </div>
+                      </>
+                    );
+                  }}
+                  renderTrigger={(selectedOption) => {
+                    if (!selectedOption) return null;
+                    if (selectedOption.value === 'none') {
+                      return <span className="text-muted-foreground italic">None</span>;
+                    }
+                    const dept = departments.find((d) => d.id === selectedOption.value);
+                    if (!dept) return <span>{selectedOption.label}</span>;
+                    return (
+                      <div className="flex items-center gap-2 w-full min-w-0">
+                        <FolderTree className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{dept.name}</span>
+                      </div>
+                    );
+                  }}
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="head">Department Head (Optional)</Label>
-                <Select
+                <Combobox
+                  options={[
+                    { value: 'none', label: 'None', searchLabel: 'none' },
+                    ...users.map((user) => ({
+                      value: user.id,
+                      label: user.name,
+                      searchLabel: `${user.name} ${user.email}`,
+                    })),
+                  ]}
                   value={formData.headId || 'none'}
                   onValueChange={(value) => setFormData({ ...formData, headId: value === 'none' ? undefined : value })}
+                  placeholder={isLoadingUsers ? 'Loading users...' : 'Select department head'}
+                  searchPlaceholder="Search users..."
+                  emptyMessage="No users found."
                   disabled={isLoadingUsers}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={isLoadingUsers ? 'Loading...' : 'Select department head'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name} ({user.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  renderOption={(option, isSelected) => {
+                    if (option.value === 'none') {
+                      return (
+                        <>
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4 shrink-0",
+                              isSelected ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <span className="text-muted-foreground italic">None</span>
+                        </>
+                      );
+                    }
+                    const user = users.find((u) => u.id === option.value);
+                    if (!user) return null;
+                    return (
+                      <>
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4 shrink-0",
+                            isSelected ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <div className="flex items-start gap-2 w-full min-w-0">
+                          <User className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                            <span className="font-medium truncate" title={user.name}>
+                              {user.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground truncate" title={user.email}>
+                              {user.email}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  }}
+                  renderTrigger={(selectedOption) => {
+                    if (!selectedOption) return null;
+                    if (selectedOption.value === 'none') {
+                      return <span className="text-muted-foreground italic">None</span>;
+                    }
+                    const user = users.find((u) => u.id === selectedOption.value);
+                    if (!user) return <span>{selectedOption.label}</span>;
+                    return (
+                      <div className="flex items-center gap-2 w-full min-w-0">
+                        <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{user.name}</span>
+                      </div>
+                    );
+                  }}
+                />
               </div>
             </div>
 
