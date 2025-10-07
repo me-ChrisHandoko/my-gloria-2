@@ -13,7 +13,15 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { ChevronUpIcon, ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import {
+  ChevronUpIcon,
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+  ChevronDoubleLeftIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronDoubleRightIcon
+} from '@heroicons/react/24/outline';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -224,34 +232,67 @@ export function DataTable<TData, TValue>({
 
       {/* Pagination */}
       {showPagination && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
           <div className="text-sm text-gray-700 dark:text-gray-300">
             {pagination ? (
               <>
-                Showing{' '}
-                <span className="font-medium">
-                  {(pagination.page - 1) * pagination.pageSize + 1}
-                </span>{' '}
-                to{' '}
-                <span className="font-medium">
-                  {Math.min(pagination.page * pagination.pageSize, pagination.total)}
-                </span>{' '}
-                of <span className="font-medium">{pagination.total}</span> results
+                {/* Mobile version - abbreviated */}
+                <span className="sm:hidden">
+                  <span className="font-medium">
+                    {(pagination.page - 1) * pagination.pageSize + 1}
+                  </span>
+                  -
+                  <span className="font-medium">
+                    {Math.min(pagination.page * pagination.pageSize, pagination.total)}
+                  </span>
+                  {' '}of{' '}
+                  <span className="font-medium">{pagination.total}</span>
+                </span>
+                {/* Desktop version - full text */}
+                <span className="hidden sm:inline">
+                  Showing{' '}
+                  <span className="font-medium">
+                    {(pagination.page - 1) * pagination.pageSize + 1}
+                  </span>{' '}
+                  to{' '}
+                  <span className="font-medium">
+                    {Math.min(pagination.page * pagination.pageSize, pagination.total)}
+                  </span>{' '}
+                  of <span className="font-medium">{pagination.total}</span> results
+                </span>
               </>
             ) : (
               <>
-                Showing{' '}
-                <span className="font-medium">
-                  {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
-                </span>{' '}
-                to{' '}
-                <span className="font-medium">
-                  {Math.min(
-                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                    data.length
-                  )}
-                </span>{' '}
-                of <span className="font-medium">{data.length}</span> results
+                {/* Mobile version - abbreviated */}
+                <span className="sm:hidden">
+                  <span className="font-medium">
+                    {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+                  </span>
+                  -
+                  <span className="font-medium">
+                    {Math.min(
+                      (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                      data.length
+                    )}
+                  </span>
+                  {' '}of{' '}
+                  <span className="font-medium">{data.length}</span>
+                </span>
+                {/* Desktop version - full text */}
+                <span className="hidden sm:inline">
+                  Showing{' '}
+                  <span className="font-medium">
+                    {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+                  </span>{' '}
+                  to{' '}
+                  <span className="font-medium">
+                    {Math.min(
+                      (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                      data.length
+                    )}
+                  </span>{' '}
+                  of <span className="font-medium">{data.length}</span> results
+                </span>
               </>
             )}
           </div>
@@ -291,9 +332,11 @@ export function DataTable<TData, TValue>({
                     ? pagination.page === 1
                     : !table.getCanPreviousPage()
                 }
-                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="rounded-md border border-gray-300 bg-white px-2 sm:px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                aria-label="First page"
               >
-                First
+                <ChevronDoubleLeftIcon className="h-4 w-4 sm:hidden" />
+                <span className="hidden sm:inline">First</span>
               </button>
               <button
                 onClick={() => {
@@ -308,9 +351,11 @@ export function DataTable<TData, TValue>({
                     ? pagination.page === 1
                     : !table.getCanPreviousPage()
                 }
-                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="rounded-md border border-gray-300 bg-white px-2 sm:px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                aria-label="Previous page"
               >
-                Previous
+                <ChevronLeftIcon className="h-4 w-4 sm:hidden" />
+                <span className="hidden sm:inline">Previous</span>
               </button>
               <button
                 onClick={() => {
@@ -325,9 +370,11 @@ export function DataTable<TData, TValue>({
                     ? pagination.page >= Math.ceil(pagination.total / pagination.pageSize)
                     : !table.getCanNextPage()
                 }
-                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="rounded-md border border-gray-300 bg-white px-2 sm:px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                aria-label="Next page"
               >
-                Next
+                <ChevronRightIcon className="h-4 w-4 sm:hidden" />
+                <span className="hidden sm:inline">Next</span>
               </button>
               <button
                 onClick={() => {
@@ -343,9 +390,11 @@ export function DataTable<TData, TValue>({
                     ? pagination.page >= Math.ceil(pagination.total / pagination.pageSize)
                     : !table.getCanNextPage()
                 }
-                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="rounded-md border border-gray-300 bg-white px-2 sm:px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                aria-label="Last page"
               >
-                Last
+                <ChevronDoubleRightIcon className="h-4 w-4 sm:hidden" />
+                <span className="hidden sm:inline">Last</span>
               </button>
             </div>
           </div>
