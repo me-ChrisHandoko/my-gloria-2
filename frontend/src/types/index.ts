@@ -79,17 +79,21 @@ export interface Department {
 // Position types
 export interface Position {
   id: string;
+  code: string;
   name: string;
-  description?: string;
-  departmentId: string;
-  schoolId: string;
-  organizationId: string;
-  code?: string;
-  level?: number;
+  departmentId?: string;
+  schoolId?: string;
+  hierarchyLevel: number;
+  maxHolders?: number;
+  isUnique?: boolean;
   isActive?: boolean;
-  permissions?: string[];
   createdAt: Date;
   updatedAt: Date;
+  // For backward compatibility and extended data
+  organizationId?: string;
+  description?: string;
+  level?: number; // Alias for hierarchyLevel
+  permissions?: string[];
 }
 
 // Role types

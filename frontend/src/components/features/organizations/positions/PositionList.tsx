@@ -1,0 +1,328 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import { toast } from "sonner";
+import { createPositionColumns } from "./PositionColumns";
+import { type Position } from "@/lib/api/services/positions.service";
+import { useGetPositionsQuery } from "@/store/api/positionApi";
+import { useGetOrganizationsQuery } from "@/store/api/organizationApi";
+import { useGetDepartmentsQuery } from "@/store/api/departmentApi";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Skeleton } from "@/components/ui/skeleton";
+import CreatePositionModal from "./CreatePositionModal";
+import EditPositionModal from "./EditPositionModal";
+import ViewPositionModal from "./ViewPositionModal";
+import DeletePositionModal from "./DeletePositionModal";
+
+export default function PositionList() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSchool, setSelectedSchool] = useState<string>("all");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
+  const [isActiveFilter, setIsActiveFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Modal states - will be implemented in Phase 2
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [holdersModalOpen, setHoldersModalOpen] = useState(false);
+  const [permissionsModalOpen, setPermissionsModalOpen] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const itemsPerPage = 10;
+
+  // RTK Query hooks
+  const { data: organizationsData, isLoading: isLoadingOrganizations } =
+    useGetOrganizationsQuery({ limit: 100 });
+
+  const schools = organizationsData?.data || [];
+
+  // Fetch departments based on selected school
+  const {
+    data: departmentsData,
+    isLoading: isLoadingDepartments,
+  } = useGetDepartmentsQuery(
+    {
+      schoolId: selectedSchool === "all" ? undefined : selectedSchool,
+      limit: 100,
+      isActive: true,
+    },
+    {
+      skip: selectedSchool === "all",
+    }
+  );
+
+  const departments = departmentsData?.data || [];
+
+  // Fetch positions using RTK Query
+  const {
+    data: positionsData,
+    isLoading: isLoadingPositions,
+    isFetching,
+    error: positionsError,
+    refetch: refetchPositions,
+  } = useGetPositionsQuery({
+    page: currentPage,
+    limit: itemsPerPage,
+    search: debouncedSearchTerm,
+    schoolId: selectedSchool === "all" ? undefined : selectedSchool,
+    departmentId: selectedDepartment === "all" ? undefined : selectedDepartment,
+    isActive:
+      isActiveFilter === "all" ? undefined : isActiveFilter === "active",
+  });
+
+  const positions = positionsData?.data || [];
+  const totalPages =
+    positionsData?.meta?.totalPages || positionsData?.totalPages || 1;
+  const totalItems =
+    positionsData?.meta?.total || positionsData?.total || 0;
+
+  // Handle RTK Query errors
+  useEffect(() => {
+    if (positionsError) {
+      console.error("Failed to fetch positions:", positionsError);
+      toast.error("Failed to load positions");
+    }
+  }, [positionsError]);
+
+  // Reset department filter when school changes
+  useEffect(() => {
+    setSelectedDepartment("all");
+  }, [selectedSchool]);
+
+  // Handle actions
+  const handleCreate = () => {
+    setCreateModalOpen(true);
+  };
+
+  const handleEdit = (position: Position) => {
+    setSelectedPosition(position);
+    setEditModalOpen(true);
+  };
+
+  const handleDelete = (position: Position) => {
+    setSelectedPosition(position);
+    setDeleteModalOpen(true);
+  };
+
+  const handleView = (position: Position) => {
+    setSelectedPosition(position);
+    setViewModalOpen(true);
+  };
+
+  const handleViewHolders = (position: Position) => {
+    setSelectedPosition(position);
+    setHoldersModalOpen(true);
+  };
+
+  const handleManagePermissions = (position: Position) => {
+    setSelectedPosition(position);
+    setPermissionsModalOpen(true);
+  };
+
+  const handleCreateSuccess = () => {
+    setCreateModalOpen(false);
+    refetchPositions();
+    toast.success("Position created successfully");
+  };
+
+  const handleEditSuccess = () => {
+    setEditModalOpen(false);
+    setSelectedPosition(null);
+    refetchPositions();
+    toast.success("Position updated successfully");
+  };
+
+  const handleDeleteSuccess = () => {
+    setDeleteModalOpen(false);
+    setSelectedPosition(null);
+    refetchPositions();
+    toast.success("Position deleted successfully");
+  };
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, selectedSchool, selectedDepartment, isActiveFilter]);
+
+  // Create columns with action handlers
+  const columns = createPositionColumns({
+    onView: handleView,
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+    onViewHolders: handleViewHolders,
+    onManagePermissions: handleManagePermissions,
+  });
+
+  if (isLoadingPositions && positions.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+            <div className="mt-6 space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Positions
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Manage organizational positions and assignments
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleCreate}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Position
+          </button>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent>
+          {/* Filters */}
+          <div className="mt-6 mb-6 flex flex-wrap gap-4">
+            <Input
+              placeholder="Search positions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-xs"
+            />
+            <Select value={selectedSchool} onValueChange={setSelectedSchool}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="All Schools" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Schools</SelectItem>
+                {schools.map((school) => (
+                  <SelectItem key={school.id} value={school.id}>
+                    {school.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={selectedDepartment}
+              onValueChange={setSelectedDepartment}
+              disabled={selectedSchool === "all" || isLoadingDepartments}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="All Departments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* DataTable */}
+          <DataTable
+            columns={columns}
+            data={positions}
+            isLoading={isFetching}
+            showSearch={false}
+            showPagination={true}
+            pagination={{
+              page: currentPage,
+              pageSize: itemsPerPage,
+              total: totalItems,
+              onPageChange: setCurrentPage,
+              onPageSizeChange: () => {},
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Modals */}
+      <CreatePositionModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
+
+      {selectedPosition && (
+        <>
+          <EditPositionModal
+            open={editModalOpen}
+            position={selectedPosition}
+            onClose={() => {
+              setEditModalOpen(false);
+              setSelectedPosition(null);
+            }}
+            onSuccess={handleEditSuccess}
+          />
+
+          <ViewPositionModal
+            open={viewModalOpen}
+            position={selectedPosition}
+            onClose={() => {
+              setViewModalOpen(false);
+              setSelectedPosition(null);
+            }}
+          />
+
+          <DeletePositionModal
+            open={deleteModalOpen}
+            position={selectedPosition}
+            onClose={() => {
+              setDeleteModalOpen(false);
+              setSelectedPosition(null);
+            }}
+            onSuccess={handleDeleteSuccess}
+          />
+        </>
+      )}
+
+      {/* TODO: Add PositionHoldersModal (Phase 3) */}
+      {/* TODO: Add PositionPermissionsModal (Phase 3) */}
+    </div>
+  );
+}

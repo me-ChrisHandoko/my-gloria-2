@@ -10,36 +10,48 @@ export const positionApi = apiSlice.injectEndpoints({
     getPositions: builder.query<PaginatedResponse<Position>, QueryParams & {
       departmentId?: string;
       schoolId?: string;
-      organizationId?: string;
     }>({
-      query: (params = {}) => ({
-        url: '/positions',
-        params: {
+      query: (params = {}) => {
+        const queryParams: Record<string, any> = {
           page: params.page || 1,
           limit: params.limit || 10,
-          search: params.search || '',
-          sortBy: params.sortBy || 'level',
+          sortBy: params.sortBy || 'name',
           sortOrder: params.sortOrder || 'asc',
-          departmentId: params.departmentId,
-          schoolId: params.schoolId,
-          organizationId: params.organizationId,
-          isActive: params.isActive,
-          ...params
-        },
-      }),
-      providesTags: (result) =>
-        result
+        };
+
+        // Only add optional parameters if they have values
+        if (params.search) queryParams.name = params.search;
+        if (params.departmentId) queryParams.departmentId = params.departmentId;
+        if (params.schoolId) queryParams.schoolId = params.schoolId;
+        if (params.isActive !== undefined) queryParams.isActive = params.isActive;
+
+        return {
+          url: '/organizations/positions',
+          params: queryParams,
+        };
+      },
+      providesTags: (result) => {
+        // Debug logging to diagnose response structure issues
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Position API result:', result);
+          console.log('result.data type:', typeof result?.data);
+          console.log('result.data isArray:', Array.isArray(result?.data));
+        }
+
+        // Defensive check: ensure result.data exists and is an array
+        return result?.data && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Position' as const, id })),
               { type: 'Position', id: 'LIST' },
             ]
-          : [{ type: 'Position', id: 'LIST' }],
+          : [{ type: 'Position', id: 'LIST' }];
+      },
       keepUnusedDataFor: 300,
     }),
 
     // Get single position
     getPositionById: builder.query<Position, string>({
-      query: (id) => `/positions/${id}`,
+      query: (id) => `/organizations/positions/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Position', id }],
     }),
 
@@ -61,7 +73,7 @@ export const positionApi = apiSlice.injectEndpoints({
 
     // Get position holders (users in this position)
     getPositionHolders: builder.query<any[], string>({
-      query: (positionId) => `/positions/${positionId}/holders`,
+      query: (positionId) => `/organizations/positions/${positionId}/holders`,
       providesTags: (_result, _error, positionId) => [
         { type: 'Position', id: `${positionId}-holders` }
       ],
@@ -69,7 +81,7 @@ export const positionApi = apiSlice.injectEndpoints({
 
     // Get position permissions
     getPositionPermissions: builder.query<string[], string>({
-      query: (positionId) => `/positions/${positionId}/permissions`,
+      query: (positionId) => `/organizations/positions/${positionId}/permissions`,
       providesTags: (_result, _error, positionId) => [
         { type: 'Position', id: `${positionId}-permissions` }
       ],
@@ -80,7 +92,7 @@ export const positionApi = apiSlice.injectEndpoints({
     // Create position
     createPosition: builder.mutation<Position, Partial<Position>>({
       query: (position) => ({
-        url: '/positions',
+        url: '/organizations/positions',
         method: 'POST',
         body: position,
       }),
@@ -113,7 +125,7 @@ export const positionApi = apiSlice.injectEndpoints({
     // Update position
     updatePosition: builder.mutation<Position, { id: string; data: Partial<Position> }>({
       query: ({ id, data }) => ({
-        url: `/positions/${id}`,
+        url: `/organizations/positions/${id}`,
         method: 'PATCH',
         body: data,
       }),
@@ -140,7 +152,7 @@ export const positionApi = apiSlice.injectEndpoints({
     // Delete position
     deletePosition: builder.mutation<{ success: boolean; message: string }, string>({
       query: (id) => ({
-        url: `/positions/${id}`,
+        url: `/organizations/positions/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: (_result, _error, id) => [
@@ -156,7 +168,7 @@ export const positionApi = apiSlice.injectEndpoints({
       { id: string; permissions: string[] }
     >({
       query: ({ id, permissions }) => ({
-        url: `/positions/${id}/permissions`,
+        url: `/organizations/positions/${id}/permissions`,
         method: 'PUT',
         body: { permissions },
       }),
@@ -172,7 +184,7 @@ export const positionApi = apiSlice.injectEndpoints({
       { id: string; level: number }
     >({
       query: ({ id, level }) => ({
-        url: `/positions/${id}/level`,
+        url: `/organizations/positions/${id}/level`,
         method: 'PATCH',
         body: { level },
       }),
@@ -188,7 +200,7 @@ export const positionApi = apiSlice.injectEndpoints({
       { ids: string[]; data: Partial<Position> }
     >({
       query: ({ ids, data }) => ({
-        url: '/positions/bulk-update',
+        url: '/organizations/positions/bulk-update',
         method: 'PATCH',
         body: { ids, data },
       }),
@@ -204,7 +216,7 @@ export const positionApi = apiSlice.injectEndpoints({
       { id: string; newName: string; targetDepartmentId?: string }
     >({
       query: ({ id, newName, targetDepartmentId }) => ({
-        url: `/positions/${id}/clone`,
+        url: `/organizations/positions/${id}/clone`,
         method: 'POST',
         body: { newName, targetDepartmentId },
       }),
@@ -220,7 +232,7 @@ export const positionApi = apiSlice.injectEndpoints({
       { positionId: string; userId: string }
     >({
       query: ({ positionId, userId }) => ({
-        url: `/positions/${positionId}/assign`,
+        url: `/organizations/positions/${positionId}/assign`,
         method: 'POST',
         body: { userId },
       }),
@@ -236,7 +248,7 @@ export const positionApi = apiSlice.injectEndpoints({
       { positionId: string; userId: string }
     >({
       query: ({ positionId, userId }) => ({
-        url: `/positions/${positionId}/remove`,
+        url: `/organizations/positions/${positionId}/remove`,
         method: 'POST',
         body: { userId },
       }),
