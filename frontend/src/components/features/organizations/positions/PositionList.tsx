@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
@@ -28,22 +28,30 @@ import CreatePositionModal from "./CreatePositionModal";
 import EditPositionModal from "./EditPositionModal";
 import ViewPositionModal from "./ViewPositionModal";
 import DeletePositionModal from "./DeletePositionModal";
+import PositionHierarchyModal from "./PositionHierarchyModal";
+import ViewHoldersModal from "./ViewHoldersModal";
+import ManagePermissionsModal from "./ManagePermissionsModal";
+import AssignUserModal from "./AssignUserModal";
 
 export default function PositionList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSchool, setSelectedSchool] = useState<string>("all");
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [isActiveFilter, setIsActiveFilter] = useState<string>("all");
+  const [hierarchyLevelFilter, setHierarchyLevelFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Modal states - will be implemented in Phase 2
+  // Modal states
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [holdersModalOpen, setHoldersModalOpen] = useState(false);
   const [permissionsModalOpen, setPermissionsModalOpen] = useState(false);
+  const [hierarchyModalOpen, setHierarchyModalOpen] = useState(false);
+  const [assignUserModalOpen, setAssignUserModalOpen] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+  const [selectedSchoolForHierarchy, setSelectedSchoolForHierarchy] = useState<string>("");
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const itemsPerPage = 10;
@@ -88,11 +96,42 @@ export default function PositionList() {
       isActiveFilter === "all" ? undefined : isActiveFilter === "active",
   });
 
-  const positions = positionsData?.data || [];
+  // Filter positions by hierarchy level on client-side
+  const allPositions = positionsData?.data || [];
+  const positions = React.useMemo(() => {
+    if (hierarchyLevelFilter === "all") {
+      return allPositions;
+    }
+
+    // Handle range filters
+    if (hierarchyLevelFilter === "1-3") {
+      return allPositions.filter(
+        (p) => (p.hierarchyLevel || p.level || 0) >= 1 && (p.hierarchyLevel || p.level || 0) <= 3
+      );
+    }
+    if (hierarchyLevelFilter === "4-6") {
+      return allPositions.filter(
+        (p) => (p.hierarchyLevel || p.level || 0) >= 4 && (p.hierarchyLevel || p.level || 0) <= 6
+      );
+    }
+    if (hierarchyLevelFilter === "7-10") {
+      return allPositions.filter(
+        (p) => (p.hierarchyLevel || p.level || 0) >= 7 && (p.hierarchyLevel || p.level || 0) <= 10
+      );
+    }
+
+    // Handle single level filter
+    const levelNum = parseInt(hierarchyLevelFilter);
+    if (!isNaN(levelNum)) {
+      return allPositions.filter((p) => (p.hierarchyLevel || p.level || 0) === levelNum);
+    }
+
+    return allPositions;
+  }, [allPositions, hierarchyLevelFilter]);
+
   const totalPages =
     positionsData?.meta?.totalPages || positionsData?.totalPages || 1;
-  const totalItems =
-    positionsData?.meta?.total || positionsData?.total || 0;
+  const totalItems = positions.length; // Use filtered count
 
   // Handle RTK Query errors
   useEffect(() => {
@@ -137,6 +176,21 @@ export default function PositionList() {
     setPermissionsModalOpen(true);
   };
 
+  const handleViewHierarchy = (schoolId: string) => {
+    setSelectedSchoolForHierarchy(schoolId);
+    setHierarchyModalOpen(true);
+  };
+
+  const handleAssignUserSuccess = () => {
+    setAssignUserModalOpen(false);
+    refetchPositions();
+    toast.success("User assigned successfully");
+  };
+
+  const handleHoldersSuccess = () => {
+    refetchPositions();
+  };
+
   const handleCreateSuccess = () => {
     setCreateModalOpen(false);
     refetchPositions();
@@ -160,7 +214,7 @@ export default function PositionList() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, selectedSchool, selectedDepartment, isActiveFilter]);
+  }, [debouncedSearchTerm, selectedSchool, selectedDepartment, isActiveFilter, hierarchyLevelFilter]);
 
   // Create columns with action handlers
   const columns = createPositionColumns({
@@ -251,6 +305,22 @@ export default function PositionList() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={hierarchyLevelFilter} onValueChange={setHierarchyLevelFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All Levels" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="1-3">Senior (1-3)</SelectItem>
+                <SelectItem value="4-6">Mid (4-6)</SelectItem>
+                <SelectItem value="7-10">Entry (7-10)</SelectItem>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
+                  <SelectItem key={level} value={level.toString()}>
+                    Level {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="All Status" />
@@ -261,6 +331,16 @@ export default function PositionList() {
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
+            {selectedSchool && selectedSchool !== "all" && (
+              <Button
+                variant="outline"
+                onClick={() => handleViewHierarchy(selectedSchool)}
+                className="gap-2"
+              >
+                <Building2 className="h-4 w-4" />
+                View Hierarchy
+              </Button>
+            )}
           </div>
 
           {/* DataTable */}
@@ -321,8 +401,55 @@ export default function PositionList() {
         </>
       )}
 
-      {/* TODO: Add PositionHoldersModal (Phase 3) */}
-      {/* TODO: Add PositionPermissionsModal (Phase 3) */}
+      {/* Hierarchy Modal */}
+      <PositionHierarchyModal
+        open={hierarchyModalOpen}
+        schoolId={selectedSchoolForHierarchy}
+        onClose={() => {
+          setHierarchyModalOpen(false);
+          setSelectedSchoolForHierarchy("");
+        }}
+      />
+
+      {/* Phase 4 Modals */}
+      {selectedPosition && (
+        <>
+          {/* View Holders Modal */}
+          <ViewHoldersModal
+            open={holdersModalOpen}
+            position={selectedPosition}
+            onClose={() => {
+              setHoldersModalOpen(false);
+              setSelectedPosition(null);
+            }}
+            onAssignUser={() => {
+              setHoldersModalOpen(false);
+              setAssignUserModalOpen(true);
+            }}
+          />
+
+          {/* Manage Permissions Modal */}
+          <ManagePermissionsModal
+            open={permissionsModalOpen}
+            position={selectedPosition}
+            onClose={() => {
+              setPermissionsModalOpen(false);
+              setSelectedPosition(null);
+            }}
+          />
+
+          {/* Assign User Modal */}
+          <AssignUserModal
+            open={assignUserModalOpen}
+            position={selectedPosition}
+            onClose={() => {
+              setAssignUserModalOpen(false);
+              setSelectedPosition(null);
+            }}
+            onSuccess={handleAssignUserSuccess}
+          />
+        </>
+      )}
     </div>
   );
 }
