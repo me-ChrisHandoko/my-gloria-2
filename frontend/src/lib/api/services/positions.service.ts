@@ -8,12 +8,12 @@ export interface Position extends BasePosition {
   department?: {
     id: string;
     name: string;
-    code: string;
+    code?: string;
   };
   school?: {
     id: string;
     name: string;
-    code: string;
+    code?: string;
   };
   holderCount?: number;
   permissionCount?: number;

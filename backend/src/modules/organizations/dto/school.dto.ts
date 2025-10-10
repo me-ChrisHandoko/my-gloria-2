@@ -12,6 +12,7 @@ import {
   IsInt,
   Min,
   Max,
+  IsIn,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -40,6 +41,16 @@ export class CreateSchoolDto {
   @MinLength(3)
   @MaxLength(50)
   code: string;
+
+  @ApiPropertyOptional({
+    description: 'School location area',
+    example: 'Barat',
+    enum: ['Barat', 'Timur'],
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['Barat', 'Timur'])
+  lokasi?: string;
 
   @ApiPropertyOptional({
     description: 'School address',
@@ -124,6 +135,12 @@ export class SchoolResponseDto {
     example: 'GHS001',
   })
   code: string;
+
+  @ApiPropertyOptional({
+    description: 'School location area',
+    example: 'Barat',
+  })
+  lokasi?: string;
 
   @ApiPropertyOptional({
     description: 'School address',
@@ -217,6 +234,42 @@ export class QuerySchoolDto {
   @IsBoolean()
   @Type(() => Boolean)
   isActive?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter by organization ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsOptional()
+  @IsUUID()
+  organizationId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by status',
+    enum: ['active', 'inactive'],
+    example: 'active',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['active', 'inactive'])
+  status?: string;
+
+  @ApiPropertyOptional({
+    description: 'Search across school name and code',
+    example: 'pgtk',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by location',
+    enum: ['Barat', 'Timur'],
+    example: 'Barat',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['Barat', 'Timur'])
+  lokasi?: string;
 
   @ApiPropertyOptional({
     description: 'Page number for pagination',

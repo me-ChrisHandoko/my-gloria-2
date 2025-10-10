@@ -7,21 +7,27 @@ export const schoolApi = apiSlice.injectEndpoints({
     // ===== QUERIES =====
 
     // Get paginated schools with filtering
-    getSchools: builder.query<PaginatedResponse<School>, QueryParams & { organizationId?: string }>({
-      query: (params = {}) => ({
-        url: '/schools',
-        params: {
+    getSchools: builder.query<PaginatedResponse<School>, QueryParams & { organizationId?: string; lokasi?: string }>({
+      query: (params = {}) => {
+        const queryParams: Record<string, any> = {
           page: params.page || 1,
           limit: params.limit || 10,
-          search: params.search || '',
           sortBy: params.sortBy || 'name',
           sortOrder: params.sortOrder || 'asc',
-          organizationId: params.organizationId,
-          status: params.status,
-          type: params.type,
-          ...params
-        },
-      }),
+        };
+
+        // Only add optional parameters if they have values
+        if (params.search) queryParams.search = params.search;
+        if (params.organizationId) queryParams.organizationId = params.organizationId;
+        if (params.lokasi) queryParams.lokasi = params.lokasi;
+        if (params.status) queryParams.status = params.status;
+        if (params.type) queryParams.type = params.type;
+
+        return {
+          url: '/organizations/schools',
+          params: queryParams,
+        };
+      },
       providesTags: (result) =>
         result
           ? [
@@ -71,7 +77,7 @@ export const schoolApi = apiSlice.injectEndpoints({
 
     // Get single school with details
     getSchoolById: builder.query<School, string>({
-      query: (id) => `/schools/${id}`,
+      query: (id) => `/organizations/schools/${id}`,
       providesTags: (result, error, id) => [{ type: 'School', id }],
       transformResponse: (response: School) => ({
         ...response,
@@ -97,7 +103,7 @@ export const schoolApi = apiSlice.injectEndpoints({
 
     // Get school departments
     getSchoolDepartments: builder.query<any[], string>({
-      query: (schoolId) => `/schools/${schoolId}/departments`,
+      query: (schoolId) => `/organizations/schools/${schoolId}/departments`,
       providesTags: (result, error, schoolId) => [
         { type: 'School', id: `${schoolId}-departments` },
         'Department'
@@ -112,7 +118,7 @@ export const schoolApi = apiSlice.injectEndpoints({
       activePrograms: number;
       completionRate: number;
     }, string>({
-      query: (id) => `/schools/${id}/stats`,
+      query: (id) => `/organizations/schools/${id}/stats`,
       providesTags: (result, error, id) => [
         { type: 'School', id: `${id}-stats` }
       ],
@@ -121,10 +127,24 @@ export const schoolApi = apiSlice.injectEndpoints({
 
     // Get school academic periods
     getSchoolAcademicPeriods: builder.query<any[], string>({
-      query: (schoolId) => `/schools/${schoolId}/academic-periods`,
+      query: (schoolId) => `/organizations/schools/${schoolId}/academic-periods`,
       providesTags: (result, error, schoolId) => [
         { type: 'School', id: `${schoolId}-periods` }
       ],
+    }),
+
+    // Get bagian kerja jenjang list for school code options
+    getBagianKerjaJenjangList: builder.query<string[], void>({
+      query: () => '/organizations/schools/bagian-kerja-jenjang',
+      keepUnusedDataFor: 3600, // Cache for 1 hour
+      transformResponse: (response: any) => {
+        // Handle wrapped response from backend TransformInterceptor
+        if (response && response.success && response.data) {
+          return response.data;
+        }
+        // Return response directly if not wrapped, or empty array as fallback
+        return Array.isArray(response) ? response : [];
+      },
     }),
 
     // ===== MUTATIONS =====
@@ -132,7 +152,7 @@ export const schoolApi = apiSlice.injectEndpoints({
     // Create new school
     createSchool: builder.mutation<School, Partial<School>>({
       query: (school) => ({
-        url: '/schools',
+        url: '/organizations/schools',
         method: 'POST',
         body: school,
       }),
@@ -165,7 +185,7 @@ export const schoolApi = apiSlice.injectEndpoints({
     // Update school
     updateSchool: builder.mutation<School, { id: string; data: Partial<School> }>({
       query: ({ id, data }) => ({
-        url: `/schools/${id}`,
+        url: `/organizations/schools/${id}`,
         method: 'PATCH',
         body: data,
       }),
@@ -193,7 +213,7 @@ export const schoolApi = apiSlice.injectEndpoints({
     // Delete school
     deleteSchool: builder.mutation<{ success: boolean; message: string }, string>({
       query: (id) => ({
-        url: `/schools/${id}`,
+        url: `/organizations/schools/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, id) => [
@@ -209,7 +229,7 @@ export const schoolApi = apiSlice.injectEndpoints({
       { id: string; isActive: boolean }
     >({
       query: ({ id, isActive }) => ({
-        url: `/schools/${id}/status`,
+        url: `/organizations/schools/${id}/status`,
         method: 'PATCH',
         body: { isActive },
       }),
@@ -225,7 +245,7 @@ export const schoolApi = apiSlice.injectEndpoints({
       { ids: string[]; data: Partial<School> }
     >({
       query: ({ ids, data }) => ({
-        url: '/schools/bulk-update',
+        url: '/organizations/schools/bulk-update',
         method: 'PATCH',
         body: { ids, data },
       }),
@@ -241,7 +261,7 @@ export const schoolApi = apiSlice.injectEndpoints({
       string
     >({
       query: (id) => ({
-        url: `/schools/${id}/archive`,
+        url: `/organizations/schools/${id}/archive`,
         method: 'POST',
       }),
       invalidatesTags: (result, error, id) => [
@@ -253,7 +273,7 @@ export const schoolApi = apiSlice.injectEndpoints({
     // Restore archived school
     restoreSchool: builder.mutation<School, string>({
       query: (id) => ({
-        url: `/schools/${id}/restore`,
+        url: `/organizations/schools/${id}/restore`,
         method: 'POST',
       }),
       invalidatesTags: (result, error, id) => [
@@ -268,7 +288,7 @@ export const schoolApi = apiSlice.injectEndpoints({
       { id: string; settings: Record<string, any> }
     >({
       query: ({ id, settings }) => ({
-        url: `/schools/${id}/settings`,
+        url: `/organizations/schools/${id}/settings`,
         method: 'PUT',
         body: settings,
       }),
@@ -283,7 +303,7 @@ export const schoolApi = apiSlice.injectEndpoints({
       { id: string; logo: FormData }
     >({
       query: ({ id, logo }) => ({
-        url: `/schools/${id}/logo`,
+        url: `/organizations/schools/${id}/logo`,
         method: 'POST',
         body: logo,
       }),
@@ -298,7 +318,7 @@ export const schoolApi = apiSlice.injectEndpoints({
       { schoolId: string; organizationId: string }
     >({
       query: ({ schoolId, organizationId }) => ({
-        url: `/schools/${schoolId}/organization`,
+        url: `/organizations/schools/${schoolId}/organization`,
         method: 'PUT',
         body: { organizationId },
       }),
@@ -315,7 +335,7 @@ export const schoolApi = apiSlice.injectEndpoints({
       FormData
     >({
       query: (formData) => ({
-        url: '/schools/import',
+        url: '/organizations/schools/import',
         method: 'POST',
         body: formData,
       }),
@@ -328,7 +348,7 @@ export const schoolApi = apiSlice.injectEndpoints({
       { format: 'csv' | 'excel' | 'pdf'; filters?: QueryParams }
     >({
       query: ({ format, filters = {} }) => ({
-        url: '/schools/export',
+        url: '/organizations/schools/export',
         params: {
           format,
           ...filters,
@@ -349,6 +369,7 @@ export const {
   useGetSchoolDepartmentsQuery,
   useGetSchoolStatsQuery,
   useGetSchoolAcademicPeriodsQuery,
+  useGetBagianKerjaJenjangListQuery,
   useCreateSchoolMutation,
   useUpdateSchoolMutation,
   useDeleteSchoolMutation,

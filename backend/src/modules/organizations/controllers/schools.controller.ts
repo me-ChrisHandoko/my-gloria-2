@@ -97,6 +97,26 @@ export class SchoolsController {
     return this.schoolsService.findAll(query);
   }
 
+  @Get('bagian-kerja-jenjang')
+  @RequiredPermissions({ resource: 'schools', action: PermissionAction.READ })
+  @ApiOperation({
+    summary: 'Get bagian kerja jenjang list',
+    description:
+      'Retrieves list of distinct bagian_kerja from data_karyawan table for school code options.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Bagian kerja jenjang list retrieved successfully',
+    schema: {
+      type: 'array',
+      items: { type: 'string' },
+      example: ['ADMIN', 'GURU', 'KEPALA SEKOLAH'],
+    },
+  })
+  async getBagianKerjaJenjangList(): Promise<string[]> {
+    return this.schoolsService.getBagianKerjaJenjangList();
+  }
+
   @Get('statistics')
   @RequiredPermissions({ resource: 'schools', action: PermissionAction.READ })
   @ApiOperation({

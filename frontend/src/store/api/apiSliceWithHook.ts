@@ -46,7 +46,7 @@ const getClerkToken = async (): Promise<string | null> => {
 // Custom base query with authentication
 const baseQuery = fetchBaseQuery({
   baseUrl: apiConfig.baseUrl,
-  prepareHeaders: async (headers) => {
+  prepareHeaders: async (headers, { method }) => {
     try {
       // Get token from Clerk
       const token = await getClerkToken();
@@ -67,8 +67,10 @@ const baseQuery = fetchBaseQuery({
         `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       );
 
-      // Add content type if not set
-      if (!headers.has("content-type")) {
+      // Only add content-type for methods that typically have a body
+      // Don't add content-type for DELETE, GET, HEAD methods to avoid Fastify validation errors
+      const methodsWithBody = ['POST', 'PUT', 'PATCH'];
+      if (methodsWithBody.includes(method?.toUpperCase() || '') && !headers.has("content-type")) {
         headers.set("content-type", "application/json");
       }
 
@@ -138,7 +140,24 @@ const baseQueryWithReauth: BaseQueryFn<
     if (result.error.status === 403) {
       console.error("Permission denied:", result.error);
     } else if (result.error.status === 429) {
-      console.error("Rate limit exceeded:", result.error);
+      console.warn("Rate limit exceeded - implementing backoff strategy");
+
+      // Extract retry-after header from response if available
+      const retryAfterHeader = result.meta?.response?.headers?.get('retry-after');
+      const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader) : null;
+
+      // Calculate wait time: use retry-after header or default to 5 seconds
+      const waitTime = retryAfter ? retryAfter * 1000 : 5000;
+
+      console.log(`[Rate Limit] Waiting ${waitTime/1000}s before allowing retry...`);
+
+      // Wait before allowing the next request
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+
+      // Optionally show user notification
+      if (typeof window !== "undefined") {
+        console.warn(`Rate limit reached. Please wait ${waitTime/1000} seconds before retrying.`);
+      }
     } else if (typeof result.error.status === 'number' && result.error.status >= 500) {
       console.error("Server error:", result.error);
     }
@@ -169,11 +188,11 @@ export const apiSlice = createApi({
     "SystemConfig",
   ],
   endpoints: () => ({}),
-  // Refetch on focus/reconnect for better UX
-  refetchOnFocus: true,
+  // Refetch on reconnect for network recovery (disabled on focus to prevent rate limiting)
+  refetchOnFocus: false,
   refetchOnReconnect: true,
-  // Keep unused data for 60 seconds
-  keepUnusedDataFor: 60,
+  // Keep unused data for 5 minutes to reduce refetch frequency
+  keepUnusedDataFor: 300,
 });
 
 // Export hooks for usage in functional components

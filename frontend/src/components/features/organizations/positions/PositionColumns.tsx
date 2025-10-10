@@ -1,7 +1,7 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Position } from '@/lib/api/services/positions.service';
+import { Position } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -39,7 +39,7 @@ export const createPositionColumns = ({
   onDelete,
   onViewHolders,
   onManagePermissions,
-}: PositionColumnsProps): ColumnDef<Position>[] => [
+}: PositionColumnsProps): ColumnDef<Position, unknown>[] => [
   {
     accessorKey: 'name',
     header: ({ column }) => {
@@ -232,6 +232,7 @@ export const createPositionColumns = ({
   },
   {
     id: 'actions',
+    accessorFn: () => undefined, // Satisfy TanStack Table v8 type requirement for display-only column
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => {
       const position = row.original;
@@ -280,5 +281,7 @@ export const createPositionColumns = ({
         </div>
       );
     },
+    enableSorting: false,
+    enableColumnFilter: false,
   },
 ];

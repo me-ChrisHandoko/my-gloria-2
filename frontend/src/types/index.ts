@@ -10,6 +10,14 @@ export interface User {
   nip?: string;
   isSuperadmin?: boolean;
   isActive?: boolean;
+
+  // Optional name fields for component compatibility
+  firstName?: string;
+  lastName?: string;
+
+  // Optional current position display name
+  currentPosition?: string;
+
   dataKaryawan?: {
     nama: string;
     email: string;
@@ -44,18 +52,14 @@ export interface Organization {
 // School types
 export interface School {
   id: string;
+  code: string;
   name: string;
-  description?: string;
-  organizationId: string;
-  type?: string;
-  status?: string;
-  isActive?: boolean;
+  lokasi?: string;
   address?: string;
   phone?: string;
   email?: string;
-  website?: string;
-  logoUrl?: string;
-  settings?: Record<string, any>;
+  principal?: string;
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -89,11 +93,32 @@ export interface Position {
   isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
+
   // For backward compatibility and extended data
   organizationId?: string;
   description?: string;
   level?: number; // Alias for hierarchyLevel
   permissions?: string[];
+
+  // Optional populated fields from API responses
+  department?: {
+    id: string;
+    name: string;
+    code?: string;
+  };
+
+  // Optional school relation from API responses
+  school?: {
+    id: string;
+    name: string;
+    code?: string;
+  };
+
+  // Optional holder count from aggregated queries
+  holderCount?: number;
+
+  // Optional permission count from aggregated queries
+  permissionCount?: number;
 }
 
 // Role types

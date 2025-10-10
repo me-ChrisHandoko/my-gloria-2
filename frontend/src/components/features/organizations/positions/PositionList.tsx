@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { createPositionColumns } from "./PositionColumns";
-import { type Position } from "@/lib/api/services/positions.service";
+import { type Position } from "@/types";
 import { useGetPositionsQuery } from "@/store/api/positionApi";
 import { useGetOrganizationsQuery } from "@/store/api/organizationApi";
 import { useGetDepartmentsQuery } from "@/store/api/departmentApi";
@@ -131,7 +131,7 @@ export default function PositionList() {
 
   const totalPages =
     positionsData?.meta?.totalPages || positionsData?.totalPages || 1;
-  const totalItems = positions.length; // Use filtered count
+  const totalItems = positionsData?.meta?.total || positionsData?.total || 0;
 
   // Handle RTK Query errors
   useEffect(() => {

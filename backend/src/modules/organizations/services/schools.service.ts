@@ -79,6 +79,14 @@ export class SchoolsService {
 
     const where: Prisma.SchoolWhereInput = {};
 
+    // Handle search parameter (searches across name and code)
+    if (query.search) {
+      where.OR = [
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { code: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+
     if (query.name) {
       where.name = { contains: query.name, mode: 'insensitive' };
     }
@@ -89,6 +97,16 @@ export class SchoolsService {
 
     if (query.isActive !== undefined) {
       where.isActive = query.isActive;
+    }
+
+    // Handle status filter (converts "active"/"inactive" string to boolean)
+    if (query.status) {
+      where.isActive = query.status === 'active';
+    }
+
+    // Handle lokasi filter
+    if (query.lokasi) {
+      where.lokasi = query.lokasi;
     }
 
     const [schools, total] = await Promise.all([
@@ -395,11 +413,34 @@ export class SchoolsService {
     };
   }
 
+  async getBagianKerjaJenjangList(): Promise<string[]> {
+    try {
+      // Query to get distinct bagian_kerja from data_karyawan table
+      const result = await this.prisma.$queryRaw<Array<{ bagian_kerja: string }>>`
+        SELECT bagian_kerja
+        FROM gloria_master.data_karyawan
+        WHERE bagian_kerja NOT IN ('YAYASAN', 'SATPAM', 'UMUM')
+        AND status_aktif = 'Aktif'
+        GROUP BY bagian_kerja
+        ORDER BY bagian_kerja ASC
+      `;
+
+      return result.map((row) => row.bagian_kerja);
+    } catch (error) {
+      this.logger.error(
+        `Failed to get bagian_kerja jenjang list: ${error.message}`,
+        error.stack,
+      );
+      return [];
+    }
+  }
+
   private formatSchoolResponse(school: any): SchoolResponseDto {
     return {
       id: school.id,
       name: school.name,
       code: school.code,
+      lokasi: school.lokasi,
       address: school.address,
       phone: school.phone,
       email: school.email,

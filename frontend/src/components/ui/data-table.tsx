@@ -139,6 +139,7 @@ export function DataTable<TData, TValue>({
                     return (
                       <th
                         key={header.id}
+                        style={{ width: header.getSize() }}
                         className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
                       >
                         {header.isPlaceholder ? null : (
@@ -205,6 +206,7 @@ export function DataTable<TData, TValue>({
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
+                        style={{ width: cell.column.getSize() }}
                         className="px-4 py-4 text-sm text-gray-900 dark:text-gray-100"
                       >
                         {flexRender(
