@@ -117,24 +117,6 @@ export default function ViewDepartmentModal({
                 </div>
 
                 <div className="flex items-start space-x-3">
-                  <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Department Head</p>
-                    <p className="text-sm text-muted-foreground">
-                      {department.head ? (
-                        <>
-                          {department.head.name}
-                          <br />
-                          <span className="text-xs">{department.head.email}</span>
-                        </>
-                      ) : (
-                        'Not assigned'
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
                   <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Last Updated</p>

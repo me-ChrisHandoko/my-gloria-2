@@ -131,7 +131,7 @@ export function DataTable<TData, TValue>({
         <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent dark:from-gray-900 pointer-events-none lg:hidden z-10" />
 
         <div className="overflow-x-auto">
-          <table className="min-w-[600px] lg:min-w-0 w-full lg:table-fixed divide-y divide-gray-200 dark:divide-gray-700">
+          <table className="min-w-[400px] sm:min-w-[600px] lg:min-w-0 w-full lg:table-fixed divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>

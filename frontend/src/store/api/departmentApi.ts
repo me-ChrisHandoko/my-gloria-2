@@ -92,8 +92,53 @@ export const departmentApi = apiSlice.injectEndpoints({
     }),
 
     // Get departments by school
-    getDepartmentsBySchool: builder.query<Department[], string>({
-      query: (schoolId) => `/schools/${schoolId}/departments`,
+    getDepartmentsBySchool: builder.query<PaginatedResponse<Department>, string>({
+      query: (schoolId) => ({
+        url: '/organizations/departments',
+        params: {
+          schoolId,
+          limit: 100,
+          includeSchool: true,
+          includeParent: true,
+        },
+      }),
+      transformResponse: (response: any) => {
+        // Handle wrapped response from backend TransformInterceptor
+        let actualResponse: PaginatedResponse<Department>;
+
+        if (response && response.success && response.data) {
+          // Unwrap the response from TransformInterceptor
+          actualResponse = response.data;
+
+          // Check if it's double-wrapped
+          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
+            actualResponse = (actualResponse as any).data;
+          }
+        } else {
+          // Use response directly if not wrapped
+          actualResponse = response;
+        }
+
+        // Ensure we have valid data
+        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+          return {
+            data: [],
+            total: 0,
+            page: 1,
+            limit: 1000,
+            totalPages: 0,
+          };
+        }
+
+        return {
+          ...actualResponse,
+          data: actualResponse.data.map(dept => ({
+            ...dept,
+            createdAt: new Date(dept.createdAt),
+            updatedAt: new Date(dept.updatedAt),
+          })),
+        };
+      },
       providesTags: (_result, _error, schoolId) => [
         { type: 'Department', id: `school-${schoolId}` }
       ],
@@ -128,6 +173,20 @@ export const departmentApi = apiSlice.injectEndpoints({
         { type: 'Department', id: `${id}-stats` }
       ],
       keepUnusedDataFor: 600,
+    }),
+
+    // Get department code options
+    getDepartmentCodeOptions: builder.query<string[], void>({
+      query: () => '/organizations/departments/code-options',
+      transformResponse: (response: any) => {
+        // Handle wrapped response from backend TransformInterceptor
+        if (response && response.success && response.data) {
+          return response.data;
+        }
+        return response || [];
+      },
+      providesTags: [{ type: 'Department', id: 'CODE_OPTIONS' }],
+      keepUnusedDataFor: 3600, // Cache for 1 hour
     }),
 
     // ===== MUTATIONS =====
@@ -299,6 +358,7 @@ export const {
   useGetDepartmentPositionsQuery,
   useGetDepartmentMembersQuery,
   useGetDepartmentStatsQuery,
+  useGetDepartmentCodeOptionsQuery,
   useCreateDepartmentMutation,
   useUpdateDepartmentMutation,
   useDeleteDepartmentMutation,

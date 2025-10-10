@@ -73,7 +73,6 @@ export interface Department {
   organizationId: string;
   code?: string;
   isActive?: boolean;
-  headId?: string;
   parentId?: string;
   settings?: Record<string, any>;
   createdAt: Date;

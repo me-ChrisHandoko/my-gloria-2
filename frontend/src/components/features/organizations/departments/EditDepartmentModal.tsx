@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -29,9 +30,9 @@ import {
 } from '@/lib/api/services/departments.service';
 import {
   useUpdateDepartmentMutation,
-  useGetDepartmentsBySchoolQuery
+  useGetDepartmentsBySchoolQuery,
+  useGetDepartmentCodeOptionsQuery
 } from '@/store/api/departmentApi';
-import { useGetUsersQuery } from '@/store/api/userApi';
 
 interface EditDepartmentModalProps {
   open: boolean;
@@ -50,7 +51,6 @@ export default function EditDepartmentModal({
     name: department.name,
     code: department.code,
     parentId: department.parentId,
-    headId: department.headId,
     description: department.description,
     isActive: department.isActive,
   });
@@ -63,16 +63,14 @@ export default function EditDepartmentModal({
     { skip: !open }
   );
 
-  const { data: usersData, isLoading: isLoadingUsers } = useGetUsersQuery(
-    { limit: 100 },
+  const { data: codeOptions, isLoading: isLoadingCodeOptions } = useGetDepartmentCodeOptionsQuery(
+    undefined,
     { skip: !open }
   );
 
-  const users = usersData?.data || [];
-
   // Filter out current department and its children to prevent circular references
-  const departments = (departmentsData || []).filter(
-    (dept) => dept.id !== department.id && dept.parentId !== department.id
+  const departments = (departmentsData?.data || []).filter(
+    (dept: Department) => dept.id !== department.id && dept.parentId !== department.id
   );
 
   // Reset form data when department changes
@@ -81,7 +79,6 @@ export default function EditDepartmentModal({
       name: department.name,
       code: department.code,
       parentId: department.parentId,
-      headId: department.headId,
       description: department.description,
       isActive: department.isActive,
     });
@@ -146,8 +143,8 @@ export default function EditDepartmentModal({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="required">
-                  Department Name
+                <Label htmlFor="name">
+                  Department Name <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="name"
@@ -159,15 +156,32 @@ export default function EditDepartmentModal({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="code" className="required">
-                  Department Code
+                <Label htmlFor="code">
+                  Department Code <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="code"
+                <Combobox
+                  options={[
+                    ...(codeOptions || []).map((code) => ({
+                      value: code,
+                      label: code,
+                      searchLabel: code,
+                    })),
+                  ]}
                   value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  placeholder="e.g., MATH001"
-                  required
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      code: value.toUpperCase(),
+                    })
+                  }
+                  placeholder={
+                    isLoadingCodeOptions
+                      ? "Loading codes..."
+                      : "Select code"
+                  }
+                  searchPlaceholder="Search codes..."
+                  emptyMessage="No matching codes found."
+                  disabled={isLoadingCodeOptions}
                 />
               </div>
             </div>
@@ -199,30 +213,9 @@ export default function EditDepartmentModal({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {departments.map((dept) => (
+                    {departments.map((dept: Department) => (
                       <SelectItem key={dept.id} value={dept.id}>
                         {dept.name} ({dept.code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="head">Department Head (Optional)</Label>
-                <Select
-                  value={formData.headId || 'none'}
-                  onValueChange={(value) => setFormData({ ...formData, headId: value === 'none' ? undefined : value })}
-                  disabled={isLoadingUsers}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={isLoadingUsers ? 'Loading...' : 'Select department head'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name} ({user.email})
                       </SelectItem>
                     ))}
                   </SelectContent>

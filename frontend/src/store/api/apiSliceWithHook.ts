@@ -46,7 +46,7 @@ const getClerkToken = async (): Promise<string | null> => {
 // Custom base query with authentication
 const baseQuery = fetchBaseQuery({
   baseUrl: apiConfig.baseUrl,
-  prepareHeaders: async (headers, { method }) => {
+  prepareHeaders: async (headers) => {
     try {
       // Get token from Clerk
       const token = await getClerkToken();
@@ -67,10 +67,9 @@ const baseQuery = fetchBaseQuery({
         `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       );
 
-      // Only add content-type for methods that typically have a body
-      // Don't add content-type for DELETE, GET, HEAD methods to avoid Fastify validation errors
-      const methodsWithBody = ['POST', 'PUT', 'PATCH'];
-      if (methodsWithBody.includes(method?.toUpperCase() || '') && !headers.has("content-type")) {
+      // Set content-type if not already set
+      // fetchBaseQuery will handle this appropriately for different HTTP methods
+      if (!headers.has("content-type")) {
         headers.set("content-type", "application/json");
       }
 

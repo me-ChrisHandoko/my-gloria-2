@@ -108,6 +108,25 @@ export class DepartmentsController {
     return this.departmentsService.findAll(query);
   }
 
+  @Get('code-options')
+  @RequiredPermissions({
+    resource: 'departments',
+    action: PermissionAction.READ,
+  })
+  @ApiOperation({
+    summary: 'Get department code options',
+    description:
+      'Retrieves available department codes from active YAYASAN employees.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Department code options retrieved successfully',
+    type: [String],
+  })
+  async getCodeOptions(): Promise<string[]> {
+    return this.departmentsService.getCodeOptions();
+  }
+
   @Get('hierarchy/:schoolId')
   @RequiredPermissions({
     resource: 'departments',

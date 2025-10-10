@@ -32,57 +32,52 @@ export class DepartmentsService {
     createDepartmentDto: CreateDepartmentDto,
   ): Promise<DepartmentResponseDto> {
     try {
-      // Verify school exists
-      const school = await this.prisma.school.findUnique({
-        where: { id: createDepartmentDto.schoolId },
-      });
-
-      if (!school) {
-        throw new NotFoundException(
-          `School with ID ${createDepartmentDto.schoolId} not found`,
-        );
-      }
-
-      // Check for duplicate code within the school
-      const existingDepartment = await this.prisma.department.findFirst({
-        where: {
-          code: createDepartmentDto.code,
-          schoolId: createDepartmentDto.schoolId,
-        },
-      });
-
-      if (existingDepartment) {
-        throw new ConflictException(
-          `Department with code ${createDepartmentDto.code} already exists in this school`,
-        );
-      }
-
-      // Verify parent department if provided
-      if (createDepartmentDto.parentId) {
-        const parentDept = await this.prisma.department.findFirst({
-          where: {
-            id: createDepartmentDto.parentId,
-            schoolId: createDepartmentDto.schoolId,
-          },
+      // Verify school exists if provided
+      if (createDepartmentDto.schoolId) {
+        const school = await this.prisma.school.findUnique({
+          where: { id: createDepartmentDto.schoolId },
         });
 
-        if (!parentDept) {
+        if (!school) {
           throw new NotFoundException(
-            `Parent department with ID ${createDepartmentDto.parentId} not found in the same school`,
+            `School with ID ${createDepartmentDto.schoolId} not found`,
           );
         }
       }
 
-      // Verify head user if provided
-      if (createDepartmentDto.headId) {
-        const headUser = await this.prisma.userProfile.findUnique({
-          where: { id: createDepartmentDto.headId },
+      // Check for duplicate code
+      const where: any = { code: createDepartmentDto.code };
+      if (createDepartmentDto.schoolId) {
+        where.schoolId = createDepartmentDto.schoolId;
+      }
+
+      const existingDepartment = await this.prisma.department.findFirst({
+        where,
+      });
+
+      if (existingDepartment) {
+        const errorMsg = createDepartmentDto.schoolId
+          ? `Department with code ${createDepartmentDto.code} already exists in this school`
+          : `Department with code ${createDepartmentDto.code} already exists`;
+        throw new ConflictException(errorMsg);
+      }
+
+      // Verify parent department if provided
+      if (createDepartmentDto.parentId) {
+        const parentWhere: any = { id: createDepartmentDto.parentId };
+        if (createDepartmentDto.schoolId) {
+          parentWhere.schoolId = createDepartmentDto.schoolId;
+        }
+
+        const parentDept = await this.prisma.department.findFirst({
+          where: parentWhere,
         });
 
-        if (!headUser) {
-          throw new NotFoundException(
-            `User with ID ${createDepartmentDto.headId} not found`,
-          );
+        if (!parentDept) {
+          const errorMsg = createDepartmentDto.schoolId
+            ? `Parent department with ID ${createDepartmentDto.parentId} not found in the same school`
+            : `Parent department with ID ${createDepartmentDto.parentId} not found`;
+          throw new NotFoundException(errorMsg);
         }
       }
 
@@ -537,6 +532,39 @@ export class DepartmentsService {
     }
   }
 
+  async getCodeOptions(): Promise<string[]> {
+    const cacheKey = `${this.cachePrefix}code-options`;
+    const cached = await this.cache.get<string[]>(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const results = await this.prisma.$queryRaw<Array<{ bidang_kerja: string }>>`
+        SELECT DISTINCT bidang_kerja
+        FROM gloria_master.data_karyawan
+        WHERE bagian_kerja = 'YAYASAN'
+          AND status_aktif = 'Aktif'
+          AND bidang_kerja IS NOT NULL
+        ORDER BY bidang_kerja ASC
+      `;
+
+      const options = results
+        .map((r) => r.bidang_kerja)
+        .filter((code) => code && code.trim().length > 0);
+
+      await this.cache.set(cacheKey, options, this.cacheTTL);
+      return options;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch department code options: ${error.message}`,
+        error.stack,
+      );
+      return [];
+    }
+  }
+
   private formatDepartmentResponse(
     department: any,
     userCount = 0,
@@ -547,7 +575,6 @@ export class DepartmentsService {
       code: department.code,
       schoolId: department.schoolId,
       parentId: department.parentId,
-      headId: department.headId,
       description: department.description,
       isActive: department.isActive,
       positionCount: department._count?.positions || 0,
@@ -563,16 +590,6 @@ export class DepartmentsService {
 
     if (department.parent) {
       response.parent = department.parent;
-    }
-
-    if (department.head) {
-      response.head = {
-        id: department.head.id,
-        name:
-          `${department.head.firstName || ''} ${department.head.lastName || ''}`.trim() ||
-          department.head.email,
-        email: department.head.email,
-      };
     }
 
     return response;

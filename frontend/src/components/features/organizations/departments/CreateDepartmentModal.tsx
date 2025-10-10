@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Combobox } from "@/components/ui/combobox";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2, Building2, FolderTree, User, Check } from "lucide-react";
+import { Loader2, Building2, FolderTree, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   type CreateDepartmentDto,
@@ -25,9 +25,9 @@ import {
 import {
   useCreateDepartmentMutation,
   useGetDepartmentsBySchoolQuery,
+  useGetDepartmentCodeOptionsQuery,
 } from "@/store/api/departmentApi";
 import { useGetOrganizationsQuery } from "@/store/api/organizationApi";
-import { useGetUsersQuery } from "@/store/api/userApi";
 
 interface CreateDepartmentModalProps {
   open: boolean;
@@ -43,9 +43,8 @@ export default function CreateDepartmentModal({
   const [formData, setFormData] = useState<CreateDepartmentDto>({
     name: "",
     code: "",
-    schoolId: "",
+    schoolId: undefined,
     parentId: undefined,
-    headId: undefined,
     description: "",
     isActive: true,
   });
@@ -58,17 +57,14 @@ export default function CreateDepartmentModal({
     useGetOrganizationsQuery({ limit: 100 }, { skip: !open });
   const schools = organizationsData?.data || [];
 
-  const { data: usersData, isLoading: isLoadingUsers } = useGetUsersQuery(
-    { limit: 100 },
-    { skip: !open }
-  );
-  const users = usersData?.data || [];
-
   const { data: departmentsData, isLoading: isLoadingDepartments } =
-    useGetDepartmentsBySchoolQuery(formData.schoolId, {
+    useGetDepartmentsBySchoolQuery(formData.schoolId || "", {
       skip: !formData.schoolId,
     });
-  const departments = departmentsData || [];
+  const departments = departmentsData?.data || [];
+
+  const { data: codeOptions, isLoading: isLoadingCodeOptions } =
+    useGetDepartmentCodeOptionsQuery(undefined, { skip: !open });
 
   // Reset parent when school changes
   useEffect(() => {
@@ -88,11 +84,6 @@ export default function CreateDepartmentModal({
 
     if (!formData.code.trim()) {
       toast.error("Department code is required");
-      return;
-    }
-
-    if (!formData.schoolId) {
-      toast.error("Please select a school");
       return;
     }
 
@@ -116,9 +107,8 @@ export default function CreateDepartmentModal({
     setFormData({
       name: "",
       code: "",
-      schoolId: "",
+      schoolId: undefined,
       parentId: undefined,
-      headId: undefined,
       description: "",
       isActive: true,
     });
@@ -145,8 +135,8 @@ export default function CreateDepartmentModal({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="required">
-                  Department Name
+                <Label htmlFor="name">
+                  Department Name <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="name"
@@ -160,89 +150,126 @@ export default function CreateDepartmentModal({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="code" className="required">
-                  Department Code
+                <Label htmlFor="code">
+                  Department Code <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="code"
+                <Combobox
+                  options={[
+                    ...(codeOptions || []).map((code) => ({
+                      value: code,
+                      label: code,
+                      searchLabel: code,
+                    })),
+                  ]}
                   value={formData.code}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setFormData({
                       ...formData,
-                      code: e.target.value.toUpperCase(),
+                      code: value.toUpperCase(),
                     })
                   }
-                  placeholder="e.g., MATH001"
-                  required
+                  placeholder={
+                    isLoadingCodeOptions
+                      ? "Loading codes..."
+                      : "Select code"
+                  }
+                  searchPlaceholder="Search codes..."
+                  emptyMessage="No matching codes found."
+                  disabled={isLoadingCodeOptions}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="school" className="required">
-                School
-              </Label>
-              <Combobox
-                options={schools.map((school) => ({
-                  value: school.id,
-                  label: school.name,
-                  searchLabel: `${school.name} ${school.code}`,
-                }))}
-                value={formData.schoolId}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, schoolId: value })
-                }
-                placeholder={
-                  isLoadingSchools ? "Loading schools..." : "Select a school"
-                }
-                searchPlaceholder="Search schools..."
-                emptyMessage="No schools found."
-                disabled={isLoadingSchools}
-                renderOption={(option, isSelected) => {
-                  const school = schools.find((s) => s.id === option.value);
-                  if (!school) return null;
-                  return (
-                    <>
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4 shrink-0",
-                          isSelected ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      <div className="flex items-start gap-2 w-full min-w-0">
-                        <Building2 className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
-                        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                          <span
-                            className="font-medium truncate"
-                            title={school.name}
-                          >
-                            {school.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {school.code}
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  );
-                }}
-                renderTrigger={(selectedOption) => {
-                  if (!selectedOption) return null;
-                  const school = schools.find(
-                    (s) => s.id === selectedOption.value
-                  );
-                  if (!school) return <span>{selectedOption.label}</span>;
-                  return (
-                    <div className="flex items-center gap-2 w-full min-w-0">
-                      <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{school.name}</span>
-                    </div>
-                  );
-                }}
-              />
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="school">School (Optional)</Label>
+                <Combobox
+                  options={[
+                    { value: "none", label: "None", searchLabel: "none" },
+                    ...schools.map((school) => ({
+                      value: school.id,
+                      label: school.name,
+                      searchLabel: `${school.name} ${school.code}`,
+                    })),
+                  ]}
+                  value={formData.schoolId || "none"}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      schoolId: value === "none" ? undefined : value,
+                    })
+                  }
+                  placeholder={
+                    isLoadingSchools ? "Loading schools..." : "Select a school"
+                  }
+                  searchPlaceholder="Search schools..."
+                  emptyMessage="No schools found."
+                  disabled={isLoadingSchools}
+                  renderOption={(option, isSelected) => {
+                    if (option.value === "none") {
+                      return (
+                        <>
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4 shrink-0",
+                              isSelected ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <span className="text-muted-foreground italic">
+                            None
+                          </span>
+                        </>
+                      );
+                    }
+                    const school = schools.find((s) => s.id === option.value);
+                    if (!school) return null;
+                    return (
+                      <>
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4 shrink-0",
+                            isSelected ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <div className="flex items-start gap-2 w-full min-w-0">
+                          <Building2 className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                            <span
+                              className="font-medium truncate"
+                              title={school.name}
+                            >
+                              {school.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {school.code}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  }}
+                  renderTrigger={(selectedOption) => {
+                    if (!selectedOption) return null;
+                    if (selectedOption.value === "none") {
+                      return (
+                        <span className="text-muted-foreground italic">
+                          None
+                        </span>
+                      );
+                    }
+                    const school = schools.find(
+                      (s) => s.id === selectedOption.value
+                    );
+                    if (!school) return <span>{selectedOption.label}</span>;
+                    return (
+                      <div className="flex items-center gap-2 w-full min-w-0">
+                        <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{school.name}</span>
+                      </div>
+                    );
+                  }}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="parent">Parent Department (Optional)</Label>
                 <Combobox
@@ -326,101 +353,6 @@ export default function CreateDepartmentModal({
                       <div className="flex items-center gap-2 w-full min-w-0">
                         <FolderTree className="h-4 w-4 shrink-0 text-muted-foreground" />
                         <span className="truncate">{dept.name}</span>
-                      </div>
-                    );
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="head">Department Head (Optional)</Label>
-                <Combobox
-                  options={[
-                    { value: "none", label: "None", searchLabel: "none" },
-                    ...users.map((user) => ({
-                      value: user.id,
-                      label: user.name,
-                      searchLabel: `${user.name} ${user.email}`,
-                    })),
-                  ]}
-                  value={formData.headId || "none"}
-                  onValueChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      headId: value === "none" ? undefined : value,
-                    })
-                  }
-                  placeholder={
-                    isLoadingUsers
-                      ? "Loading users..."
-                      : "Select department head"
-                  }
-                  searchPlaceholder="Search users..."
-                  emptyMessage="No users found."
-                  disabled={isLoadingUsers}
-                  renderOption={(option, isSelected) => {
-                    if (option.value === "none") {
-                      return (
-                        <>
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4 shrink-0",
-                              isSelected ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          <span className="text-muted-foreground italic">
-                            None
-                          </span>
-                        </>
-                      );
-                    }
-                    const user = users.find((u) => u.id === option.value);
-                    if (!user) return null;
-                    return (
-                      <>
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4 shrink-0",
-                            isSelected ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        <div className="flex items-start gap-2 w-full min-w-0">
-                          <User className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
-                          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                            <span
-                              className="font-medium truncate"
-                              title={user.name}
-                            >
-                              {user.name}
-                            </span>
-                            <span
-                              className="text-xs text-muted-foreground truncate"
-                              title={user.email}
-                            >
-                              {user.email}
-                            </span>
-                          </div>
-                        </div>
-                      </>
-                    );
-                  }}
-                  renderTrigger={(selectedOption) => {
-                    if (!selectedOption) return null;
-                    if (selectedOption.value === "none") {
-                      return (
-                        <span className="text-muted-foreground italic">
-                          None
-                        </span>
-                      );
-                    }
-                    const user = users.find(
-                      (u) => u.id === selectedOption.value
-                    );
-                    if (!user) return <span>{selectedOption.label}</span>;
-                    return (
-                      <div className="flex items-center gap-2 w-full min-w-0">
-                        <User className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{user.name}</span>
                       </div>
                     );
                   }}

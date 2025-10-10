@@ -38,13 +38,13 @@ export class CreateDepartmentDto {
   @MaxLength(50)
   code: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'School ID this department belongs to',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
+  @IsOptional()
   @IsUUID()
-  @IsNotEmpty()
-  schoolId: string;
+  schoolId?: string;
 
   @ApiPropertyOptional({
     description: 'Parent department ID for hierarchical structure',
@@ -53,14 +53,6 @@ export class CreateDepartmentDto {
   @IsOptional()
   @IsUUID()
   parentId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Department head or manager ID',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  @IsOptional()
-  @IsUUID()
-  headId?: string;
 
   @ApiPropertyOptional({
     description: 'Department description',
@@ -107,11 +99,11 @@ export class DepartmentResponseDto {
   })
   code: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'School ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  schoolId: string;
+  schoolId?: string;
 
   @ApiPropertyOptional({
     description: 'School details',
@@ -135,21 +127,6 @@ export class DepartmentResponseDto {
     id: string;
     name: string;
     code: string;
-  };
-
-  @ApiPropertyOptional({
-    description: 'Department head ID',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  headId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Department head details',
-  })
-  head?: {
-    id: string;
-    name: string;
-    email: string;
   };
 
   @ApiPropertyOptional({

@@ -36,9 +36,8 @@ export interface DepartmentHierarchy {
 export interface CreateDepartmentDto {
   name: string;
   code: string;
-  schoolId: string;
+  schoolId?: string;
   parentId?: string;
-  headId?: string;
   description?: string;
   isActive?: boolean;
 }
@@ -47,7 +46,6 @@ export interface UpdateDepartmentDto {
   name?: string;
   code?: string;
   parentId?: string;
-  headId?: string;
   description?: string;
   isActive?: boolean;
 }

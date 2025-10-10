@@ -103,7 +103,6 @@ model Department {
   id          String       @id
   code        String       @unique
   name        String
-  bagianKerja String?      @map("bagian_kerja")
   schoolId    String?      @map("school_id")
   parentId    String?      @map("parent_id")
   description String?
@@ -118,7 +117,6 @@ model Department {
   positions   Position[]
   workflows   Workflow[]
 
-  @@index([bagianKerja])
   @@index([schoolId, isActive])
   @@index([parentId])
   @@index([createdBy], map: "idx_departments_created_by")
