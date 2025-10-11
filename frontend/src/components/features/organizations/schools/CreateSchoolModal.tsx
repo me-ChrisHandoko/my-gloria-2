@@ -13,27 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Combobox } from "@/components/ui/combobox";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   useCreateSchoolMutation,
   useGetBagianKerjaJenjangListQuery,
 } from "@/store/api/schoolApi";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 interface CreateSchoolModalProps {
   open: boolean;
@@ -58,21 +45,20 @@ export default function CreateSchoolModal({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [lokasiOpen, setLokasiOpen] = useState(false);
-  const [codeOpen, setCodeOpen] = useState(false);
 
   const [createSchool, { isLoading }] = useCreateSchoolMutation();
   const { data: bagianKerjaJenjangList = [], isLoading: isLoadingBagianKerja } =
     useGetBagianKerjaJenjangListQuery();
 
   const lokasiOptions = [
-    { value: "Barat", label: "Barat" },
-    { value: "Timur", label: "Timur" },
+    { value: "Barat", label: "Barat", searchLabel: "Barat" },
+    { value: "Timur", label: "Timur", searchLabel: "Timur" },
   ];
 
   const codeOptions = bagianKerjaJenjangList.map((bagian) => ({
     value: bagian,
     label: bagian,
+    searchLabel: bagian,
   }));
 
   const validateForm = () => {
@@ -178,70 +164,25 @@ export default function CreateSchoolModal({
               <Label htmlFor="code">
                 Code <span className="text-red-500">*</span>
               </Label>
-              <Popover open={codeOpen} onOpenChange={setCodeOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={codeOpen}
-                    className={cn(
-                      "w-full justify-between",
-                      errors.code ? "border-red-500" : ""
-                    )}
-                    disabled={isLoadingBagianKerja}
-                  >
-                    {isLoadingBagianKerja ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Loading...
-                      </>
-                    ) : formData.code ? (
-                      codeOptions.find(
-                        (option) => option.value === formData.code
-                      )?.label
-                    ) : (
-                      "Select school code..."
-                    )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
-                  <Command className="max-h-[300px]">
-                    <CommandInput placeholder="Search code..." />
-                    <CommandList>
-                      <CommandEmpty>No code found.</CommandEmpty>
-                      <CommandGroup>
-                        {codeOptions.map((option) => (
-                          <CommandItem
-                            key={option.value}
-                            value={option.value}
-                            onSelect={(currentValue) => {
-                              setFormData({
-                                ...formData,
-                                code:
-                                  currentValue === formData.code
-                                    ? ""
-                                    : currentValue,
-                              });
-                              setCodeOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.code === option.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {option.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Combobox
+                options={codeOptions}
+                value={formData.code}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    code: value,
+                  })
+                }
+                placeholder={
+                  isLoadingBagianKerja
+                    ? "Loading codes..."
+                    : "Select school code..."
+                }
+                searchPlaceholder="Search code..."
+                emptyMessage="No code found."
+                disabled={isLoadingBagianKerja}
+                className={errors.code ? "border-red-500" : ""}
+              />
               {errors.code && (
                 <p className="text-sm text-red-500">{errors.code}</p>
               )}
@@ -249,59 +190,19 @@ export default function CreateSchoolModal({
             {/* Lokasi */}
             <div className="space-y-2">
               <Label htmlFor="lokasi">Lokasi</Label>
-              <Popover open={lokasiOpen} onOpenChange={setLokasiOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={lokasiOpen}
-                    className="w-full justify-between"
-                  >
-                    {formData.lokasi
-                      ? lokasiOptions.find(
-                          (option) => option.value === formData.lokasi
-                        )?.label
-                      : "Select location..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search location..." />
-                    <CommandList>
-                      <CommandEmpty>No location found.</CommandEmpty>
-                      <CommandGroup>
-                        {lokasiOptions.map((option) => (
-                          <CommandItem
-                            key={option.value}
-                            value={option.value}
-                            onSelect={(currentValue) => {
-                              setFormData({
-                                ...formData,
-                                lokasi:
-                                  currentValue === formData.lokasi
-                                    ? ""
-                                    : currentValue,
-                              });
-                              setLokasiOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.lokasi === option.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {option.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Combobox
+                options={lokasiOptions}
+                value={formData.lokasi}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    lokasi: value,
+                  })
+                }
+                placeholder="Select location..."
+                searchPlaceholder="Search location..."
+                emptyMessage="No location found."
+              />
             </div>
           </div>
 
