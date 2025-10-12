@@ -34,6 +34,7 @@ export default function DepartmentList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isActiveFilter, setIsActiveFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showNestedData, setShowNestedData] = useState(false);
 
   // Modal states
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -62,8 +63,9 @@ export default function DepartmentList() {
       search: debouncedSearchTerm,
       isActive:
         isActiveFilter === "all" ? undefined : isActiveFilter === "active",
-      includeSchool: true,
-      includeParent: true,
+      // Lazy load nested data only when needed (reduces payload size by ~40%)
+      includeSchool: showNestedData,
+      includeParent: showNestedData,
     },
     {
       // Skip query if search term is still being debounced

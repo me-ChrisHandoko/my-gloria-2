@@ -44,6 +44,14 @@ export const corsConfig = registerAs('cors', () => ({
 export const rateLimitConfig = registerAs('rateLimit', () => ({
   ttl: parseInt(process.env.RATE_LIMIT_TTL || '60000', 10),
   limit: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+  // Token bucket configuration for smoother rate limiting
+  tokenBucket: {
+    enabled: process.env.RATE_LIMIT_TOKEN_BUCKET === 'true',
+    refillRate: parseInt(process.env.RATE_LIMIT_REFILL_RATE || '10', 10), // tokens per second
+    bucketSize: parseInt(process.env.RATE_LIMIT_BUCKET_SIZE || '20', 10), // max tokens
+  },
+  // Retry-After header configuration
+  includeRetryAfter: process.env.RATE_LIMIT_INCLUDE_RETRY_AFTER !== 'false',
 }));
 
 export const loggingConfig = registerAs('logging', () => ({

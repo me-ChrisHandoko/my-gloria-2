@@ -102,6 +102,21 @@ export class RateLimitConfigService {
       timeWindow: 60000, // 1 minute
     },
 
+    // Organization endpoints - optimized for search functionality
+    '/organizations/departments': {
+      max: 20, // 20 requests per 10 seconds = safe search rate
+      timeWindow: 10000, // 10 seconds window for better distribution
+      skipSuccessfulRequests: false,
+    },
+    '/organizations/schools': {
+      max: 20,
+      timeWindow: 10000, // 10 seconds
+    },
+    '/organizations/positions': {
+      max: 20,
+      timeWindow: 10000, // 10 seconds
+    },
+
     // File uploads - strict limits
     '/files/upload': {
       max: 10,

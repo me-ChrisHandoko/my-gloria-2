@@ -37,6 +37,7 @@ import {
 } from '../../../core/auth/decorators/permissions.decorator';
 import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
 import { AuditLog } from '../../../core/auth/decorators/audit-log.decorator';
+import { RateLimit } from '../../../core/auth/decorators/rate-limit.decorator';
 
 @ApiTags('Organizations - Departments')
 @ApiBearerAuth()
@@ -88,6 +89,12 @@ export class DepartmentsController {
   }
 
   @Get()
+  @RateLimit({
+    limit: 20,
+    windowMs: 10000, // 20 requests per 10 seconds
+    message: 'Too many search requests. Please wait a moment before trying again.',
+    headers: true,
+  })
   @RequiredPermissions({
     resource: 'departments',
     action: PermissionAction.READ,
@@ -95,12 +102,16 @@ export class DepartmentsController {
   @ApiOperation({
     summary: 'Get all departments',
     description:
-      'Retrieves a paginated list of departments with optional filtering.',
+      'Retrieves a paginated list of departments with optional filtering. Rate limited to 20 requests per 10 seconds.',
   })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Departments retrieved successfully',
     type: PaginatedDepartmentResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    description: 'Rate limit exceeded. Please wait before retrying.',
   })
   async findAll(
     @Query() query: QueryDepartmentDto,
