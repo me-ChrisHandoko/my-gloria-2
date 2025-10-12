@@ -20,11 +20,11 @@ import { Loader2, Building2, FolderTree, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   type CreateDepartmentDto,
-  type Department,
+  type Department as DepartmentExtended,
 } from "@/lib/api/services/departments.service";
 import {
   useCreateDepartmentMutation,
-  useGetDepartmentsBySchoolQuery,
+  useGetDepartmentsQuery,
   useGetDepartmentCodeOptionsQuery,
 } from "@/store/api/departmentApi";
 import { useGetOrganizationsQuery } from "@/store/api/organizationApi";
@@ -57,21 +57,63 @@ export default function CreateDepartmentModal({
     useGetOrganizationsQuery({ limit: 100 }, { skip: !open });
   const schools = organizationsData?.data || [];
 
+  // Fetch ALL departments when modal opens (foundation + school levels)
   const { data: departmentsData, isLoading: isLoadingDepartments } =
-    useGetDepartmentsBySchoolQuery(formData.schoolId || "", {
-      skip: !formData.schoolId,
-    });
+    useGetDepartmentsQuery(
+      { limit: 100, includeSchool: true, includeParent: true },
+      { skip: !open }
+    );
   const departments = departmentsData?.data || [];
 
   const { data: codeOptions, isLoading: isLoadingCodeOptions } =
     useGetDepartmentCodeOptionsQuery(undefined, { skip: !open });
 
-  // Reset parent when school changes
+  // Group departments by foundation level and school
+  const groupedDepartments = React.useMemo(() => {
+    const foundation = departments.filter((d) => !d.schoolId);
+    const schoolDepts = departments.filter((d) => d.schoolId);
+
+    return {
+      foundation,
+      bySchool: schools.reduce((acc, school) => {
+        acc[school.id] = schoolDepts.filter((d) => d.schoolId === school.id);
+        return acc;
+      }, {} as Record<string, DepartmentExtended[]>),
+    };
+  }, [departments, schools]);
+
+  // Validate parent-child school relationship
   useEffect(() => {
-    if (!formData.schoolId) {
-      setFormData((prev) => ({ ...prev, parentId: undefined }));
+    if (formData.parentId && formData.schoolId) {
+      const parent = departments.find((d) => d.id === formData.parentId);
+      if (parent?.schoolId && parent.schoolId !== formData.schoolId) {
+        toast.warning(
+          "Warning: Parent department belongs to a different school. Consider selecting a foundation-level parent or a parent from the same school.",
+          { duration: 5000 }
+        );
+      }
     }
-  }, [formData.schoolId]);
+  }, [formData.schoolId, formData.parentId, departments]);
+
+  // Validate parent-child hierarchy
+  const validateDepartmentHierarchy = (): boolean => {
+    if (!formData.parentId || !formData.schoolId) return true;
+
+    const parent = departments.find((d) => d.id === formData.parentId);
+
+    // Foundation parent → Always allowed
+    if (!parent?.schoolId) return true;
+
+    // School-specific parent → Must match child school
+    if (parent.schoolId !== formData.schoolId) {
+      toast.error(
+        "Cannot select parent from different school. Please choose a foundation-level parent or a parent from the same school."
+      );
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +126,11 @@ export default function CreateDepartmentModal({
 
     if (!formData.code.trim()) {
       toast.error("Department code is required");
+      return;
+    }
+
+    // Validate hierarchy
+    if (!validateDepartmentHierarchy()) {
       return;
     }
 
@@ -275,11 +322,25 @@ export default function CreateDepartmentModal({
                 <Combobox
                   options={[
                     { value: "none", label: "None", searchLabel: "none" },
-                    ...departments.map((dept) => ({
+                    // Foundation level departments
+                    ...groupedDepartments.foundation.map((dept) => ({
                       value: dept.id,
-                      label: dept.name,
-                      searchLabel: `${dept.name} ${dept.code}`,
+                      label: `🏢 ${dept.name}`,
+                      searchLabel: `${dept.name} ${dept.code} foundation`,
+                      group: "Foundation Level",
                     })),
+                    // School-specific departments grouped by school
+                    ...Object.entries(groupedDepartments.bySchool).flatMap(
+                      ([schoolId, depts]) => {
+                        const school = schools.find((s) => s.id === schoolId);
+                        return depts.map((dept) => ({
+                          value: dept.id,
+                          label: dept.name,
+                          searchLabel: `${dept.name} ${dept.code} ${school?.name || ""}`,
+                          group: school?.name || "Unknown School",
+                        }));
+                      }
+                    ),
                   ]}
                   value={formData.parentId || "none"}
                   onValueChange={(value) =>
@@ -289,15 +350,13 @@ export default function CreateDepartmentModal({
                     })
                   }
                   placeholder={
-                    !formData.schoolId
-                      ? "Select school first"
-                      : isLoadingDepartments
+                    isLoadingDepartments
                       ? "Loading departments..."
                       : "Select parent department"
                   }
                   searchPlaceholder="Search departments..."
                   emptyMessage="No departments found."
-                  disabled={!formData.schoolId || isLoadingDepartments}
+                  disabled={isLoadingDepartments}
                   renderOption={(option, isSelected) => {
                     if (option.value === "none") {
                       return (
@@ -314,8 +373,9 @@ export default function CreateDepartmentModal({
                         </>
                       );
                     }
-                    const dept = departments.find((d) => d.id === option.value);
+                    const dept = departments.find((d) => d.id === option.value) as DepartmentExtended | undefined;
                     if (!dept) return null;
+                    const isFoundation = !dept.schoolId;
                     return (
                       <>
                         <Check
@@ -324,14 +384,28 @@ export default function CreateDepartmentModal({
                             isSelected ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        <div className="flex items-center gap-2 w-full min-w-0">
-                          <FolderTree className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          <span className="truncate flex-1" title={dept.name}>
-                            {dept.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground shrink-0">
-                            {dept.code}
-                          </span>
+                        <div className="flex items-start gap-2 w-full min-w-0">
+                          {isFoundation ? (
+                            <Building2 className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" />
+                          ) : (
+                            <FolderTree className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                          )}
+                          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                            <span
+                              className="font-medium truncate"
+                              title={dept.name}
+                            >
+                              {dept.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {dept.code}
+                              {isFoundation
+                                ? " • Foundation Level"
+                                : dept.school
+                                ? ` • ${dept.school.name}`
+                                : ""}
+                            </span>
+                          </div>
                         </div>
                       </>
                     );
@@ -349,9 +423,14 @@ export default function CreateDepartmentModal({
                       (d) => d.id === selectedOption.value
                     );
                     if (!dept) return <span>{selectedOption.label}</span>;
+                    const isFoundation = !dept.schoolId;
                     return (
                       <div className="flex items-center gap-2 w-full min-w-0">
-                        <FolderTree className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        {isFoundation ? (
+                          <Building2 className="h-4 w-4 shrink-0 text-blue-500" />
+                        ) : (
+                          <FolderTree className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
                         <span className="truncate">{dept.name}</span>
                       </div>
                     );

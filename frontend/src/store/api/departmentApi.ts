@@ -12,23 +12,31 @@ export const departmentApi = apiSlice.injectEndpoints({
       includeSchool?: boolean;
       includeParent?: boolean;
     }>({
-      query: (params = {}) => ({
-        url: '/organizations/departments',
-        params: {
+      query: (params = {}) => {
+        // Build query params conditionally to avoid sending undefined values
+        const queryParams: Record<string, any> = {
           page: params.page || 1,
           limit: params.limit || 10,
-          // Map 'search' to 'name' for partial name matching as backend expects
-          name: params.search || undefined,
-          sortBy: params.sortBy || 'name',
           sortOrder: params.sortOrder || 'asc',
-          schoolId: params.schoolId,
-          isActive: params.isActive,
-          includeSchool: params.includeSchool,
-          includeParent: params.includeParent,
-          // Only send parameters that backend QueryDepartmentDto accepts
-          // Removed: organizationId, search, and spread operator ...params
-        },
-      }),
+        };
+
+        // Only add optional parameters if they have values
+        // Map 'search' to 'name' for partial name matching as backend expects
+        if (params.search) queryParams.name = params.search;
+        // Let backend use its default sortBy ('hierarchy') unless explicitly provided
+        if (params.sortBy) queryParams.sortBy = params.sortBy;
+        if (params.schoolId) queryParams.schoolId = params.schoolId;
+        // Critical: only add isActive when it's defined (not undefined)
+        // This ensures "All Status" filter works correctly by omitting the parameter
+        if (params.isActive !== undefined) queryParams.isActive = params.isActive;
+        if (params.includeSchool) queryParams.includeSchool = params.includeSchool;
+        if (params.includeParent) queryParams.includeParent = params.includeParent;
+
+        return {
+          url: '/organizations/departments',
+          params: queryParams,
+        };
+      },
       // Transform response to handle wrapped response from backend TransformInterceptor
       transformResponse: (response: any) => {
         // Handle wrapped response from backend TransformInterceptor
@@ -74,7 +82,8 @@ export const departmentApi = apiSlice.injectEndpoints({
               { type: 'Department', id: 'LIST' },
             ]
           : [{ type: 'Department', id: 'LIST' }],
-      keepUnusedDataFor: 300,
+      // Reduced from 300s to 60s to prevent state bloat from multiple cached queries
+      keepUnusedDataFor: 60,
     }),
 
     // Get single department

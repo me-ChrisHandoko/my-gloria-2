@@ -113,9 +113,9 @@ export class AuditLogService {
       entityType,
       entityId,
       entityDisplay,
-      oldValues: this.filterChangedValues(oldValues, changedFields),
-      newValues: this.filterChangedValues(newValues, changedFields),
-      changedFields,
+      oldValues: oldValues, // Store ALL fields before update
+      newValues: newValues, // Store ALL fields after update
+      changedFields, // Array of field names that changed
       ipAddress: context.request?.ip,
       userAgent: context.request?.headers['user-agent'] as string,
     });
@@ -534,6 +534,8 @@ export class AuditLogService {
 
   /**
    * Get changed fields between old and new values
+   * Only compares fields that exist in oldValues (database fields)
+   * to avoid including computed/relational fields from DTOs
    */
   private getChangedFields(oldValues: any, newValues: any): string[] {
     const changed: string[] = [];
@@ -542,20 +544,26 @@ export class AuditLogService {
       return changed;
     }
 
-    const allKeys = new Set([
-      ...Object.keys(oldValues),
-      ...Object.keys(newValues),
-    ]);
+    // Only check fields that exist in oldValues (source of truth for database fields)
+    // This excludes computed fields (positionCount, userCount) and
+    // relational fields (parent, school) that only exist in formatted DTOs
+    const oldKeys = Object.keys(oldValues);
 
-    for (const key of allKeys) {
-      // Skip metadata fields
-      if (['createdAt', 'updatedAt', 'deletedAt'].includes(key)) {
+    for (const key of oldKeys) {
+      // Skip metadata fields and internal fields
+      if (['createdAt', 'updatedAt', 'deletedAt', '_count'].includes(key)) {
+        continue;
+      }
+
+      // Skip if key is an object (relational data like parent, school)
+      if (oldValues[key] !== null && typeof oldValues[key] === 'object' && !Array.isArray(oldValues[key])) {
         continue;
       }
 
       const oldVal = oldValues[key];
       const newVal = newValues[key];
 
+      // Compare values - field changed if new value is different
       if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
         changed.push(key);
       }

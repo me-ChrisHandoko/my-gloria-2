@@ -2055,10 +2055,6 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@heroicons/react/24/outline/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/data-table.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/textarea.tsx
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/cmdk/dist/index.d.ts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/command.tsx
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-popover/dist/index.d.mts
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/popover.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/combobox.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-switch/dist/index.d.mts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/switch.tsx
@@ -2331,7 +2327,6 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/date-fns/yearsToQuarters.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/date-fns/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/ViewDepartmentModal.tsx
-/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/DepartmentHierarchyModal.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/DepartmentColumns.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/DepartmentList.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/(dashboard)/organizations/departments/page.tsx
@@ -2675,6 +2670,10 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/app/(dashboard)/organizations/positions/page.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/schools/SchoolColumns.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/schools/CreateSchoolModal.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/cmdk/dist/index.d.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/command.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@radix-ui/react-popover/dist/index.d.mts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/ui/popover.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/schools/EditSchoolModal.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/schools/ViewSchoolModal.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/schools/DeleteSchoolModal.tsx
@@ -3041,6 +3040,7 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/examples/InfiniteUserList.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/cache/CacheMonitor.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/notifications/NotificationBell.tsx
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/features/organizations/departments/DepartmentHierarchyModal.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/layouts/DashboardHeader.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/layouts/DashboardSidebar.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/components/layouts/DashboardSkeleton.tsx

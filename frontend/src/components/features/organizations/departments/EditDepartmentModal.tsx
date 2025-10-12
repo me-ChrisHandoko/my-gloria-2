@@ -13,26 +13,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Combobox } from '@/components/ui/combobox';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Building2, FolderTree, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   type UpdateDepartmentDto,
   type Department,
+  type Department as DepartmentExtended,
 } from '@/lib/api/services/departments.service';
 import {
   useUpdateDepartmentMutation,
-  useGetDepartmentsBySchoolQuery,
+  useGetDepartmentsQuery,
   useGetDepartmentCodeOptionsQuery
 } from '@/store/api/departmentApi';
+import { useGetOrganizationsQuery } from '@/store/api/organizationApi';
 
 interface EditDepartmentModalProps {
   open: boolean;
@@ -58,8 +54,13 @@ export default function EditDepartmentModal({
   // RTK Query hooks
   const [updateDepartment, { isLoading: isUpdating }] = useUpdateDepartmentMutation();
 
-  const { data: departmentsData, isLoading: isLoadingDepartments } = useGetDepartmentsBySchoolQuery(
-    department.schoolId,
+  const { data: organizationsData, isLoading: isLoadingSchools } =
+    useGetOrganizationsQuery({ limit: 100 }, { skip: !open });
+  const schools = organizationsData?.data || [];
+
+  // Fetch ALL departments (foundation + school levels) for parent selection
+  const { data: departmentsData, isLoading: isLoadingDepartments } = useGetDepartmentsQuery(
+    { limit: 100, includeSchool: true, includeParent: true },
     { skip: !open }
   );
 
@@ -69,9 +70,33 @@ export default function EditDepartmentModal({
   );
 
   // Filter out current department and its children to prevent circular references
-  const departments = (departmentsData?.data || []).filter(
-    (dept: Department) => dept.id !== department.id && dept.parentId !== department.id
-  );
+  // For school-specific departments, optionally filter to show only same-school or foundation parents
+  const departments = (departmentsData?.data || []).filter((dept: Department) => {
+    // Exclude self and direct children
+    if (dept.id === department.id || dept.parentId === department.id) return false;
+
+    // If current department has schoolId, allow foundation parents or same-school parents
+    if (department.schoolId) {
+      return !dept.schoolId || dept.schoolId === department.schoolId;
+    }
+
+    // If current is foundation-level, allow all departments as potential parents
+    return true;
+  });
+
+  // Group departments by foundation level and school
+  const groupedDepartments = React.useMemo(() => {
+    const foundation = departments.filter((d) => !d.schoolId);
+    const schoolDepts = departments.filter((d) => d.schoolId);
+
+    return {
+      foundation,
+      bySchool: schools.reduce((acc, school) => {
+        acc[school.id] = schoolDepts.filter((d) => d.schoolId === school.id);
+        return acc;
+      }, {} as Record<string, DepartmentExtended[]>),
+    };
+  }, [departments, schools]);
 
   // Reset form data when department changes
   useEffect(() => {
@@ -136,7 +161,8 @@ export default function EditDepartmentModal({
           <DialogHeader>
             <DialogTitle>Edit Department</DialogTitle>
             <DialogDescription>
-              Update department information for {department.school?.name}
+              Update department information
+              {department.school?.name ? ` for ${department.school.name}` : ' (Foundation Level)'}
             </DialogDescription>
           </DialogHeader>
 
@@ -186,40 +212,144 @@ export default function EditDepartmentModal({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>School</Label>
-              <Input
-                value={`${department.school?.name} (${department.school?.code})`}
-                disabled
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground">School cannot be changed after creation</p>
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="parent">Parent Department (Optional)</Label>
-                <Select
-                  value={formData.parentId || 'none'}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, parentId: value === 'none' ? undefined : value })
+                <Label>School</Label>
+                <Input
+                  value={
+                    department.school
+                      ? `${department.school.name} (${department.school.code})`
+                      : 'Foundation Level (No School)'
                   }
+                  disabled
+                  className="bg-muted"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {department.schoolId
+                    ? 'School cannot be changed after creation'
+                    : 'This is a foundation-level department'}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="parent">Parent Department (Optional)</Label>
+                <Combobox
+                  options={[
+                    { value: "none", label: "None", searchLabel: "none" },
+                    // Foundation level departments
+                    ...groupedDepartments.foundation.map((dept) => ({
+                      value: dept.id,
+                      label: `🏢 ${dept.name}`,
+                      searchLabel: `${dept.name} ${dept.code} foundation`,
+                      group: "Foundation Level",
+                    })),
+                    // School-specific departments grouped by school
+                    ...Object.entries(groupedDepartments.bySchool).flatMap(
+                      ([schoolId, depts]) => {
+                        const school = schools.find((s) => s.id === schoolId);
+                        return depts.map((dept) => ({
+                          value: dept.id,
+                          label: dept.name,
+                          searchLabel: `${dept.name} ${dept.code} ${school?.name || ""}`,
+                          group: school?.name || "Unknown School",
+                        }));
+                      }
+                    ),
+                  ]}
+                  value={formData.parentId || "none"}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      parentId: value === "none" ? undefined : value,
+                    })
+                  }
+                  placeholder={
+                    isLoadingDepartments
+                      ? "Loading departments..."
+                      : "Select parent department"
+                  }
+                  searchPlaceholder="Search departments..."
+                  emptyMessage="No departments found."
                   disabled={isLoadingDepartments}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={isLoadingDepartments ? 'Loading...' : 'Select parent department'}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {departments.map((dept: Department) => (
-                      <SelectItem key={dept.id} value={dept.id}>
-                        {dept.name} ({dept.code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  renderOption={(option, isSelected) => {
+                    if (option.value === "none") {
+                      return (
+                        <>
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4 shrink-0",
+                              isSelected ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <span className="text-muted-foreground italic">
+                            None
+                          </span>
+                        </>
+                      );
+                    }
+                    const dept = departments.find((d) => d.id === option.value) as DepartmentExtended | undefined;
+                    if (!dept) return null;
+                    const isFoundation = !dept.schoolId;
+                    return (
+                      <>
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4 shrink-0",
+                            isSelected ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <div className="flex items-start gap-2 w-full min-w-0">
+                          {isFoundation ? (
+                            <Building2 className="h-4 w-4 mt-0.5 shrink-0 text-blue-500" />
+                          ) : (
+                            <FolderTree className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                          )}
+                          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                            <span
+                              className="font-medium truncate"
+                              title={dept.name}
+                            >
+                              {dept.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {dept.code}
+                              {isFoundation
+                                ? " • Foundation Level"
+                                : dept.school
+                                ? ` • ${dept.school.name}`
+                                : ""}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  }}
+                  renderTrigger={(selectedOption) => {
+                    if (!selectedOption) return null;
+                    if (selectedOption.value === "none") {
+                      return (
+                        <span className="text-muted-foreground italic">
+                          None
+                        </span>
+                      );
+                    }
+                    const dept = departments.find(
+                      (d) => d.id === selectedOption.value
+                    );
+                    if (!dept) return <span>{selectedOption.label}</span>;
+                    const isFoundation = !dept.schoolId;
+                    return (
+                      <div className="flex items-center gap-2 w-full min-w-0">
+                        {isFoundation ? (
+                          <Building2 className="h-4 w-4 shrink-0 text-blue-500" />
+                        ) : (
+                          <FolderTree className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
+                        <span className="truncate">{dept.name}</span>
+                      </div>
+                    );
+                  }}
+                />
               </div>
             </div>
 
@@ -234,13 +364,20 @@ export default function EditDepartmentModal({
               />
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="isActive">Active Status</Label>
+                <p className="text-sm text-muted-foreground">
+                  Set department as active or inactive
+                </p>
+              </div>
               <Switch
                 id="isActive"
                 checked={formData.isActive}
-                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isActive: checked })
+                }
               />
-              <Label htmlFor="isActive">Active Department</Label>
             </div>
           </div>
 

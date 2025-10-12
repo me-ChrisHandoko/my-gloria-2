@@ -69,7 +69,7 @@ export interface Department {
   id: string;
   name: string;
   description?: string;
-  schoolId: string;
+  schoolId?: string; // Optional: null/undefined = foundation level, value = school-specific
   organizationId: string;
   code?: string;
   isActive?: boolean;

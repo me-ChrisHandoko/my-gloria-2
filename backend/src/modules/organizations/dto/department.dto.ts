@@ -11,7 +11,7 @@ import {
   Max,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class CreateDepartmentDto {
   @ApiProperty({
@@ -170,6 +170,18 @@ export class DepartmentResponseDto {
     example: '2024-01-01T00:00:00.000Z',
   })
   updatedAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'User ID who created this department',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  createdBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'User ID who last modified this department',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  modifiedBy?: string;
 }
 
 export class QueryDepartmentDto {
@@ -210,8 +222,39 @@ export class QueryDepartmentDto {
     example: true,
   })
   @IsOptional()
+  @Type(() => String)
+  @Transform(({ value }) => {
+    // Handle undefined/null/empty (for "all" filter)
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+
+    // Handle string values from query parameters
+    if (typeof value === 'string') {
+      const lowerValue = value.toLowerCase().trim();
+      if (lowerValue === 'true' || lowerValue === '1') {
+        return true;
+      }
+      if (lowerValue === 'false' || lowerValue === '0') {
+        return false;
+      }
+      // Return undefined for invalid string values
+      return undefined;
+    }
+
+    // Handle boolean values (if already converted somehow)
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    // Handle numeric values
+    if (typeof value === 'number') {
+      return value !== 0;
+    }
+
+    return undefined;
+  })
   @IsBoolean()
-  @Type(() => Boolean)
   isActive?: boolean;
 
   @ApiPropertyOptional({
@@ -220,8 +263,18 @@ export class QueryDepartmentDto {
     default: false,
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return false;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const lowerValue = value.toLowerCase().trim();
+      if (lowerValue === 'true' || lowerValue === '1') return true;
+      if (lowerValue === 'false' || lowerValue === '0') return false;
+    }
+    if (typeof value === 'number') return value !== 0;
+    return false;
+  })
   @IsBoolean()
-  @Type(() => Boolean)
   includeSchool?: boolean = false;
 
   @ApiPropertyOptional({
@@ -230,8 +283,18 @@ export class QueryDepartmentDto {
     default: false,
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return false;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const lowerValue = value.toLowerCase().trim();
+      if (lowerValue === 'true' || lowerValue === '1') return true;
+      if (lowerValue === 'false' || lowerValue === '0') return false;
+    }
+    if (typeof value === 'number') return value !== 0;
+    return false;
+  })
   @IsBoolean()
-  @Type(() => Boolean)
   includeParent?: boolean = false;
 
   @ApiPropertyOptional({
@@ -262,12 +325,12 @@ export class QueryDepartmentDto {
 
   @ApiPropertyOptional({
     description: 'Sort field',
-    enum: ['name', 'code', 'createdAt', 'updatedAt'],
-    default: 'name',
+    enum: ['name', 'code', 'createdAt', 'updatedAt', 'hierarchy'],
+    default: 'hierarchy',
   })
   @IsOptional()
   @IsString()
-  sortBy?: string = 'name';
+  sortBy?: string = 'hierarchy';
 
   @ApiPropertyOptional({
     description: 'Sort order',
