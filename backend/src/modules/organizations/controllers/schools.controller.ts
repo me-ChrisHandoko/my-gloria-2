@@ -36,6 +36,7 @@ import {
 } from '../../../core/auth/decorators/permissions.decorator';
 import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
 import { AuditLog } from '../../../core/auth/decorators/audit-log.decorator';
+import { RateLimit } from '../../../core/auth/decorators/rate-limit.decorator';
 
 @ApiTags('Organizations - Schools')
 @ApiBearerAuth()
@@ -80,16 +81,26 @@ export class SchoolsController {
   }
 
   @Get()
+  @RateLimit({
+    limit: 20,
+    windowMs: 10000, // 20 requests per 10 seconds
+    message: 'Too many search requests. Please wait a moment before trying again.',
+    headers: true,
+  })
   @RequiredPermissions({ resource: 'schools', action: PermissionAction.READ })
   @ApiOperation({
     summary: 'Get all schools',
     description:
-      'Retrieves a paginated list of schools with optional filtering.',
+      'Retrieves a paginated list of schools with optional filtering. Rate limited to 20 requests per 10 seconds.',
   })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Schools retrieved successfully',
     type: PaginatedSchoolResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    description: 'Rate limit exceeded. Please wait before retrying.',
   })
   async findAll(
     @Query() query: QuerySchoolDto,

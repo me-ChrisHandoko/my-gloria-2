@@ -37,23 +37,31 @@ export default function SchoolList() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  // Increased debounce delay to reduce API call frequency and prevent rate limiting
+  const debouncedSearchTerm = useDebounce(searchTerm, 800);
   const itemsPerPage = 10;
 
   // Fetch schools using RTK Query
+  // Skip query execution while debouncing to prevent premature API calls
   const {
     data: schoolsData,
     isLoading: isLoadingSchools,
     isFetching,
     error: schoolsError,
     refetch: refetchSchools,
-  } = useGetSchoolsQuery({
-    page: currentPage,
-    limit: itemsPerPage,
-    search: debouncedSearchTerm,
-    lokasi: selectedLocation === "all" ? undefined : selectedLocation,
-    status: statusFilter === "all" ? undefined : statusFilter,
-  });
+  } = useGetSchoolsQuery(
+    {
+      page: currentPage,
+      limit: itemsPerPage,
+      search: debouncedSearchTerm,
+      lokasi: selectedLocation === "all" ? undefined : selectedLocation,
+      status: statusFilter === "all" ? undefined : statusFilter,
+    },
+    {
+      // Skip query if search term is still being debounced
+      skip: searchTerm !== debouncedSearchTerm,
+    }
+  );
 
   const schools = schoolsData?.data || [];
   const totalPages =
@@ -110,6 +118,7 @@ export default function SchoolList() {
   };
 
   // Reset page when filters change
+  // Use debounced search term to prevent premature page resets during typing
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, selectedLocation, statusFilter]);

@@ -53,7 +53,8 @@ export default function PositionList() {
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   const [selectedSchoolForHierarchy, setSelectedSchoolForHierarchy] = useState<string>("");
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  // Increased debounce delay to reduce API call frequency and prevent rate limiting
+  const debouncedSearchTerm = useDebounce(searchTerm, 800);
   const itemsPerPage = 10;
 
   // RTK Query hooks
@@ -80,21 +81,28 @@ export default function PositionList() {
   const departments = departmentsData?.data || [];
 
   // Fetch positions using RTK Query
+  // Skip query execution while debouncing to prevent premature API calls
   const {
     data: positionsData,
     isLoading: isLoadingPositions,
     isFetching,
     error: positionsError,
     refetch: refetchPositions,
-  } = useGetPositionsQuery({
-    page: currentPage,
-    limit: itemsPerPage,
-    search: debouncedSearchTerm,
-    schoolId: selectedSchool === "all" ? undefined : selectedSchool,
-    departmentId: selectedDepartment === "all" ? undefined : selectedDepartment,
-    isActive:
-      isActiveFilter === "all" ? undefined : isActiveFilter === "active",
-  });
+  } = useGetPositionsQuery(
+    {
+      page: currentPage,
+      limit: itemsPerPage,
+      search: debouncedSearchTerm,
+      schoolId: selectedSchool === "all" ? undefined : selectedSchool,
+      departmentId: selectedDepartment === "all" ? undefined : selectedDepartment,
+      isActive:
+        isActiveFilter === "all" ? undefined : isActiveFilter === "active",
+    },
+    {
+      // Skip query if search term is still being debounced
+      skip: searchTerm !== debouncedSearchTerm,
+    }
+  );
 
   // Filter positions by hierarchy level on client-side
   const allPositions = positionsData?.data || [];
@@ -212,6 +220,7 @@ export default function PositionList() {
   };
 
   // Reset page when filters change
+  // Use debounced search term to prevent premature page resets during typing
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, selectedSchool, selectedDepartment, isActiveFilter, hierarchyLevelFilter]);
