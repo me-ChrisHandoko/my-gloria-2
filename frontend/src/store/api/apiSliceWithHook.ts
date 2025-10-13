@@ -67,11 +67,10 @@ const baseQuery = fetchBaseQuery({
         `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       );
 
-      // Set content-type if not already set
-      // fetchBaseQuery will handle this appropriately for different HTTP methods
-      if (!headers.has("content-type")) {
-        headers.set("content-type", "application/json");
-      }
+      // Let fetchBaseQuery automatically handle Content-Type headers:
+      // - POST/PUT/PATCH with body: adds Content-Type: application/json
+      // - GET/DELETE without body: omits Content-Type header
+      // This prevents "Body cannot be empty when content-type is set" errors
 
       return headers;
     } catch (error) {

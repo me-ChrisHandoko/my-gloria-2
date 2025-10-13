@@ -50,7 +50,9 @@ export default function DeleteSchoolModal({
             </div>
             <div>
               <DialogTitle>Delete School</DialogTitle>
-              <DialogDescription>This action cannot be undone</DialogDescription>
+              <DialogDescription>
+                This action cannot be undone
+              </DialogDescription>
             </div>
           </div>
         </DialogHeader>
@@ -63,12 +65,11 @@ export default function DeleteSchoolModal({
             </span>
             ?
           </p>
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/10 p-4">
-            <p className="text-sm text-red-800 dark:text-red-400">
-              <strong>Warning:</strong> This will permanently delete the school and may affect
-              related departments, positions, and other data. Please ensure this is what you
-              intend to do.
-            </p>
+          <div className="text-sm text-muted-foreground">
+            <span>
+              This action will mark the school as inactive. This cannot be
+              undone.
+            </span>
           </div>
         </div>
 

@@ -416,7 +416,9 @@ export class SchoolsService {
   async getBagianKerjaJenjangList(): Promise<string[]> {
     try {
       // Query to get distinct bagian_kerja from data_karyawan table
-      const result = await this.prisma.$queryRaw<Array<{ bagian_kerja: string }>>`
+      const result = await this.prisma.$queryRaw<
+        Array<{ bagian_kerja: string }>
+      >`
         SELECT bagian_kerja
         FROM gloria_master.data_karyawan
         WHERE bagian_kerja NOT IN ('YAYASAN', 'SATPAM', 'UMUM')
@@ -458,6 +460,8 @@ export class SchoolsService {
         0,
       createdAt: school.createdAt,
       updatedAt: school.updatedAt,
+      createdBy: school.createdBy,
+      modifiedBy: school.modifiedBy,
     };
   }
 }

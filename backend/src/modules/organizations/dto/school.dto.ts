@@ -207,6 +207,18 @@ export class SchoolResponseDto {
     example: '2024-01-01T00:00:00.000Z',
   })
   updatedAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'User ID who created this department',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  createdBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'User ID who last modified this department',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  modifiedBy?: string;
 }
 
 export class QuerySchoolDto {
