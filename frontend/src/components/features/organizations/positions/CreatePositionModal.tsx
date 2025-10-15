@@ -81,10 +81,10 @@ export default function CreatePositionModal({
 
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
-    } else if (formData.name.length < 2) {
-      newErrors.name = "Name must be at least 2 characters";
-    } else if (formData.name.length > 100) {
-      newErrors.name = "Name must not exceed 100 characters";
+    } else if (formData.name.length < 3) {
+      newErrors.name = "Name must be at least 3 characters";
+    } else if (formData.name.length > 200) {
+      newErrors.name = "Name must not exceed 200 characters";
     }
 
     if (!formData.code.trim()) {

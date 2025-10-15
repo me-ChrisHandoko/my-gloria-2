@@ -5,7 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { v7 as uuidv7 } from 'uuid';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { CacheService } from '../../../core/cache/cache.service';
 import {
@@ -43,7 +43,7 @@ export class SchoolsService {
 
       const school = await this.prisma.school.create({
         data: {
-          id: randomUUID(),
+          id: uuidv7(),
           ...createSchoolDto,
           isActive: createSchoolDto.isActive ?? true,
         },

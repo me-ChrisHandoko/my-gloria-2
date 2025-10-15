@@ -105,7 +105,12 @@ export default function PositionList() {
   );
 
   // Filter positions by hierarchy level on client-side
-  const allPositions = positionsData?.data || [];
+  // Backend response is wrapped by TransformInterceptor: { success, data: { data: [...], meta: {...} } }
+  // RTK Query types expect PaginatedResponse<Position> but actual response has extra nesting
+  // Cast to any to access the nested structure safely
+  const responseData = positionsData as any;
+  const allPositions: Position[] = responseData?.data?.data || responseData?.data || [];
+
   const positions = React.useMemo(() => {
     if (hierarchyLevelFilter === "all") {
       return allPositions;
@@ -114,32 +119,33 @@ export default function PositionList() {
     // Handle range filters
     if (hierarchyLevelFilter === "1-3") {
       return allPositions.filter(
-        (p) => (p.hierarchyLevel || p.level || 0) >= 1 && (p.hierarchyLevel || p.level || 0) <= 3
+        (p: Position) => (p.hierarchyLevel || p.level || 0) >= 1 && (p.hierarchyLevel || p.level || 0) <= 3
       );
     }
     if (hierarchyLevelFilter === "4-6") {
       return allPositions.filter(
-        (p) => (p.hierarchyLevel || p.level || 0) >= 4 && (p.hierarchyLevel || p.level || 0) <= 6
+        (p: Position) => (p.hierarchyLevel || p.level || 0) >= 4 && (p.hierarchyLevel || p.level || 0) <= 6
       );
     }
     if (hierarchyLevelFilter === "7-10") {
       return allPositions.filter(
-        (p) => (p.hierarchyLevel || p.level || 0) >= 7 && (p.hierarchyLevel || p.level || 0) <= 10
+        (p: Position) => (p.hierarchyLevel || p.level || 0) >= 7 && (p.hierarchyLevel || p.level || 0) <= 10
       );
     }
 
     // Handle single level filter
     const levelNum = parseInt(hierarchyLevelFilter);
     if (!isNaN(levelNum)) {
-      return allPositions.filter((p) => (p.hierarchyLevel || p.level || 0) === levelNum);
+      return allPositions.filter((p: Position) => (p.hierarchyLevel || p.level || 0) === levelNum);
     }
 
     return allPositions;
   }, [allPositions, hierarchyLevelFilter]);
 
-  const totalPages =
-    positionsData?.meta?.totalPages || positionsData?.totalPages || 1;
-  const totalItems = positionsData?.meta?.total || positionsData?.total || 0;
+  // Access meta from the nested structure: positionsData.data.meta
+  const meta = responseData?.data?.meta || responseData?.meta;
+  const totalPages = meta?.totalPages || 1;
+  const totalItems = meta?.total || 0;
 
   // Handle RTK Query errors
   useEffect(() => {
@@ -277,79 +283,86 @@ export default function PositionList() {
       <Card>
         <CardContent>
           {/* Filters */}
-          <div className="mt-6 mb-6 flex flex-wrap gap-4">
-            <Input
-              placeholder="Search positions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-xs"
-            />
-            <Select value={selectedSchool} onValueChange={setSelectedSchool}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All Schools" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Schools</SelectItem>
-                {schools.map((school) => (
-                  <SelectItem key={school.id} value={school.id}>
-                    {school.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={selectedDepartment}
-              onValueChange={setSelectedDepartment}
-              disabled={selectedSchool === "all" || isLoadingDepartments}
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All Departments" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
-                {departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={hierarchyLevelFilter} onValueChange={setHierarchyLevelFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Levels" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
-                <SelectItem value="1-3">Senior (1-3)</SelectItem>
-                <SelectItem value="4-6">Mid (4-6)</SelectItem>
-                <SelectItem value="7-10">Entry (7-10)</SelectItem>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
-                  <SelectItem key={level} value={level.toString()}>
-                    Level {level}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-            {selectedSchool && selectedSchool !== "all" && (
-              <Button
-                variant="outline"
-                onClick={() => handleViewHierarchy(selectedSchool)}
-                className="gap-2"
+          <div className="mt-6 mb-6 space-y-3">
+            {/* Primary filters row */}
+            <div className="flex flex-wrap gap-4">
+              <Input
+                placeholder="Search positions..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full sm:max-w-xs"
+              />
+              <Select value={selectedSchool} onValueChange={setSelectedSchool}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Schools" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Schools</SelectItem>
+                  {schools.map((school) => (
+                    <SelectItem key={school.id} value={school.id}>
+                      {school.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={selectedDepartment}
+                onValueChange={setSelectedDepartment}
+                disabled={selectedSchool === "all" || isLoadingDepartments}
               >
-                <Building2 className="h-4 w-4" />
-                View Hierarchy
-              </Button>
-            )}
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Departments" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Departments</SelectItem>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Secondary filters row */}
+            <div className="flex flex-wrap gap-4">
+              <Select value={hierarchyLevelFilter} onValueChange={setHierarchyLevelFilter}>
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder="All Levels" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Levels</SelectItem>
+                  <SelectItem value="1-3">Senior (1-3)</SelectItem>
+                  <SelectItem value="4-6">Mid (4-6)</SelectItem>
+                  <SelectItem value="7-10">Entry (7-10)</SelectItem>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
+                    <SelectItem key={level} value={level.toString()}>
+                      Level {level}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
+                <SelectTrigger className="w-full sm:w-[130px]">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              {selectedSchool && selectedSchool !== "all" && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleViewHierarchy(selectedSchool)}
+                  className="gap-2"
+                >
+                  <Building2 className="h-4 w-4" />
+                  View Hierarchy
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* DataTable */}

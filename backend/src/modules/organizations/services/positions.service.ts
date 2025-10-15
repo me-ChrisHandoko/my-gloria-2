@@ -5,7 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { v7 as uuidv7 } from 'uuid';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { CacheService } from '../../../core/cache/cache.service';
 import {
@@ -78,11 +78,11 @@ export class PositionsService {
 
       const position = await this.prisma.position.create({
         data: {
-          id: randomUUID(),
+          id: uuidv7(),
           name: createPositionDto.name,
           code: createPositionDto.code,
           departmentId: createPositionDto.departmentId,
-          hierarchyLevel: 1, // Default hierarchy level
+          hierarchyLevel: createPositionDto.hierarchyLevel, // Use hierarchyLevel from DTO
           maxHolders: createPositionDto.maxOccupants || 1,
           isActive: createPositionDto.isActive ?? true,
         },
@@ -96,6 +96,11 @@ export class PositionsService {
               school: {
                 select: { id: true, name: true, code: true },
               },
+            },
+          },
+          _count: {
+            select: {
+              userPositions: true,
             },
           },
         },
@@ -177,16 +182,14 @@ export class PositionsService {
       where.isActive = query.isActive;
     }
 
+    // Always include department and school for frontend compatibility
     const include: Prisma.PositionInclude = {
       _count: {
         select: {
           userPositions: true,
         },
       },
-    };
-
-    if (query.includeDepartment) {
-      include.department = {
+      department: {
         select: {
           id: true,
           name: true,
@@ -196,8 +199,8 @@ export class PositionsService {
             select: { id: true, name: true, code: true },
           },
         },
-      };
-    }
+      },
+    };
 
     if (query.includeParent) {
       // Include parent through PositionHierarchy if needed
@@ -353,6 +356,8 @@ export class PositionsService {
         updateData.name = updatePositionDto.name;
       if (updatePositionDto.code !== undefined)
         updateData.code = updatePositionDto.code;
+      if (updatePositionDto.hierarchyLevel !== undefined)
+        updateData.hierarchyLevel = updatePositionDto.hierarchyLevel;
       if (updatePositionDto.maxOccupants !== undefined)
         updateData.maxHolders = updatePositionDto.maxOccupants;
       if (updatePositionDto.isActive !== undefined)
@@ -542,7 +547,7 @@ export class PositionsService {
     // Create new assignment
     await this.prisma.userPosition.create({
       data: {
-        id: randomUUID(),
+        id: uuidv7(),
         userProfileId: userId,
         positionId,
         startDate: startDate || new Date(),
@@ -640,27 +645,42 @@ export class PositionsService {
       7: PositionLevel.EXECUTIVE,
     };
 
+    const holderCount = position._count?.userPositions || 0;
+
     const response: PositionResponseDto = {
       id: position.id,
       name: position.name,
       code: position.code,
       departmentId: position.departmentId,
+      hierarchyLevel: position.hierarchyLevel, // Required field for frontend
       level: levelMap[position.hierarchyLevel] || PositionLevel.ENTRY,
       parentId: undefined, // Will be populated from PositionHierarchy if needed
       description: undefined,
       responsibilities: undefined,
       qualifications: undefined,
       maxOccupants: position.maxHolders,
-      currentOccupants: position._count?.userPositions || 0,
+      currentOccupants: holderCount,
       isActive: position.isActive,
-      userCount: position._count?.userPositions || 0,
+      holderCount: holderCount, // Frontend expects this field name
+      userCount: holderCount, // Alias for compatibility
       subordinateCount: 0, // Will be calculated if needed
       createdAt: position.createdAt,
       updatedAt: position.updatedAt,
     };
 
+    // Add department details if available
     if (position.department) {
       response.department = position.department;
+
+      // Extract school info from department if available
+      if (position.department.school) {
+        response.schoolId = position.department.schoolId;
+        response.school = {
+          id: position.department.school.id,
+          name: position.department.school.name,
+          code: position.department.school.code,
+        };
+      }
     }
 
     if (position.parent) {

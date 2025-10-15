@@ -49,13 +49,33 @@ export class CreatePositionDto {
   @MaxLength(50)
   code: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Department ID this position belongs to',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
+  @IsOptional()
   @IsUUID()
+  departmentId?: string;
+
+  @ApiProperty({
+    description: 'Position hierarchy level in organization (1=highest, 10=lowest)',
+    example: 5,
+    minimum: 1,
+    maximum: 10,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(10)
   @IsNotEmpty()
-  departmentId: string;
+  hierarchyLevel: number;
+
+  @ApiPropertyOptional({
+    description: 'School ID this position belongs to',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsOptional()
+  @IsUUID()
+  schoolId?: string;
 
   @ApiPropertyOptional({
     description: 'Position level in organizational hierarchy',
@@ -168,6 +188,14 @@ export class PositionResponseDto {
     };
   };
 
+  @ApiProperty({
+    description: 'Position hierarchy level (1=highest, 10=lowest)',
+    example: 3,
+    minimum: 1,
+    maximum: 10,
+  })
+  hierarchyLevel: number;
+
   @ApiPropertyOptional({
     description: 'Position level',
     enum: PositionLevel,
@@ -228,11 +256,38 @@ export class PositionResponseDto {
   })
   isActive: boolean;
 
+  @ApiPropertyOptional({
+    description: 'School ID for this position',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  schoolId?: string;
+
+  @ApiPropertyOptional({
+    description: 'School details',
+  })
+  school?: {
+    id: string;
+    name: string;
+    code: string;
+  };
+
   @ApiProperty({
-    description: 'Number of users in this position',
+    description: 'Number of users holding this position',
+    example: 3,
+  })
+  holderCount?: number;
+
+  @ApiProperty({
+    description: 'Number of users in this position (alias for holderCount)',
     example: 3,
   })
   userCount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Number of permissions assigned to this position',
+    example: 15,
+  })
+  permissionCount?: number;
 
   @ApiProperty({
     description: 'Number of subordinate positions',

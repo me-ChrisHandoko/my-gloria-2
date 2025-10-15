@@ -42,6 +42,7 @@ export const createPositionColumns = ({
 }: PositionColumnsProps): ColumnDef<Position, unknown>[] => [
   {
     accessorKey: 'name',
+    size: 180,
     header: ({ column }) => {
       return (
         <Button
@@ -66,6 +67,7 @@ export const createPositionColumns = ({
   },
   {
     accessorKey: 'code',
+    size: 100,
     header: ({ column }) => {
       return (
         <Button
@@ -94,6 +96,7 @@ export const createPositionColumns = ({
   },
   {
     accessorKey: 'hierarchyLevel',
+    size: 80,
     header: ({ column }) => {
       return (
         <div className="hidden md:table-cell text-center">
@@ -128,15 +131,17 @@ export const createPositionColumns = ({
   {
     id: 'department',
     accessorFn: (row) => row.department?.name,
-    header: () => <div className="hidden md:table-cell">Department</div>,
+    size: 140,
+    header: () => <div className="hidden lg:table-cell">Department</div>,
     cell: ({ row }) => {
       const department = row.original.department;
-      return <div className="hidden md:table-cell max-w-[150px] truncate" title={department?.name}>{department?.name || '-'}</div>;
+      return <div className="hidden lg:table-cell max-w-[150px] truncate" title={department?.name}>{department?.name || '-'}</div>;
     },
   },
   {
     id: 'school',
     accessorFn: (row) => row.school?.name,
+    size: 140,
     header: () => <div className="hidden lg:table-cell">School</div>,
     cell: ({ row }) => {
       const school = row.original.school;
@@ -145,9 +150,10 @@ export const createPositionColumns = ({
   },
   {
     accessorKey: 'holderCount',
+    size: 80,
     header: ({ column }) => {
       return (
-        <div className="text-center hidden md:table-cell">
+        <div className="text-center hidden sm:table-cell">
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
@@ -168,7 +174,7 @@ export const createPositionColumns = ({
     cell: ({ row }) => {
       const count = row.getValue('holderCount') as number;
       return (
-        <div className="text-center hidden md:table-cell whitespace-nowrap">
+        <div className="text-center hidden sm:table-cell whitespace-nowrap">
           <Badge variant="secondary">{count || 0}</Badge>
         </div>
       );
@@ -176,11 +182,12 @@ export const createPositionColumns = ({
   },
   {
     accessorKey: 'permissionCount',
-    header: () => <div className="text-center hidden lg:table-cell">Permissions</div>,
+    size: 100,
+    header: () => <div className="text-center hidden xl:table-cell">Permissions</div>,
     cell: ({ row }) => {
       const count = row.original.permissionCount || row.original.permissions?.length || 0;
       return (
-        <div className="text-center hidden lg:table-cell whitespace-nowrap">
+        <div className="text-center hidden xl:table-cell whitespace-nowrap">
           <Badge variant="secondary">{count}</Badge>
         </div>
       );
@@ -188,6 +195,7 @@ export const createPositionColumns = ({
   },
   {
     accessorKey: 'isActive',
+    size: 100,
     header: ({ column }) => {
       return (
         <div className="text-center">
@@ -232,6 +240,7 @@ export const createPositionColumns = ({
   },
   {
     id: 'actions',
+    size: 80,
     accessorFn: () => undefined, // Satisfy TanStack Table v8 type requirement for display-only column
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => {
@@ -241,7 +250,7 @@ export const createPositionColumns = ({
         <div className="text-right whitespace-nowrap">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
+              <Button variant="ghost" className="h-10 w-10 sm:h-8 sm:w-8 p-0">
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
