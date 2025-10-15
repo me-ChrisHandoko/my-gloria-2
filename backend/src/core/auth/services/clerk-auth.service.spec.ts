@@ -19,10 +19,10 @@ jest.mock('@clerk/backend', () => ({
   })),
 }));
 
-// Mock crypto for UUID generation
-global.crypto = {
-  randomUUID: jest.fn(() => 'mocked-uuid'),
-} as any;
+// Mock uuid v7 for ID generation
+jest.mock('uuid', () => ({
+  v7: jest.fn(() => 'mocked-uuid'),
+}));
 
 describe('ClerkAuthService - DataKaryawan Validation', () => {
   let service: ClerkAuthService;

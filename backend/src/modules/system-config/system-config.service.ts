@@ -49,7 +49,7 @@ export class SystemConfigService {
 
     const config = await this.prisma.systemConfiguration.create({
       data: {
-        id: crypto.randomUUID(),
+        id: uuidv7(),
         key: dto.key,
         value,
         type: dto.type,
@@ -388,7 +388,7 @@ export class SystemConfigService {
   ): Promise<void> {
     await this.prisma.systemConfigHistory.create({
       data: {
-        id: crypto.randomUUID(),
+        id: uuidv7(),
         configId: config.id,
         previousValue: config.value as any, // Cast to any to handle JsonValue -> InputJsonValue conversion
         newValue,

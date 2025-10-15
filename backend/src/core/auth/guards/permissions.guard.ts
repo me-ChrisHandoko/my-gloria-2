@@ -6,6 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { v7 as uuidv7 } from 'uuid';
 import { PrismaService } from '../../database/prisma.service';
 import { CacheService } from '../../cache/cache.service';
 import { LoggingService } from '../../logging/logging.service';
@@ -504,7 +505,7 @@ export class PermissionsGuard implements CanActivate {
     try {
       await this.prisma.permissionCheckLog.create({
         data: {
-          id: crypto.randomUUID(),
+          id: uuidv7(),
           userProfileId: user.id,
           resource: requiredPermissions[0]?.resource || 'unknown',
           action: requiredPermissions[0]?.action || 'unknown',

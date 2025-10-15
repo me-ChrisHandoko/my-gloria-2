@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { v7 as uuidv7 } from 'uuid';
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 
@@ -243,7 +244,7 @@ export class SecurityMonitorService {
     try {
       await this.prismaService.auditLog.create({
         data: {
-          id: crypto.randomUUID(),
+          id: uuidv7(),
           actorId: event.userId || 'UNKNOWN',
           action: 'LOGIN',
           module: 'SECURITY_MONITOR',
@@ -366,7 +367,7 @@ export class SecurityMonitorService {
     try {
       await this.prismaService.auditLog.create({
         data: {
-          id: crypto.randomUUID(),
+          id: uuidv7(),
           actorId: 'SECURITY_MONITOR',
           action: 'LOGIN', // Use valid AuditAction enum value
           module: 'SECURITY_MONITOR',

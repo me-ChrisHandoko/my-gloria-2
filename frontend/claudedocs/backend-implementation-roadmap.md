@@ -535,6 +535,8 @@ private async checkCircularReference(
 ### Updated create() Method
 
 ```typescript
+import { v7 as uuidv7 } from 'uuid';
+
 async create(
   createDepartmentDto: CreateDepartmentDto,
 ): Promise<DepartmentResponseDto> {
@@ -580,7 +582,7 @@ async create(
 
     const department = await this.prisma.department.create({
       data: {
-        id: crypto.randomUUID(),
+        id: uuidv7(),
         ...createDepartmentDto,
         isActive: createDepartmentDto.isActive ?? true,
       },

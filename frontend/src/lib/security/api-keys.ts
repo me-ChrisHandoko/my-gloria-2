@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { z } from 'zod';
+import { v7 as uuidv7 } from 'uuid';
 
 /**
  * API Key configuration
@@ -122,7 +123,7 @@ export class APIKeyManager {
       undefined;
 
     const metadata: APIKeyMetadata = {
-      id: crypto.randomUUID(),
+      id: uuidv7(),
       name,
       description: options?.description,
       createdAt: now,

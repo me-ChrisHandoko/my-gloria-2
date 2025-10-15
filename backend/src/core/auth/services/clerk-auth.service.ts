@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClerkClient, ClerkClient } from '@clerk/backend';
+import { v7 as uuidv7 } from 'uuid';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthenticatedUser } from '../guards/clerk-auth.guard';
 import { SecurityMonitorService } from '../../monitoring/security-monitor.service';
@@ -223,7 +224,7 @@ export class ClerkAuthService {
               // Create audit log for profile re-linking within transaction
               await tx.auditLog.create({
                 data: {
-                  id: crypto.randomUUID(),
+                  id: uuidv7(),
                   actorId: clerkUser.id,
                   action: 'UPDATE',
                   module: 'AUTH',
@@ -256,7 +257,7 @@ export class ClerkAuthService {
             userProfile = await this.prismaService.$transaction(async (tx) => {
               const newProfile = await tx.userProfile.create({
                 data: {
-                  id: crypto.randomUUID(),
+                  id: uuidv7(),
                   clerkUserId: clerkUser.id,
                   nip: dataKaryawan.nip,
                   isActive: true,
@@ -267,7 +268,7 @@ export class ClerkAuthService {
               // Create audit log for new profile
               await tx.auditLog.create({
                 data: {
-                  id: crypto.randomUUID(),
+                  id: uuidv7(),
                   actorId: clerkUser.id,
                   action: 'CREATE',
                   module: 'AUTH',
@@ -638,7 +639,7 @@ export class ClerkAuthService {
 
       await this.prismaService.auditLog.create({
         data: {
-          id: crypto.randomUUID(),
+          id: uuidv7(),
           actorId: userId,
           action: auditAction,
           module: 'AUTH',

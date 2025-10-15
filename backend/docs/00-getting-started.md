@@ -418,6 +418,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { v7 as uuidv7 } from 'uuid';
 
 @Injectable()
 export class UserService {
@@ -426,7 +427,7 @@ export class UserService {
   async create(createUserDto: CreateUserDto) {
     return this.prisma.userProfile.create({
       data: {
-        id: crypto.randomUUID(),
+        id: uuidv7(),
         ...createUserDto,
       },
       include: {

@@ -14,6 +14,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { Logger } from '@nestjs/common';
+import { v7 as uuidv7 } from 'uuid';
 
 const prisma = new PrismaClient();
 const logger = new Logger('ProfileCleanupScript');
@@ -194,7 +195,7 @@ class ProfileCleanupService {
       try {
         await prisma.auditLog.create({
           data: {
-            id: crypto.randomUUID(),
+            id: uuidv7(),
             actorId: 'SYSTEM_CLEANUP',
             action: 'DELETE',
             module: 'PROFILE_CLEANUP',
