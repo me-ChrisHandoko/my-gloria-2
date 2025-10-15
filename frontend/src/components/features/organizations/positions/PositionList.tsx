@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Building2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
@@ -20,23 +20,18 @@ import { toast } from "sonner";
 import { createPositionColumns } from "./PositionColumns";
 import { type Position } from "@/types";
 import { useGetPositionsQuery } from "@/store/api/positionApi";
-import { useGetOrganizationsQuery } from "@/store/api/organizationApi";
-import { useGetDepartmentsQuery } from "@/store/api/departmentApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 import CreatePositionModal from "./CreatePositionModal";
 import EditPositionModal from "./EditPositionModal";
 import ViewPositionModal from "./ViewPositionModal";
 import DeletePositionModal from "./DeletePositionModal";
-import PositionHierarchyModal from "./PositionHierarchyModal";
 import ViewHoldersModal from "./ViewHoldersModal";
 import ManagePermissionsModal from "./ManagePermissionsModal";
 import AssignUserModal from "./AssignUserModal";
 
 export default function PositionList() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSchool, setSelectedSchool] = useState<string>("all");
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [isActiveFilter, setIsActiveFilter] = useState<string>("all");
   const [hierarchyLevelFilter, setHierarchyLevelFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,37 +43,12 @@ export default function PositionList() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [holdersModalOpen, setHoldersModalOpen] = useState(false);
   const [permissionsModalOpen, setPermissionsModalOpen] = useState(false);
-  const [hierarchyModalOpen, setHierarchyModalOpen] = useState(false);
   const [assignUserModalOpen, setAssignUserModalOpen] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
-  const [selectedSchoolForHierarchy, setSelectedSchoolForHierarchy] = useState<string>("");
 
   // Increased debounce delay to reduce API call frequency and prevent rate limiting
   const debouncedSearchTerm = useDebounce(searchTerm, 800);
   const itemsPerPage = 10;
-
-  // RTK Query hooks
-  const { data: organizationsData, isLoading: isLoadingOrganizations } =
-    useGetOrganizationsQuery({ limit: 100 });
-
-  const schools = organizationsData?.data || [];
-
-  // Fetch departments based on selected school
-  const {
-    data: departmentsData,
-    isLoading: isLoadingDepartments,
-  } = useGetDepartmentsQuery(
-    {
-      schoolId: selectedSchool === "all" ? undefined : selectedSchool,
-      limit: 100,
-      isActive: true,
-    },
-    {
-      skip: selectedSchool === "all",
-    }
-  );
-
-  const departments = departmentsData?.data || [];
 
   // Fetch positions using RTK Query
   // Skip query execution while debouncing to prevent premature API calls
@@ -93,10 +63,7 @@ export default function PositionList() {
       page: currentPage,
       limit: itemsPerPage,
       search: debouncedSearchTerm,
-      schoolId: selectedSchool === "all" ? undefined : selectedSchool,
-      departmentId: selectedDepartment === "all" ? undefined : selectedDepartment,
-      isActive:
-        isActiveFilter === "all" ? undefined : isActiveFilter === "active",
+      isActive: isActiveFilter === "all" ? undefined : isActiveFilter,
     },
     {
       // Skip query if search term is still being debounced
@@ -155,11 +122,6 @@ export default function PositionList() {
     }
   }, [positionsError]);
 
-  // Reset department filter when school changes
-  useEffect(() => {
-    setSelectedDepartment("all");
-  }, [selectedSchool]);
-
   // Handle actions
   const handleCreate = () => {
     setCreateModalOpen(true);
@@ -188,11 +150,6 @@ export default function PositionList() {
   const handleManagePermissions = (position: Position) => {
     setSelectedPosition(position);
     setPermissionsModalOpen(true);
-  };
-
-  const handleViewHierarchy = (schoolId: string) => {
-    setSelectedSchoolForHierarchy(schoolId);
-    setHierarchyModalOpen(true);
   };
 
   const handleAssignUserSuccess = () => {
@@ -229,7 +186,7 @@ export default function PositionList() {
   // Use debounced search term to prevent premature page resets during typing
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, selectedSchool, selectedDepartment, isActiveFilter, hierarchyLevelFilter]);
+  }, [debouncedSearchTerm, isActiveFilter, hierarchyLevelFilter]);
 
   // Create columns with action handlers
   const columns = createPositionColumns({
@@ -284,7 +241,7 @@ export default function PositionList() {
         <CardContent>
           {/* Filters */}
           <div className="mt-6 mb-6 space-y-3">
-            {/* Primary filters row */}
+            {/* Filters row */}
             <div className="flex flex-wrap gap-4">
               <Input
                 placeholder="Search positions..."
@@ -292,40 +249,6 @@ export default function PositionList() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full sm:max-w-xs"
               />
-              <Select value={selectedSchool} onValueChange={setSelectedSchool}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="All Schools" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Schools</SelectItem>
-                  {schools.map((school) => (
-                    <SelectItem key={school.id} value={school.id}>
-                      {school.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={selectedDepartment}
-                onValueChange={setSelectedDepartment}
-                disabled={selectedSchool === "all" || isLoadingDepartments}
-              >
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="All Departments" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Secondary filters row */}
-            <div className="flex flex-wrap gap-4">
               <Select value={hierarchyLevelFilter} onValueChange={setHierarchyLevelFilter}>
                 <SelectTrigger className="w-full sm:w-[160px]">
                   <SelectValue placeholder="All Levels" />
@@ -352,16 +275,6 @@ export default function PositionList() {
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
-              {selectedSchool && selectedSchool !== "all" && (
-                <Button
-                  variant="outline"
-                  onClick={() => handleViewHierarchy(selectedSchool)}
-                  className="gap-2"
-                >
-                  <Building2 className="h-4 w-4" />
-                  View Hierarchy
-                </Button>
-              )}
             </div>
           </div>
 
@@ -422,16 +335,6 @@ export default function PositionList() {
           />
         </>
       )}
-
-      {/* Hierarchy Modal */}
-      <PositionHierarchyModal
-        open={hierarchyModalOpen}
-        schoolId={selectedSchoolForHierarchy}
-        onClose={() => {
-          setHierarchyModalOpen(false);
-          setSelectedSchoolForHierarchy("");
-        }}
-      />
 
       {/* Phase 4 Modals */}
       {selectedPosition && (

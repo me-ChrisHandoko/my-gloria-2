@@ -363,9 +363,7 @@ export class QueryPositionDto {
     example: true,
   })
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
-  isActive?: boolean;
+  isActive?: boolean | string;
 
   @ApiPropertyOptional({
     description: 'Include department details in response',

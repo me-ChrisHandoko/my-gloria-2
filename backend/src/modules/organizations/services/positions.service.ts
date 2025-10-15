@@ -179,7 +179,12 @@ export class PositionsService {
     }
 
     if (query.isActive !== undefined) {
-      where.isActive = query.isActive;
+      // Handle both boolean and string values for isActive
+      if (typeof query.isActive === 'string') {
+        where.isActive = query.isActive === 'active' ? true : query.isActive === 'inactive' ? false : undefined;
+      } else {
+        where.isActive = query.isActive;
+      }
     }
 
     // Always include department and school for frontend compatibility
