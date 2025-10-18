@@ -69,25 +69,44 @@ export class PermissionsController {
     @Query('action') action?: PermissionAction,
     @Query('groupId') groupId?: string,
     @Query('isActive') isActive?: boolean,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
-    return this.permissionsService.findMany({
+    const permissions = await this.permissionsService.findMany({
       resource,
       action,
       groupId,
       isActive,
     });
+
+    // Return paginated format expected by frontend
+    const currentPage = page ? parseInt(page.toString(), 10) : 1;
+    const pageSize = limit ? parseInt(limit.toString(), 10) : permissions.length;
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedData = permissions.slice(startIndex, endIndex);
+
+    return {
+      data: paginatedData,
+      meta: {
+        total: permissions.length,
+        page: currentPage,
+        limit: pageSize,
+      },
+    };
   }
 
-  @Get(':id')
+  @Get('groups')
   @RequiredPermission('permissions', PermissionAction.READ)
-  @ApiOperation({ summary: 'Get permission by ID' })
-  @ApiParam({ name: 'id', description: 'Permission ID' })
+  @ApiOperation({ summary: 'Get all permission groups' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Permission retrieved successfully',
+    description: 'Permission groups retrieved successfully',
   })
-  async getPermissionById(@Param('id') id: string) {
-    return this.permissionsService.findById(id);
+  async getPermissionGroups(
+    @Query('includeInactive') includeInactive?: boolean,
+  ) {
+    return this.permissionsService.findAllGroups(includeInactive);
   }
 
   @Get('code/:code')
@@ -100,6 +119,29 @@ export class PermissionsController {
   })
   async getPermissionByCode(@Param('code') code: string) {
     return this.permissionsService.findByCode(code);
+  }
+
+  @Get('statistics')
+  @RequiredPermission('permissions', PermissionAction.READ)
+  @ApiOperation({ summary: 'Get permission statistics' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Statistics retrieved successfully',
+  })
+  async getStatistics() {
+    return this.permissionsService.getStatistics();
+  }
+
+  @Get(':id')
+  @RequiredPermission('permissions', PermissionAction.READ)
+  @ApiOperation({ summary: 'Get permission by ID' })
+  @ApiParam({ name: 'id', description: 'Permission ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Permission retrieved successfully',
+  })
+  async getPermissionById(@Param('id') id: string) {
+    return this.permissionsService.findById(id);
   }
 
   @Put(':id')
@@ -194,19 +236,6 @@ export class PermissionsController {
     return this.permissionsService.createPermissionGroup(dto, user.id);
   }
 
-  @Get('groups')
-  @RequiredPermission('permissions', PermissionAction.READ)
-  @ApiOperation({ summary: 'Get all permission groups' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Permission groups retrieved successfully',
-  })
-  async getPermissionGroups(
-    @Query('includeInactive') includeInactive?: boolean,
-  ) {
-    return this.permissionsService.findAllGroups(includeInactive);
-  }
-
   @Put('groups/:id')
   @RequiredPermission('permissions', PermissionAction.UPDATE)
   @ApiOperation({ summary: 'Update permission group' })
@@ -221,16 +250,5 @@ export class PermissionsController {
     @CurrentUser() user: any,
   ) {
     return this.permissionsService.updatePermissionGroup(id, dto, user.id);
-  }
-
-  @Get('statistics')
-  @RequiredPermission('permissions', PermissionAction.READ)
-  @ApiOperation({ summary: 'Get permission statistics' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Statistics retrieved successfully',
-  })
-  async getStatistics() {
-    return this.permissionsService.getStatistics();
   }
 }
