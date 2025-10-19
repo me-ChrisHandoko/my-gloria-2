@@ -25,7 +25,7 @@ export const rolesApi = apiSlice.injectEndpoints({
       QueryRoleParams | void
     >({
       query: (params = {}) => ({
-        url: '/api/v1/roles',
+        url: '/roles',
         params: {
           page: params.page || 1,
           limit: params.limit || 10,
@@ -49,13 +49,13 @@ export const rolesApi = apiSlice.injectEndpoints({
 
     // Get single role by ID
     getRoleById: builder.query<Role, string>({
-      query: (id) => `/api/v1/roles/${id}`,
+      query: (id) => `/roles/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Role', id }],
     }),
 
     // Get role by code
     getRoleByCode: builder.query<Role, string>({
-      query: (code) => `/api/v1/roles/code/${code}`,
+      query: (code) => `/roles/code/${code}`,
       providesTags: (_result, _error, code) => [
         { type: 'Role', id: `code-${code}` },
       ],
@@ -63,7 +63,7 @@ export const rolesApi = apiSlice.injectEndpoints({
 
     // Get user roles
     getUserRoles: builder.query<Role[], string>({
-      query: (userProfileId) => `/api/v1/roles/user/${userProfileId}`,
+      query: (userProfileId) => `/roles/user/${userProfileId}`,
       providesTags: (_result, _error, userProfileId) => [
         { type: 'Role', id: `user-${userProfileId}` },
       ],
@@ -71,13 +71,13 @@ export const rolesApi = apiSlice.injectEndpoints({
 
     // Get role statistics
     getRoleStatistics: builder.query<any, void>({
-      query: () => '/api/v1/roles/statistics',
+      query: () => '/roles/statistics',
       providesTags: [{ type: 'Role', id: 'STATISTICS' }],
     }),
 
     // Get role hierarchy
     getRoleHierarchy: builder.query<any, string>({
-      query: (roleId) => `/api/v1/roles/${roleId}/hierarchy`,
+      query: (roleId) => `/roles/${roleId}/hierarchy`,
       providesTags: (_result, _error, roleId) => [
         { type: 'Role', id: `hierarchy-${roleId}` },
       ],
@@ -88,7 +88,7 @@ export const rolesApi = apiSlice.injectEndpoints({
     // Create new role
     createRole: builder.mutation<Role, CreateRoleDto>({
       query: (data) => ({
-        url: '/api/v1/roles',
+        url: '/roles',
         method: 'POST',
         body: data,
       }),
@@ -98,7 +98,7 @@ export const rolesApi = apiSlice.injectEndpoints({
     // Update role
     updateRole: builder.mutation<Role, { id: string; data: UpdateRoleDto }>({
       query: ({ id, data }) => ({
-        url: `/api/v1/roles/${id}`,
+        url: `/roles/${id}`,
         method: 'PUT',
         body: data,
       }),
@@ -108,10 +108,22 @@ export const rolesApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    // Delete role
+    deleteRole: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/roles/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Role', id },
+        { type: 'Role', id: 'LIST' },
+      ],
+    }),
+
     // Assign role to user
     assignRole: builder.mutation<UserRole, AssignRoleDto>({
       query: (data) => ({
-        url: '/api/v1/roles/assign',
+        url: '/roles/assign',
         method: 'POST',
         body: data,
       }),
@@ -127,7 +139,7 @@ export const rolesApi = apiSlice.injectEndpoints({
       { userProfileId: string; roleId: string }
     >({
       query: ({ userProfileId, roleId }) => ({
-        url: `/api/v1/roles/remove/${userProfileId}/${roleId}`,
+        url: `/roles/remove/${userProfileId}/${roleId}`,
         method: 'DELETE',
       }),
       invalidatesTags: (_result, _error, { userProfileId }) => [
@@ -142,7 +154,7 @@ export const rolesApi = apiSlice.injectEndpoints({
       { roleId: string; data: AssignRolePermissionDto }
     >({
       query: ({ roleId, data }) => ({
-        url: `/api/v1/roles/${roleId}/permissions`,
+        url: `/roles/${roleId}/permissions`,
         method: 'POST',
         body: data,
       }),
@@ -157,7 +169,7 @@ export const rolesApi = apiSlice.injectEndpoints({
       { roleId: string; data: BulkAssignRolePermissionsDto }
     >({
       query: ({ roleId, data }) => ({
-        url: `/api/v1/roles/${roleId}/permissions/bulk`,
+        url: `/roles/${roleId}/permissions/bulk`,
         method: 'POST',
         body: data,
       }),
@@ -172,7 +184,7 @@ export const rolesApi = apiSlice.injectEndpoints({
       { roleId: string; permissionId: string }
     >({
       query: ({ roleId, permissionId }) => ({
-        url: `/api/v1/roles/${roleId}/permissions/${permissionId}`,
+        url: `/roles/${roleId}/permissions/${permissionId}`,
         method: 'DELETE',
       }),
       invalidatesTags: (_result, _error, { roleId }) => [
@@ -186,7 +198,7 @@ export const rolesApi = apiSlice.injectEndpoints({
       { roleId: string; data: CreateRoleHierarchyDto }
     >({
       query: ({ roleId, data }) => ({
-        url: `/api/v1/roles/${roleId}/hierarchy`,
+        url: `/roles/${roleId}/hierarchy`,
         method: 'POST',
         body: data,
       }),
@@ -199,7 +211,7 @@ export const rolesApi = apiSlice.injectEndpoints({
     // Create role template
     createRoleTemplate: builder.mutation<any, CreateRoleTemplateDto>({
       query: (data) => ({
-        url: '/api/v1/roles/templates',
+        url: '/roles/templates',
         method: 'POST',
         body: data,
       }),
@@ -209,7 +221,7 @@ export const rolesApi = apiSlice.injectEndpoints({
     // Apply role template
     applyRoleTemplate: builder.mutation<any, ApplyRoleTemplateDto>({
       query: (data) => ({
-        url: '/api/v1/roles/templates/apply',
+        url: '/roles/templates/apply',
         method: 'POST',
         body: data,
       }),
@@ -236,6 +248,7 @@ export const {
   // Mutations
   useCreateRoleMutation,
   useUpdateRoleMutation,
+  useDeleteRoleMutation,
   useAssignRoleMutation,
   useRemoveRoleMutation,
   useAssignPermissionToRoleMutation,

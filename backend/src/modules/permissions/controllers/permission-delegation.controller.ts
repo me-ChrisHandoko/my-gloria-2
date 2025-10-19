@@ -23,7 +23,7 @@ import { PermissionAction } from '@prisma/client';
 
 @ApiTags('Permission Delegation')
 @ApiBearerAuth()
-@Controller('api/v1/permission-delegation')
+@Controller('permission-delegation')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 export class PermissionDelegationController {
   constructor(

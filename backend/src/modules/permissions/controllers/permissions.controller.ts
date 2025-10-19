@@ -32,15 +32,17 @@ import {
   BulkAssignPermissionsDto,
 } from '../dto/permission.dto';
 import { PermissionAction } from '@prisma/client';
+import { PermissionCacheService } from '../services/permission-cache.service';
 
 @ApiTags('Permissions')
 @ApiBearerAuth()
-@Controller('api/v1/permissions')
+@Controller('permissions')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 export class PermissionsController {
   constructor(
     private readonly permissionsService: PermissionsService,
     private readonly validationService: PermissionValidationService,
+    private readonly cacheService: PermissionCacheService,
   ) {}
 
   @Post()
@@ -218,6 +220,56 @@ export class PermissionsController {
   async refreshCache(@CurrentUser() user: any) {
     await this.validationService.refreshUserPermissions(user.id);
     return { success: true, message: 'Permission cache refreshed' };
+  }
+
+  @Post('cache/invalidate')
+  @RequiredPermission('permissions', PermissionAction.UPDATE)
+  @ApiOperation({
+    summary: 'Invalidate permission cache for specific user or all users',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Cache invalidated successfully',
+  })
+  async invalidateCache(
+    @Body() body: { userProfileId?: string },
+    @CurrentUser() user: any,
+  ) {
+    if (body.userProfileId) {
+      await this.cacheService.invalidateUserCache(body.userProfileId);
+      return {
+        success: true,
+        message: `Permission cache invalidated for user ${body.userProfileId}`,
+      };
+    } else {
+      await this.cacheService.invalidateAllCaches();
+      return {
+        success: true,
+        message: 'All permission caches invalidated',
+      };
+    }
+  }
+
+  @Get('debug/:userProfileId')
+  @RequiredPermission('permissions', PermissionAction.READ)
+  @ApiOperation({
+    summary: 'Debug permission chain for specific user (admin only)',
+  })
+  @ApiParam({ name: 'userProfileId', description: 'User Profile ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Permission chain debug information',
+  })
+  async debugPermissions(
+    @Param('userProfileId') userProfileId: string,
+    @Query('resource') resource?: string,
+    @Query('action') action?: PermissionAction,
+  ) {
+    return this.permissionsService.debugUserPermissions(
+      userProfileId,
+      resource,
+      action,
+    );
   }
 
   // Permission Groups

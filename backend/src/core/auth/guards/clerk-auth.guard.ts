@@ -106,21 +106,7 @@ export class ClerkAuthGuard implements CanActivate {
         });
       }
 
-      // Build authenticated user object
-      const authenticatedUser: AuthenticatedUser = {
-        id: clerkUser.id,
-        clerkUserId: clerkUser.id,
-        email: clerkUser.email || undefined,
-        firstName: clerkUser.firstName,
-        lastName: clerkUser.lastName,
-        username: clerkUser.username,
-        profileImageUrl: clerkUser.profileImageUrl,
-        sessionId: session.sessionId,
-        organizationId: session.organizationId,
-        organizationRole: session.organizationRole,
-      };
-
-      // Sync with database and validate user authorization
+      // Sync with database and validate user authorization FIRST
       // This will throw UnauthorizedException if user is not in DataKaryawan or not active
       const userProfile =
         await this.clerkAuthService.syncUserProfile(clerkUser);
@@ -138,8 +124,21 @@ export class ClerkAuthGuard implements CanActivate {
         });
       }
 
-      authenticatedUser.profileId = userProfile.id;
-      authenticatedUser.nip = userProfile.nip;
+      // Build authenticated user object with DATABASE ID as primary id
+      const authenticatedUser: AuthenticatedUser = {
+        id: userProfile.id, // ✅ Use database UUID as primary ID
+        clerkUserId: clerkUser.id,
+        email: clerkUser.email || undefined,
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+        username: clerkUser.username,
+        profileImageUrl: clerkUser.profileImageUrl,
+        sessionId: session.sessionId,
+        organizationId: session.organizationId,
+        organizationRole: session.organizationRole,
+        profileId: userProfile.id,
+        nip: userProfile.nip,
+      };
 
       // Load user roles and permissions
       const rolesAndPermissions =

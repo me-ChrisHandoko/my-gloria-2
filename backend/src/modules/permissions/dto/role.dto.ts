@@ -50,6 +50,12 @@ export class CreateRoleDto {
 }
 
 export class UpdateRoleDto {
+  @ApiPropertyOptional({ description: 'Unique role code' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  code?: string;
+
   @ApiPropertyOptional({ description: 'Role name' })
   @IsString()
   @IsOptional()
@@ -63,13 +69,13 @@ export class UpdateRoleDto {
   description?: string;
 
   @ApiPropertyOptional({
-    description: 'Hierarchy level (1-10)',
-    minimum: 1,
+    description: 'Hierarchy level (0-10, 0 = superadmin)',
+    minimum: 0,
     maximum: 10,
   })
   @IsNumber()
   @IsOptional()
-  @Min(1)
+  @Min(0)
   @Max(10)
   @Type(() => Number)
   hierarchyLevel?: number;
@@ -78,6 +84,11 @@ export class UpdateRoleDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ description: 'Is system role', default: false })
+  @IsBoolean()
+  @IsOptional()
+  isSystemRole?: boolean;
 }
 
 export class AssignRoleDto {

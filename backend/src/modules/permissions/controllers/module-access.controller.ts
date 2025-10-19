@@ -23,7 +23,7 @@ import { PermissionAction } from '@prisma/client';
 
 @ApiTags('Module Access')
 @ApiBearerAuth()
-@Controller('api/v1/module-access')
+@Controller('module-access')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 export class ModuleAccessController {
   constructor(private readonly moduleAccessService: ModuleAccessService) {}

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Loader2, AlertTriangle, Shield } from "lucide-react";
 import { Role } from "@/lib/api/services/roles.service";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useDeleteRoleMutation } from "@/store/api/rolesApi";
 
 interface DeleteRoleModalProps {
   open: boolean;
@@ -28,29 +29,19 @@ export default function DeleteRoleModal({
   onClose,
   onSuccess,
 }: DeleteRoleModalProps) {
-  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [deleteRole, { isLoading: isDeleting }] = useDeleteRoleMutation();
 
   const handleDelete = async () => {
-    setIsDeleting(true);
-
     try {
-      // Note: Actual delete endpoint needs to be implemented in backend
-      // For now, we'll show a toast message
-      toast.error("Delete functionality will be implemented when backend endpoint is available");
-
-      // When backend is ready, uncomment this:
-      // await deleteRole(role.id).unwrap();
-      // onSuccess();
-      // toast.success("Role deleted successfully");
-
+      await deleteRole(role.id).unwrap();
+      toast.success("Role deleted successfully");
+      onSuccess();
       onClose();
     } catch (error: any) {
       console.error("Failed to delete role:", error);
       const errorMessage =
         error?.data?.message || error?.error || "Failed to delete role";
       toast.error(errorMessage);
-    } finally {
-      setIsDeleting(false);
     }
   };
 

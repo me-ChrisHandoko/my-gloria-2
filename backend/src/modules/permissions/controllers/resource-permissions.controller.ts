@@ -25,7 +25,7 @@ import { PermissionAction } from '@prisma/client';
 
 @ApiTags('Resource Permissions')
 @ApiBearerAuth()
-@Controller('api/v1/resource-permissions')
+@Controller('resource-permissions')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 export class ResourcePermissionsController {
   constructor(

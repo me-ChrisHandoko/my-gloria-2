@@ -64,6 +64,13 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('User not authenticated');
     }
 
+    // ✅ SUPERADMIN BYPASS: Users with hierarchy level 0 can do anything
+    const userHasLevel0 = await this.checkHierarchyLevel0(user.id);
+    if (userHasLevel0) {
+      this.logger.debug(`User ${user.id} has hierarchy level 0 - bypassing permission check`);
+      return true;
+    }
+
     // Check each required permission
     const results = await Promise.all(
       requiredPermissions.map((permission) =>
@@ -242,12 +249,16 @@ export class PermissionsGuard implements CanActivate {
       where: {
         userProfileId: userId,
         isActive: true,
+        role: {
+          isActive: true,
+        },
       },
       include: {
         role: {
           include: {
             rolePermissions: {
               where: {
+                isGranted: true,
                 permission: {
                   resource: permission.resource,
                   action: permission.action as any,
@@ -551,5 +562,41 @@ export class PermissionsGuard implements CanActivate {
     const pattern = 'permission:check:*';
     await this.cacheService.invalidatePattern(pattern);
     this.logger.debug('Invalidated all permission cache');
+  }
+
+  /**
+   * Check if user has hierarchy level 0 (superadmin)
+   * Users with level 0 bypass all permission checks
+   */
+  private async checkHierarchyLevel0(userId: string): Promise<boolean> {
+    const cacheKey = this.cacheService.generateKey('hierarchy', {
+      prefix: 'level0',
+      params: { userId },
+    });
+
+    // Try cache first
+    const cached = await this.cacheService.get<boolean>(cacheKey);
+    if (cached !== null) {
+      return cached;
+    }
+
+    // Check if user has any role with hierarchyLevel = 0
+    const level0Role = await this.prisma.userRole.findFirst({
+      where: {
+        userProfileId: userId,
+        isActive: true,
+        role: {
+          hierarchyLevel: 0,
+          isActive: true,
+        },
+      },
+    });
+
+    const hasLevel0 = !!level0Role;
+
+    // Cache for 10 minutes
+    await this.cacheService.set(cacheKey, hasLevel0, 600);
+
+    return hasLevel0;
   }
 }

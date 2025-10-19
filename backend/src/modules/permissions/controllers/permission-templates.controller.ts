@@ -22,7 +22,7 @@ import { PermissionAction } from '@prisma/client';
 
 @ApiTags('Permission Templates')
 @ApiBearerAuth()
-@Controller('api/v1/permission-templates')
+@Controller('permission-templates')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 export class PermissionTemplatesController {
   constructor(private readonly templatesService: PermissionTemplatesService) {}

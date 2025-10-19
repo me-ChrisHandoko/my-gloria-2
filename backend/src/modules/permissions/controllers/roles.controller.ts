@@ -37,7 +37,7 @@ import { PermissionAction } from '@prisma/client';
 
 @ApiTags('Roles')
 @ApiBearerAuth()
-@Controller('api/v1/roles')
+@Controller('roles')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
 export class RolesController {
   constructor(
@@ -118,16 +118,36 @@ export class RolesController {
     return this.rolesService.assignRole(dto, user.id);
   }
 
-  @Delete('remove/:userProfileId/:roleId')
+  @Delete(':id')
+  @RequiredPermission('roles', PermissionAction.DELETE)
+  @ApiOperation({
+    summary: 'Soft delete role',
+    description:
+      'Marks a role as inactive. The role must not have any active user assignments.',
+  })
+  @ApiParam({ name: 'id', description: 'Role ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role deleted successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Cannot delete role with active assignments or system role',
+  })
+  async deleteRole(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.rolesService.deleteRole(id, user.id);
+  }
+
+  @Delete('users/:userProfileId/roles/:roleId')
   @RequiredPermission('roles', PermissionAction.UPDATE)
   @ApiOperation({ summary: 'Remove role from user' })
   @ApiParam({ name: 'userProfileId', description: 'User Profile ID' })
   @ApiParam({ name: 'roleId', description: 'Role ID' })
   @ApiResponse({
     status: HttpStatus.NO_CONTENT,
-    description: 'Role removed successfully',
+    description: 'Role removed from user successfully',
   })
-  async removeRole(
+  async removeRoleFromUser(
     @Param('userProfileId') userProfileId: string,
     @Param('roleId') roleId: string,
     @CurrentUser() user: any,

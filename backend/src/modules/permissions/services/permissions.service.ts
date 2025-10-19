@@ -504,6 +504,166 @@ export class PermissionsService {
   /**
    * Get permission statistics
    */
+  /**
+   * Debug permission chain for a specific user
+   */
+  async debugUserPermissions(
+    userProfileId: string,
+    resource?: string,
+    action?: PermissionAction,
+  ): Promise<any> {
+    // Get user info
+    const user = await this.prisma.userProfile.findUnique({
+      where: { id: userProfileId },
+      select: {
+        id: true,
+        clerkUserId: true,
+        nip: true,
+        isSuperadmin: true,
+        isActive: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Build permission filter
+    const permissionFilter: any = {};
+    if (resource) permissionFilter.resource = resource;
+    if (action) permissionFilter.action = action;
+
+    // Get all permissions (or filtered)
+    const permissions = await this.prisma.permission.findMany({
+      where: {
+        ...permissionFilter,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        code: true,
+        resource: true,
+        action: true,
+        scope: true,
+      },
+    });
+
+    // Get user's roles
+    const userRoles = await this.prisma.userRole.findMany({
+      where: {
+        userProfileId,
+        isActive: true,
+      },
+      include: {
+        role: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    // Get role permissions for all user's roles
+    const rolePermissions = await this.prisma.rolePermission.findMany({
+      where: {
+        roleId: { in: userRoles.map((ur) => ur.roleId) },
+        isGranted: true,
+      },
+      include: {
+        permission: {
+          select: {
+            id: true,
+            code: true,
+            resource: true,
+            action: true,
+            scope: true,
+            isActive: true,
+          },
+        },
+        role: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    // Get direct user permissions
+    const userPermissions = await this.prisma.userPermission.findMany({
+      where: {
+        userProfileId,
+        isGranted: true,
+      },
+      include: {
+        permission: {
+          select: {
+            id: true,
+            code: true,
+            resource: true,
+            action: true,
+            scope: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    // Check which permissions from the filter the user has access to
+    const permissionAccess = permissions.map((perm) => {
+      const hasDirectPermission = userPermissions.some(
+        (up) => up.permissionId === perm.id,
+      );
+      const hasRolePermission = rolePermissions.some(
+        (rp) => rp.permissionId === perm.id,
+      );
+      const rolesGranting = rolePermissions
+        .filter((rp) => rp.permissionId === perm.id)
+        .map((rp) => rp.role.name);
+
+      return {
+        permission: perm,
+        hasAccess: hasDirectPermission || hasRolePermission,
+        grantedBy: {
+          directPermission: hasDirectPermission,
+          roles: rolesGranting,
+        },
+      };
+    });
+
+    return {
+      user: {
+        id: user.id,
+        clerkUserId: user.clerkUserId,
+        nip: user.nip,
+        isSuperadmin: user.isSuperadmin,
+        isActive: user.isActive,
+      },
+      roles: userRoles.map((ur) => ({
+        id: ur.role.id,
+        code: ur.role.code,
+        name: ur.role.name,
+        isActive: ur.role.isActive,
+        assignedAt: ur.assignedAt,
+        validFrom: ur.validFrom,
+        validUntil: ur.validUntil,
+      })),
+      directPermissionsCount: userPermissions.length,
+      rolePermissionsCount: rolePermissions.length,
+      permissionAccess,
+      summary: {
+        totalPermissionsChecked: permissions.length,
+        permissionsGranted: permissionAccess.filter((p) => p.hasAccess).length,
+        permissionsDenied: permissionAccess.filter((p) => !p.hasAccess).length,
+        rolesCount: userRoles.length,
+      },
+    };
+  }
+
   async getStatistics(): Promise<any> {
     const [
       totalPermissions,

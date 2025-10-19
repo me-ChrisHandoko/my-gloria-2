@@ -132,6 +132,69 @@ export class RolesService {
   }
 
   /**
+   * Soft delete a role (set isActive = false)
+   * This will deactivate the role but keep it in the database
+   */
+  async deleteRole(id: string, deletedBy: string): Promise<Role> {
+    try {
+      const existing = await this.findById(id);
+
+      if (existing.isSystemRole) {
+        throw new BadRequestException(
+          'System roles cannot be deleted',
+        );
+      }
+
+      if (!existing.isActive) {
+        throw new BadRequestException('Role is already inactive');
+      }
+
+      // Check if role is assigned to any active users
+      const activeAssignments = await this.prisma.userRole.count({
+        where: {
+          roleId: id,
+          isActive: true,
+        },
+      });
+
+      if (activeAssignments > 0) {
+        throw new BadRequestException(
+          `Cannot delete role. It is currently assigned to ${activeAssignments} active user(s). Please remove all user assignments first.`,
+        );
+      }
+
+      // Soft delete: set isActive = false
+      const role = await this.prisma.role.update({
+        where: { id },
+        data: {
+          isActive: false,
+          updatedAt: new Date(),
+        },
+      });
+
+      await this.auditService.log({
+        action: AuditAction.DELETE,
+        module: 'permissions',
+        entityType: 'Role',
+        entityId: role.id,
+        context: {
+          actorId: deletedBy,
+        },
+        metadata: {
+          roleCode: role.code,
+          roleName: role.name,
+        },
+      });
+
+      this.logger.log(`Role soft deleted: ${role.code}`, 'RolesService');
+      return role;
+    } catch (error) {
+      this.logger.error('Error deleting role', error.stack, 'RolesService');
+      throw error;
+    }
+  }
+
+  /**
    * Find role by ID
    */
   async findById(id: string): Promise<Role> {
