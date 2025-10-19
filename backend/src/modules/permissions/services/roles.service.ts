@@ -5,7 +5,6 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
-import { AuditService } from '@/core/audit/audit.service';
 import { LoggingService } from '@/core/logging/logging.service';
 import {
   Role,
@@ -13,7 +12,6 @@ import {
   RolePermission,
   RoleTemplate,
   Prisma,
-  AuditAction,
 } from '@prisma/client';
 import { v7 as uuidv7 } from 'uuid';
 import {
@@ -30,7 +28,6 @@ import {
 export class RolesService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly auditService: AuditService,
     private readonly logger: LoggingService,
   ) {}
 
@@ -56,23 +53,9 @@ export class RolesService {
           name: dto.name,
           description: dto.description,
           hierarchyLevel: dto.hierarchyLevel,
+          isActive: dto.isActive ?? true, // Default true if not provided
           isSystemRole: dto.isSystemRole || false,
           createdBy,
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.CREATE,
-        module: 'permissions',
-        entityType: 'Role',
-        entityId: role.id,
-        context: {
-          actorId: createdBy,
-        },
-        metadata: {
-          code: role.code,
-          name: role.name,
-          hierarchyLevel: role.hierarchyLevel,
         },
       });
 
@@ -107,19 +90,6 @@ export class RolesService {
           hierarchyLevel: dto.hierarchyLevel,
           isActive: dto.isActive,
           updatedAt: new Date(),
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.UPDATE,
-        module: 'permissions',
-        entityType: 'Role',
-        entityId: role.id,
-        context: {
-          actorId: modifiedBy,
-        },
-        metadata: {
-          changes: dto,
         },
       });
 
@@ -169,20 +139,6 @@ export class RolesService {
         data: {
           isActive: false,
           updatedAt: new Date(),
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.DELETE,
-        module: 'permissions',
-        entityType: 'Role',
-        entityId: role.id,
-        context: {
-          actorId: deletedBy,
-        },
-        metadata: {
-          roleCode: role.code,
-          roleName: role.name,
         },
       });
 
@@ -318,20 +274,6 @@ export class RolesService {
         },
       });
 
-      await this.auditService.log({
-        action: AuditAction.CREATE,
-        module: 'permissions',
-        entityType: 'UserRole',
-        entityId: userRole.id,
-        context: {
-          actorId: assignedBy,
-        },
-        metadata: {
-          userProfileId: dto.userProfileId,
-          roleId: dto.roleId,
-        },
-      });
-
       this.logger.log(
         `Role ${userRole.role.code} assigned to user ${userRole.userProfile.id}`,
         'RolesService',
@@ -374,20 +316,6 @@ export class RolesService {
         },
         data: {
           isActive: false,
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.DELETE,
-        module: 'permissions',
-        entityType: 'UserRole',
-        entityId: userRole.id,
-        context: {
-          actorId: removedBy,
-        },
-        metadata: {
-          userProfileId,
-          roleId,
         },
       });
 
@@ -440,21 +368,6 @@ export class RolesService {
         include: {
           role: true,
           permission: true,
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.CREATE,
-        module: 'permissions',
-        entityType: 'RolePermission',
-        entityId: rolePermission.id,
-        context: {
-          actorId: grantedBy,
-        },
-        metadata: {
-          roleId,
-          permissionId: dto.permissionId,
-          isGranted: rolePermission.isGranted,
         },
       });
 
@@ -527,20 +440,6 @@ export class RolesService {
         data: {
           isGranted: false,
           updatedAt: new Date(),
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.DELETE,
-        module: 'permissions',
-        entityType: 'RolePermission',
-        entityId: `${roleId}_${permissionId}`,
-        context: {
-          actorId: removedBy,
-        },
-        metadata: {
-          roleId,
-          permissionId,
         },
       });
 

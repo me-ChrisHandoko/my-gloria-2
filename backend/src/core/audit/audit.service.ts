@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuditLog, AuditAction, Prisma } from '@prisma/client';
+import { v7 as uuidv7 } from 'uuid';
 
 export interface AuditContext {
   actorId: string;
@@ -164,7 +165,7 @@ export class AuditService {
         action: granted ? AuditAction.APPROVE : AuditAction.REJECT,
         module: 'PERMISSION',
         entityType: 'PERMISSION',
-        entityId: `perm_${this.generateId()}`,
+        entityId: this.generateId(),
         metadata: {
           permission,
           resource,
@@ -355,7 +356,7 @@ export class AuditService {
   // Private helper methods
 
   private generateId(): string {
-    return `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return uuidv7();
   }
 
   private calculateChanges(before: any, after: any): Record<string, any> {

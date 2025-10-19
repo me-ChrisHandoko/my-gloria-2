@@ -18,14 +18,25 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
 
+    // Debug logging
+    this.logger.debug(
+      '🔍 ValidationExceptionFilter CAUGHT exception',
+      JSON.stringify(exceptionResponse, null, 2),
+    );
+
     let message: string | string[] = 'Validation failed';
     let errors: any = null;
 
     if (typeof exceptionResponse === 'object') {
       const responseObj = exceptionResponse as any;
 
-      // Handle class-validator errors
-      if (Array.isArray(responseObj.message)) {
+      // Handle custom errors format from exceptionFactory (main.ts)
+      if (responseObj.errors && Array.isArray(responseObj.errors)) {
+        message = responseObj.message || 'Validation failed';
+        errors = this.formatCustomErrors(responseObj.errors);
+      }
+      // Handle class-validator default format (array of strings)
+      else if (Array.isArray(responseObj.message)) {
         message = 'Validation failed';
         errors = this.formatValidationErrors(responseObj.message);
       } else {
@@ -56,6 +67,30 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     response.status(status).send(errorResponse);
   }
 
+  /**
+   * Format custom errors from exceptionFactory (main.ts)
+   * Input: [{ field: 'code', errors: ['code is required'] }]
+   * Output: { code: ['code is required'] }
+   */
+  private formatCustomErrors(
+    customErrors: Array<{ field: string; errors: string[] }>,
+  ): Record<string, string[]> {
+    const errors: Record<string, string[]> = {};
+
+    customErrors.forEach((error) => {
+      if (error.field && Array.isArray(error.errors)) {
+        errors[error.field] = error.errors;
+      }
+    });
+
+    return errors;
+  }
+
+  /**
+   * Format class-validator default errors (array of strings)
+   * Input: ['email must be an email', 'name should not be empty']
+   * Output: { email: ['email must be an email'], name: [...] }
+   */
   private formatValidationErrors(messages: string[]): Record<string, string[]> {
     const errors: Record<string, string[]> = {};
 

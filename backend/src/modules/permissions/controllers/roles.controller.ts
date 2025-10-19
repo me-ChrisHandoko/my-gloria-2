@@ -21,6 +21,13 @@ import { ClerkAuthGuard } from '@/core/auth/guards/clerk-auth.guard';
 import { PermissionsGuard } from '@/core/auth/guards/permissions.guard';
 import { RequiredPermission } from '@/core/auth/decorators/permissions.decorator';
 import { CurrentUser } from '@/core/auth/decorators/current-user.decorator';
+import {
+  AuditLog,
+  CriticalAudit,
+  DataModificationAudit,
+  AuditCategory,
+  AuditSeverity,
+} from '@/core/auth/decorators/audit-log.decorator';
 import { RolesService } from '../services/roles.service';
 import { RoleHierarchyService } from '../services/role-hierarchy.service';
 import {
@@ -47,6 +54,7 @@ export class RolesController {
 
   @Post()
   @RequiredPermission('roles', PermissionAction.CREATE)
+  @DataModificationAudit('role.create', 'role')
   @ApiOperation({ summary: 'Create a new role' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -93,6 +101,7 @@ export class RolesController {
 
   @Put(':id')
   @RequiredPermission('roles', PermissionAction.UPDATE)
+  @DataModificationAudit('role.update', 'role')
   @ApiOperation({ summary: 'Update role' })
   @ApiParam({ name: 'id', description: 'Role ID' })
   @ApiResponse({
@@ -109,6 +118,13 @@ export class RolesController {
 
   @Post('assign')
   @RequiredPermission('roles', PermissionAction.UPDATE)
+  @AuditLog({
+    action: 'role.assign',
+    resource: 'user_role',
+    category: AuditCategory.AUTHORIZATION,
+    severity: AuditSeverity.HIGH,
+    includeBody: true,
+  })
   @ApiOperation({ summary: 'Assign role to user' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -120,6 +136,13 @@ export class RolesController {
 
   @Delete(':id')
   @RequiredPermission('roles', PermissionAction.DELETE)
+  @AuditLog({
+    action: 'role.delete',
+    resource: 'role',
+    category: AuditCategory.DATA_MODIFICATION,
+    severity: AuditSeverity.HIGH,
+    alert: true,
+  })
   @ApiOperation({
     summary: 'Soft delete role',
     description:
@@ -140,6 +163,12 @@ export class RolesController {
 
   @Delete('users/:userProfileId/roles/:roleId')
   @RequiredPermission('roles', PermissionAction.UPDATE)
+  @AuditLog({
+    action: 'role.remove',
+    resource: 'user_role',
+    category: AuditCategory.AUTHORIZATION,
+    severity: AuditSeverity.HIGH,
+  })
   @ApiOperation({ summary: 'Remove role from user' })
   @ApiParam({ name: 'userProfileId', description: 'User Profile ID' })
   @ApiParam({ name: 'roleId', description: 'Role ID' })
@@ -157,6 +186,13 @@ export class RolesController {
 
   @Post(':roleId/permissions')
   @RequiredPermission('roles', PermissionAction.UPDATE)
+  @AuditLog({
+    action: 'role.permission.assign',
+    resource: 'role_permission',
+    category: AuditCategory.AUTHORIZATION,
+    severity: AuditSeverity.HIGH,
+    includeBody: true,
+  })
   @ApiOperation({ summary: 'Assign permission to role' })
   @ApiParam({ name: 'roleId', description: 'Role ID' })
   @ApiResponse({
@@ -173,6 +209,7 @@ export class RolesController {
 
   @Post(':roleId/permissions/bulk')
   @RequiredPermission('roles', PermissionAction.UPDATE)
+  @CriticalAudit('role.permission.bulk_assign')
   @ApiOperation({ summary: 'Bulk assign permissions to role' })
   @ApiParam({ name: 'roleId', description: 'Role ID' })
   @ApiResponse({
@@ -189,6 +226,12 @@ export class RolesController {
 
   @Delete(':roleId/permissions/:permissionId')
   @RequiredPermission('roles', PermissionAction.UPDATE)
+  @AuditLog({
+    action: 'role.permission.remove',
+    resource: 'role_permission',
+    category: AuditCategory.AUTHORIZATION,
+    severity: AuditSeverity.HIGH,
+  })
   @ApiOperation({ summary: 'Remove permission from role' })
   @ApiParam({ name: 'roleId', description: 'Role ID' })
   @ApiParam({ name: 'permissionId', description: 'Permission ID' })
@@ -210,6 +253,13 @@ export class RolesController {
 
   @Post(':roleId/hierarchy')
   @RequiredPermission('roles', PermissionAction.UPDATE)
+  @AuditLog({
+    action: 'role.hierarchy.create',
+    resource: 'role_hierarchy',
+    category: AuditCategory.AUTHORIZATION,
+    severity: AuditSeverity.HIGH,
+    includeBody: true,
+  })
   @ApiOperation({ summary: 'Create role hierarchy' })
   @ApiParam({ name: 'roleId', description: 'Role ID' })
   @ApiResponse({
@@ -241,6 +291,7 @@ export class RolesController {
 
   @Post('templates')
   @RequiredPermission('roles', PermissionAction.CREATE)
+  @DataModificationAudit('role.template.create', 'role_template')
   @ApiOperation({ summary: 'Create role template' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -255,6 +306,7 @@ export class RolesController {
 
   @Post('templates/apply')
   @RequiredPermission('roles', PermissionAction.UPDATE)
+  @CriticalAudit('role.template.apply')
   @ApiOperation({ summary: 'Apply role template' })
   @ApiResponse({
     status: HttpStatus.OK,

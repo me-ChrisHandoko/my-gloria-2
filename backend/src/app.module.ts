@@ -39,6 +39,7 @@ import { LoggingInterceptor } from './core/interceptors/logging.interceptor';
 import { TransformInterceptor } from './core/interceptors/transform.interceptor';
 import { TimeoutInterceptor } from './core/interceptors/timeout.interceptor';
 import { MetricsInterceptor } from './core/monitoring/metrics.interceptor';
+import { AuditInterceptor } from './core/audit/audit.interceptor';
 
 // Exception Filters
 import { AllExceptionsFilter } from './core/filters/all-exceptions.filter';
@@ -251,6 +252,10 @@ import { CryptoUtil } from './core/utils/crypto.util';
     {
       provide: APP_INTERCEPTOR,
       useClass: TimeoutInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
     },
 
     // Global Exception Filters (Order matters - specific to general)

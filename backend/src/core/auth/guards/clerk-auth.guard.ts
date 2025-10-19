@@ -159,7 +159,7 @@ export class ClerkAuthGuard implements CanActivate {
       // Audit log for sensitive operations
       if (this.shouldAuditLog(request)) {
         await this.clerkAuthService.createAuditLog(
-          authenticatedUser.id,
+          authenticatedUser.clerkUserId,
           'AUTH_SUCCESS',
           {
             ip: request.ip,

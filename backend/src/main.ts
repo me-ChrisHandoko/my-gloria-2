@@ -149,6 +149,7 @@ async function bootstrap() {
           return new BadRequestException({
             statusCode: 400,
             message: 'Validation failed',
+            error: 'Bad Request', // ← FIXED: Add error field for AllExceptionsFilter
             errors: messages,
           });
         },

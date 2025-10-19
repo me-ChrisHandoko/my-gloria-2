@@ -37,6 +37,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<FastifyReply>();
     const request = ctx.getRequest<FastifyRequest>();
 
+    // Debug logging
+    this.logger.debug(
+      '⚠️ AllExceptionsFilter CAUGHT exception',
+      exception instanceof Error ? exception.constructor.name : typeof exception,
+    );
+
     const errorResponse = this.buildErrorResponse(exception, request);
 
     // Log the error
@@ -101,6 +107,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
       method: request.method,
       requestId: request.id,
     };
+
+    // Preserve validation errors if present
+    if (exception instanceof HttpException) {
+      const exceptionResponse = exception.getResponse();
+      if (
+        typeof exceptionResponse === 'object' &&
+        exceptionResponse !== null
+      ) {
+        const responseObj = exceptionResponse as any;
+        if (responseObj.errors) {
+          (errorResponse as any).errors = responseObj.errors;
+        }
+      }
+    }
 
     // Include stack trace in development mode
     if (this.isDevelopment && this.enableDebug && stack) {

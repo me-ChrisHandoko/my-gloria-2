@@ -43,6 +43,11 @@ export class CreateRoleDto {
   @Type(() => Number)
   hierarchyLevel: number;
 
+  @ApiPropertyOptional({ description: 'Is active', default: true })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+
   @ApiPropertyOptional({ description: 'Is system role', default: false })
   @IsBoolean()
   @IsOptional()
