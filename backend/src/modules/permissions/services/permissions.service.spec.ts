@@ -5,19 +5,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PermissionsService } from './permissions.service';
 import { PrismaService } from '@/core/database/prisma.service';
-import { AuditService } from '@/core/audit/audit.service';
 import { LoggingService } from '@/core/logging/logging.service';
 import {
   NotFoundException,
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { PermissionAction, PermissionScope, AuditAction } from '@prisma/client';
+import { PermissionAction, PermissionScope } from '@prisma/client';
 
 describe('PermissionsService', () => {
   let service: PermissionsService;
   let prismaService: PrismaService;
-  let auditService: AuditService;
   let loggingService: LoggingService;
 
   const mockPrismaService = {
@@ -44,10 +42,6 @@ describe('PermissionsService', () => {
       count: jest.fn(),
     },
     $transaction: jest.fn((callback) => callback(mockPrismaService)),
-  };
-
-  const mockAuditService = {
-    log: jest.fn(),
   };
 
   const mockLoggingService = {
@@ -85,10 +79,6 @@ describe('PermissionsService', () => {
           useValue: mockPrismaService,
         },
         {
-          provide: AuditService,
-          useValue: mockAuditService,
-        },
-        {
           provide: LoggingService,
           useValue: mockLoggingService,
         },
@@ -97,7 +87,6 @@ describe('PermissionsService', () => {
 
     service = module.get<PermissionsService>(PermissionsService);
     prismaService = module.get<PrismaService>(PrismaService);
-    auditService = module.get<AuditService>(AuditService);
     loggingService = module.get<LoggingService>(LoggingService);
 
     jest.clearAllMocks();
@@ -129,13 +118,6 @@ describe('PermissionsService', () => {
 
       expect(result).toEqual(newPermission);
       expect(mockPrismaService.permission.create).toHaveBeenCalled();
-      expect(mockAuditService.log).toHaveBeenCalledWith(
-        expect.objectContaining({
-          action: AuditAction.CREATE,
-          module: 'permissions',
-          entityType: 'Permission',
-        }),
-      );
     });
 
     it('should throw ConflictException if permission code already exists', async () => {
@@ -236,7 +218,6 @@ describe('PermissionsService', () => {
         }),
         include: expect.any(Object),
       });
-      expect(mockAuditService.log).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if permission not found', async () => {
@@ -284,7 +265,6 @@ describe('PermissionsService', () => {
           isActive: false,
         }),
       });
-      expect(mockAuditService.log).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if permission not found', async () => {
@@ -387,7 +367,6 @@ describe('PermissionsService', () => {
 
         expect(result).toBeDefined();
         expect(mockPrismaService.permissionGroup.create).toHaveBeenCalled();
-        expect(mockAuditService.log).toHaveBeenCalled();
       });
 
       it('should throw ConflictException if group code exists', async () => {
@@ -425,7 +404,6 @@ describe('PermissionsService', () => {
 
         expect(result).toBeDefined();
         expect(mockPrismaService.permissionGroup.update).toHaveBeenCalled();
-        expect(mockAuditService.log).toHaveBeenCalled();
       });
 
       it('should throw NotFoundException if group not found', async () => {

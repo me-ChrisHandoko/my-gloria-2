@@ -1,12 +1,7 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
 import { LoggingService } from '@/core/logging/logging.service';
-import { AuditService } from '@/core/audit/audit.service';
-import { ResourcePermission, AuditAction } from '@prisma/client';
+import { ResourcePermission } from '@prisma/client';
 import { v7 as uuidv7 } from 'uuid';
 
 @Injectable()
@@ -14,7 +9,6 @@ export class ResourcePermissionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggingService,
-    private readonly auditService: AuditService,
   ) {}
 
   /**
@@ -63,22 +57,6 @@ export class ResourcePermissionsService {
         },
       });
 
-      await this.auditService.log({
-        action: AuditAction.CREATE,
-        module: 'permissions',
-        entityType: 'ResourcePermission',
-        entityId: resourcePermission.id,
-        context: {
-          actorId: grantedBy,
-        },
-        metadata: {
-          userProfileId,
-          permissionId,
-          resourceType,
-          resourceId,
-        },
-      });
-
       this.logger.log(
         `Resource permission granted for user ${userProfileId} on ${resourceType}:${resourceId}`,
         'ResourcePermissionsService',
@@ -102,7 +80,8 @@ export class ResourcePermissionsService {
     permissionId: string,
     resourceType: string,
     resourceId: string,
-    revokedBy: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _revokedBy: string,
   ): Promise<void> {
     try {
       await this.prisma.resourcePermission.update({
@@ -117,22 +96,6 @@ export class ResourcePermissionsService {
         data: {
           isGranted: false,
           updatedAt: new Date(),
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.DELETE,
-        module: 'permissions',
-        entityType: 'ResourcePermission',
-        entityId: `${userProfileId}_${permissionId}_${resourceType}_${resourceId}`,
-        context: {
-          actorId: revokedBy,
-        },
-        metadata: {
-          userProfileId,
-          permissionId,
-          resourceType,
-          resourceId,
         },
       });
 

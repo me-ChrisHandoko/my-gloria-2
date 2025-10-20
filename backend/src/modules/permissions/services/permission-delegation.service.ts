@@ -1,8 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
 import { LoggingService } from '@/core/logging/logging.service';
-import { AuditService } from '@/core/audit/audit.service';
-import { PermissionDelegation, AuditAction } from '@prisma/client';
+import { PermissionDelegation } from '@prisma/client';
 import { v7 as uuidv7 } from 'uuid';
 
 @Injectable()
@@ -10,7 +9,6 @@ export class PermissionDelegationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggingService,
-    private readonly auditService: AuditService,
   ) {}
 
   /**
@@ -51,21 +49,6 @@ export class PermissionDelegationService {
         },
       });
 
-      await this.auditService.log({
-        action: AuditAction.CREATE,
-        module: 'permissions',
-        entityType: 'PermissionDelegation',
-        entityId: delegation.id,
-        metadata: {
-          delegateId,
-          permissionCount: permissions.length,
-          validUntil,
-        },
-        context: {
-          actorId: delegatorId,
-        },
-      });
-
       this.logger.log(
         `Permissions delegated from ${delegatorId} to ${delegateId}`,
         'PermissionDelegationService',
@@ -97,20 +80,6 @@ export class PermissionDelegationService {
           revokedBy,
           revokedAt: new Date(),
           revokedReason,
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.UPDATE,
-        module: 'permissions',
-        entityType: 'PermissionDelegation',
-        entityId: delegationId,
-        metadata: {
-          action: 'revoke',
-          reason: revokedReason,
-        },
-        context: {
-          actorId: revokedBy,
         },
       });
 

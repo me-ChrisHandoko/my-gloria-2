@@ -5,15 +5,12 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
-import { AuditService } from '@/core/audit/audit.service';
 import { LoggingService } from '@/core/logging/logging.service';
 import {
   Permission,
   PermissionGroup,
   Prisma,
   PermissionAction,
-  PermissionScope,
-  AuditAction,
 } from '@prisma/client';
 import { v7 as uuidv7 } from 'uuid';
 import {
@@ -28,7 +25,6 @@ import { IPermissionFilter } from '../interfaces/permission.interface';
 export class PermissionsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly auditService: AuditService,
     private readonly logger: LoggingService,
   ) {}
 
@@ -80,21 +76,6 @@ export class PermissionsService {
         },
       });
 
-      await this.auditService.log({
-        action: AuditAction.CREATE,
-        module: 'permissions',
-        entityType: 'Permission',
-        entityId: permission.id,
-        metadata: {
-          code: permission.code,
-          resource: permission.resource,
-          action: permission.action,
-        },
-        context: {
-          actorId: createdBy,
-        },
-      });
-
       this.logger.log(
         `Permission created: ${permission.code}`,
         'PermissionsService',
@@ -116,7 +97,8 @@ export class PermissionsService {
   async updatePermission(
     id: string,
     dto: UpdatePermissionDto,
-    modifiedBy: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _modifiedBy: string,
   ): Promise<Permission> {
     try {
       const existing = await this.findById(id);
@@ -139,19 +121,6 @@ export class PermissionsService {
         },
         include: {
           group: true,
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.UPDATE,
-        module: 'permissions',
-        entityType: 'Permission',
-        entityId: permission.id,
-        metadata: {
-          changes: dto,
-        },
-        context: {
-          actorId: modifiedBy,
         },
       });
 
@@ -247,7 +216,11 @@ export class PermissionsService {
   /**
    * Delete a permission (soft delete by deactivating)
    */
-  async deletePermission(id: string, deletedBy: string): Promise<void> {
+  async deletePermission(
+    id: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _deletedBy: string,
+  ): Promise<void> {
     try {
       const permission = await this.findById(id);
 
@@ -271,19 +244,6 @@ export class PermissionsService {
         data: {
           isActive: false,
           updatedAt: new Date(),
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.DELETE,
-        module: 'permissions',
-        entityType: 'Permission',
-        entityId: id,
-        metadata: {
-          code: permission.code,
-        },
-        context: {
-          actorId: deletedBy,
         },
       });
 
@@ -332,20 +292,6 @@ export class PermissionsService {
         },
       });
 
-      await this.auditService.log({
-        action: AuditAction.CREATE,
-        module: 'permissions',
-        entityType: 'PermissionGroup',
-        entityId: group.id,
-        metadata: {
-          code: group.code,
-          name: group.name,
-        },
-        context: {
-          actorId: createdBy,
-        },
-      });
-
       this.logger.log(
         `Permission group created: ${group.code}`,
         'PermissionsService',
@@ -367,7 +313,8 @@ export class PermissionsService {
   async updatePermissionGroup(
     id: string,
     dto: UpdatePermissionGroupDto,
-    modifiedBy: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _modifiedBy: string,
   ): Promise<PermissionGroup> {
     try {
       const existing = await this.prisma.permissionGroup.findUnique({
@@ -388,19 +335,6 @@ export class PermissionsService {
           sortOrder: dto.sortOrder,
           isActive: dto.isActive,
           updatedAt: new Date(),
-        },
-      });
-
-      await this.auditService.log({
-        action: AuditAction.UPDATE,
-        module: 'permissions',
-        entityType: 'PermissionGroup',
-        entityId: group.id,
-        metadata: {
-          changes: dto,
-        },
-        context: {
-          actorId: modifiedBy,
         },
       });
 

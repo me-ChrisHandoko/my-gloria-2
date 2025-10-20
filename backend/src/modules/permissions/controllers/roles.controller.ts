@@ -75,6 +75,17 @@ export class RolesController {
     return this.rolesService.findAll(includeInactive);
   }
 
+  @Get('statistics')
+  @RequiredPermission('roles', PermissionAction.READ)
+  @ApiOperation({ summary: 'Get role statistics' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Statistics retrieved successfully',
+  })
+  async getStatistics() {
+    return this.rolesService.getStatistics();
+  }
+
   @Get(':id')
   @RequiredPermission('roles', PermissionAction.READ)
   @ApiOperation({ summary: 'Get role by ID' })
@@ -269,6 +280,7 @@ export class RolesController {
   async createRoleHierarchy(
     @Param('roleId') roleId: string,
     @Body() dto: CreateRoleHierarchyDto,
+    @CurrentUser() user: any,
   ) {
     return this.hierarchyService.createHierarchy(
       roleId,
@@ -329,16 +341,5 @@ export class RolesController {
   })
   async getUserRoles(@Param('userProfileId') userProfileId: string) {
     return this.rolesService.getUserRoles(userProfileId);
-  }
-
-  @Get('statistics')
-  @RequiredPermission('roles', PermissionAction.READ)
-  @ApiOperation({ summary: 'Get role statistics' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Statistics retrieved successfully',
-  })
-  async getStatistics() {
-    return this.rolesService.getStatistics();
   }
 }
