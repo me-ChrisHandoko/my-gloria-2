@@ -24,7 +24,7 @@ export const organizationApi = apiSlice.injectEndpoints({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Organization' as const, id })),
               { type: 'Organization', id: 'LIST' },

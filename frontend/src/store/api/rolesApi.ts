@@ -24,27 +24,74 @@ export const rolesApi = apiSlice.injectEndpoints({
       PaginatedResponse<Role>,
       QueryRoleParams | void
     >({
-      query: (params = {}) => ({
-        url: '/roles',
-        params: {
+      query: (params = {}) => {
+        const queryParams: Record<string, any> = {
           page: params.page || 1,
           limit: params.limit || 10,
-          search: params.search,
-          sortBy: params.sortBy,
-          sortOrder: params.sortOrder,
-          includeInactive: params.includeInactive,
-          hierarchyLevel: params.hierarchyLevel,
-          isSystemRole: params.isSystemRole,
-        },
-      }),
+        };
+
+        // Only add optional parameters if they have values
+        if (params.search) queryParams.search = params.search;
+        if (params.sortBy) queryParams.sortBy = params.sortBy;
+        if (params.sortOrder) queryParams.sortOrder = params.sortOrder;
+        if (params.includeInactive !== undefined) queryParams.includeInactive = params.includeInactive;
+        if (params.isActive !== undefined) queryParams.isActive = params.isActive;
+        if (params.hierarchyLevel !== undefined) queryParams.hierarchyLevel = params.hierarchyLevel;
+        if (params.isSystemRole !== undefined) queryParams.isSystemRole = params.isSystemRole;
+
+        return {
+          url: '/roles',
+          params: queryParams,
+        };
+      },
+      // Transform response to handle wrapped response from backend TransformInterceptor
+      // This follows PermissionList pattern for consistency
+      transformResponse: (response: any) => {
+        // Handle wrapped response from backend TransformInterceptor
+        let actualResponse: PaginatedResponse<Role>;
+
+        if (response && response.success && response.data) {
+          // Unwrap the response from TransformInterceptor
+          actualResponse = response.data;
+
+          // Check if it's double-wrapped
+          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
+            actualResponse = (actualResponse as any).data;
+          }
+        } else {
+          // Use response directly if not wrapped
+          actualResponse = response;
+        }
+
+        // Ensure we have valid data
+        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+          return {
+            data: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 0,
+          };
+        }
+
+        return {
+          ...actualResponse,
+          data: actualResponse.data.map(role => ({
+            ...role,
+            createdAt: new Date(role.createdAt),
+            updatedAt: new Date(role.updatedAt),
+          })),
+        };
+      },
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Role' as const, id })),
               { type: 'Role', id: 'LIST' },
             ]
           : [{ type: 'Role', id: 'LIST' }],
-      keepUnusedDataFor: 300,
+      // Set cache duration to 60 seconds (matches backend Redis TTL)
+      keepUnusedDataFor: 60,
     }),
 
     // Get single role by ID

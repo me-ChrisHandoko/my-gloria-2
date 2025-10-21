@@ -21,7 +21,7 @@ import { Prisma } from '@prisma/client';
 export class SchoolsService {
   private readonly logger = new Logger(SchoolsService.name);
   private readonly cachePrefix = 'school:';
-  private readonly cacheTTL = 3600; // 1 hour
+  private readonly cacheTTL = 60; // 60 seconds (matches Type C pattern)
 
   constructor(
     private readonly prisma: PrismaService,
@@ -175,6 +175,13 @@ export class SchoolsService {
   }
 
   async findByCode(code: string): Promise<SchoolResponseDto> {
+    const cacheKey = `${this.cachePrefix}code:${code}`;
+    const cached = await this.cache.get<SchoolResponseDto>(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
     const school = await this.prisma.school.findUnique({
       where: { code },
       include: {
@@ -190,7 +197,9 @@ export class SchoolsService {
       throw new NotFoundException(`School with code ${code} not found`);
     }
 
-    return this.formatSchoolResponse(school);
+    const result = this.formatSchoolResponse(school);
+    await this.cache.set(cacheKey, result, this.cacheTTL);
+    return result;
   }
 
   async update(
@@ -237,6 +246,10 @@ export class SchoolsService {
 
       // Invalidate cache
       await this.cache.del(`${this.cachePrefix}${id}`);
+      await this.cache.del(`${this.cachePrefix}code:${existingSchool.code}`);
+      if (updateSchoolDto.code && updateSchoolDto.code !== existingSchool.code) {
+        await this.cache.del(`${this.cachePrefix}code:${updateSchoolDto.code}`);
+      }
       await this.cache.del(`${this.cachePrefix}list`);
 
       this.logger.log(`Updated school: ${school.name} (${school.id})`);
@@ -302,6 +315,7 @@ export class SchoolsService {
 
       // Invalidate cache
       await this.cache.del(`${this.cachePrefix}${id}`);
+      await this.cache.del(`${this.cachePrefix}code:${deletedSchool.code}`);
       await this.cache.del(`${this.cachePrefix}list`);
 
       this.logger.log(`Soft deleted school: ${deletedSchool.name} (${id})`);
@@ -349,6 +363,7 @@ export class SchoolsService {
 
       // Invalidate cache
       await this.cache.del(`${this.cachePrefix}${id}`);
+      await this.cache.del(`${this.cachePrefix}code:${restoredSchool.code}`);
       await this.cache.del(`${this.cachePrefix}list`);
 
       this.logger.log(`Restored school: ${restoredSchool.name} (${id})`);

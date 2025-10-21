@@ -1,4 +1,5 @@
 import { apiSlice } from './apiSliceWithHook';
+import type { PaginatedResponse } from '@/types';
 import type {
   Permission,
   PermissionGroup,
@@ -11,7 +12,7 @@ import type {
 export const permissionApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getPermissions: builder.query<
-      { data: Permission[]; meta: { total: number; page: number; limit: number } },
+      PaginatedResponse<Permission>,
       PermissionQueryParams
     >({
       query: (params = {}) => {
@@ -25,19 +26,61 @@ export const permissionApi = apiSlice.injectEndpoints({
         if (params.action) queryParams.action = params.action;
         if (params.groupId) queryParams.groupId = params.groupId;
         if (params.isActive !== undefined) queryParams.isActive = params.isActive;
+        if (params.search) queryParams.search = params.search;
 
         return {
           url: '/permissions',
           params: queryParams,
         };
       },
+      // Transform response to handle wrapped response from backend TransformInterceptor
+      // This follows DepartmentList pattern for consistency
+      transformResponse: (response: any) => {
+        // Handle wrapped response from backend TransformInterceptor
+        let actualResponse: PaginatedResponse<Permission>;
+
+        if (response && response.success && response.data) {
+          // Unwrap the response from TransformInterceptor
+          actualResponse = response.data;
+
+          // Check if it's double-wrapped
+          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
+            actualResponse = (actualResponse as any).data;
+          }
+        } else {
+          // Use response directly if not wrapped
+          actualResponse = response;
+        }
+
+        // Ensure we have valid data
+        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+          return {
+            data: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 0,
+          };
+        }
+
+        return {
+          ...actualResponse,
+          data: actualResponse.data.map(perm => ({
+            ...perm,
+            createdAt: new Date(perm.createdAt),
+            updatedAt: new Date(perm.updatedAt),
+          })),
+        };
+      },
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Permission' as const, id })),
               { type: 'Permission' as const, id: 'LIST' },
             ]
           : [{ type: 'Permission' as const, id: 'LIST' }],
+      // Set cache duration to 60 seconds (matches backend Redis TTL)
+      keepUnusedDataFor: 60,
     }),
 
     getPermissionById: builder.query<Permission, string>({
@@ -91,6 +134,20 @@ export const permissionApi = apiSlice.injectEndpoints({
         url: '/permissions/groups',
         params,
       }),
+      transformResponse: (response: any) => {
+        // The global transformer in apiSliceWithHook wraps array responses with pagination metadata
+        // Extract the actual array from { data: [...], total, page, ... }
+        if (response && typeof response === 'object' && Array.isArray(response.data)) {
+          return response.data;
+        }
+        // Fallback: if response is already an array, return it
+        if (Array.isArray(response)) {
+          return response;
+        }
+        // Unexpected format: return empty array
+        console.warn('[permissionApi] Unexpected response format for getPermissionGroups:', response);
+        return [];
+      },
       providesTags: ['PermissionGroup'],
     }),
 

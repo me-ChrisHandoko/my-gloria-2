@@ -42,11 +42,11 @@ export default function RoleList() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
-  // Increased debounce delay to reduce API call frequency
+  // Increased debounce delay to reduce API call frequency and prevent rate limiting
   const debouncedSearchTerm = useDebounce(searchTerm, 800);
   const itemsPerPage = 10;
 
-  // Fetch roles using RTK Query
+  // Fetch roles using RTK Query with Redis caching and rate limiting (20 req/10s)
   const {
     data: rolesData,
     isLoading: isLoadingRoles,
@@ -58,7 +58,10 @@ export default function RoleList() {
       page: currentPage,
       limit: itemsPerPage,
       search: debouncedSearchTerm,
-      includeInactive: isActiveFilter === "all" ? true : isActiveFilter === "active" ? false : true,
+      // Use isActive for explicit filtering
+      ...(isActiveFilter === "all"
+        ? { includeInactive: true }
+        : { isActive: isActiveFilter === "active" }),
     },
     {
       // Skip query if search term is still being debounced
@@ -67,7 +70,7 @@ export default function RoleList() {
   );
 
   const roles = rolesData?.data || [];
-  const totalItems = rolesData?.meta?.total || rolesData?.total || 0;
+  const totalItems = rolesData?.total || 0;
 
   // Handle RTK Query errors
   useEffect(() => {
@@ -115,6 +118,7 @@ export default function RoleList() {
   };
 
   // Reset page when filters change
+  // Use debounced search term to prevent premature page resets during typing
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, isActiveFilter]);

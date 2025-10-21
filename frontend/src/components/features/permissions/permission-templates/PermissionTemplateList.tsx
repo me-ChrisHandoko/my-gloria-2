@@ -65,7 +65,7 @@ export default function PermissionTemplateList() {
   );
 
   const templates = templatesData?.data || [];
-  const totalItems = templatesData?.meta?.total || templatesData?.total || 0;
+  const totalItems = templatesData?.total || 0;
 
   // Handle RTK Query errors
   useEffect(() => {

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
 import { LoggingService } from '@/core/logging/logging.service';
+import { CacheService } from '@/core/cache/cache.service';
 import {
   Role,
   UserRole,
@@ -26,9 +27,13 @@ import {
 
 @Injectable()
 export class RolesService {
+  private readonly cachePrefix = 'role:';
+  private readonly cacheTTL = 60; // 60 seconds
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggingService,
+    private readonly cache: CacheService,
   ) {}
 
   /**
@@ -58,6 +63,9 @@ export class RolesService {
           createdBy,
         },
       });
+
+      // Invalidate list cache
+      await this.cache.del(`${this.cachePrefix}list`);
 
       this.logger.log(`Role created: ${role.code}`, 'RolesService');
       return role;
@@ -93,6 +101,11 @@ export class RolesService {
         },
       });
 
+      // Invalidate caches
+      await this.cache.del(`${this.cachePrefix}${id}`);
+      await this.cache.del(`${this.cachePrefix}code:${role.code}`);
+      await this.cache.del(`${this.cachePrefix}list`);
+
       this.logger.log(`Role updated: ${role.code}`, 'RolesService');
       return role;
     } catch (error) {
@@ -110,9 +123,7 @@ export class RolesService {
       const existing = await this.findById(id);
 
       if (existing.isSystemRole) {
-        throw new BadRequestException(
-          'System roles cannot be deleted',
-        );
+        throw new BadRequestException('System roles cannot be deleted');
       }
 
       if (!existing.isActive) {
@@ -142,6 +153,11 @@ export class RolesService {
         },
       });
 
+      // Invalidate caches
+      await this.cache.del(`${this.cachePrefix}${id}`);
+      await this.cache.del(`${this.cachePrefix}code:${role.code}`);
+      await this.cache.del(`${this.cachePrefix}list`);
+
       this.logger.log(`Role soft deleted: ${role.code}`, 'RolesService');
       return role;
     } catch (error) {
@@ -154,6 +170,18 @@ export class RolesService {
    * Find role by ID
    */
   async findById(id: string): Promise<Role> {
+    const cacheKey = `${this.cachePrefix}${id}`;
+
+    // Try cache first
+    const cached = await this.cache.get<Role>(cacheKey);
+    if (cached) {
+      this.logger.debug(
+        `Role retrieved from cache: ${cacheKey}`,
+        'RolesService',
+      );
+      return cached;
+    }
+
     const role = await this.prisma.role.findUnique({
       where: { id },
       include: {
@@ -179,6 +207,9 @@ export class RolesService {
       throw new NotFoundException(`Role with ID ${id} not found`);
     }
 
+    // Cache the result
+    await this.cache.set(cacheKey, role, this.cacheTTL);
+
     return role;
   }
 
@@ -186,6 +217,18 @@ export class RolesService {
    * Find role by code
    */
   async findByCode(code: string): Promise<Role> {
+    const cacheKey = `${this.cachePrefix}code:${code}`;
+
+    // Try cache first
+    const cached = await this.cache.get<Role>(cacheKey);
+    if (cached) {
+      this.logger.debug(
+        `Role retrieved from cache: ${cacheKey}`,
+        'RolesService',
+      );
+      return cached;
+    }
+
     const role = await this.prisma.role.findUnique({
       where: { code },
       include: {
@@ -200,6 +243,9 @@ export class RolesService {
     if (!role) {
       throw new NotFoundException(`Role with code ${code} not found`);
     }
+
+    // Cache the result
+    await this.cache.set(cacheKey, role, this.cacheTTL);
 
     return role;
   }
@@ -225,6 +271,125 @@ export class RolesService {
       },
       orderBy: [{ hierarchyLevel: 'asc' }, { name: 'asc' }],
     });
+  }
+
+  /**
+   * Find roles with pagination and caching
+   */
+  async findManyPaginated(
+    filter: {
+      search?: string;
+      includeInactive?: boolean;
+      isActive?: boolean;
+      hierarchyLevel?: number;
+      isSystemRole?: boolean;
+    },
+    page: number,
+    limit: number,
+  ): Promise<{
+    data: Role[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    // Generate cache key based on filter params
+    const cacheKey = `${this.cachePrefix}list:${JSON.stringify({ filter, page, limit })}`;
+
+    // Try to get from cache first
+    const cached = await this.cache.get<{
+      data: Role[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>(cacheKey);
+
+    if (cached) {
+      this.logger.debug(
+        `Role list retrieved from cache: ${cacheKey}`,
+        'RolesService',
+      );
+      return cached;
+    }
+
+    // Build where clause
+    const where: any = {};
+
+    // Active filter - isActive takes precedence over includeInactive
+    if (filter.isActive !== undefined) {
+      // Explicit isActive filter (true = active only, false = inactive only)
+      where.isActive = filter.isActive;
+    } else if (!filter.includeInactive) {
+      // Legacy includeInactive behavior (false = active only, true = all)
+      where.isActive = true;
+    }
+
+    // Search filter (search in name, code, description)
+    if (filter.search) {
+      where.OR = [
+        { name: { contains: filter.search, mode: 'insensitive' } },
+        { code: { contains: filter.search, mode: 'insensitive' } },
+        { description: { contains: filter.search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Hierarchy level filter
+    if (filter.hierarchyLevel !== undefined) {
+      where.hierarchyLevel = filter.hierarchyLevel;
+    }
+
+    // System role filter
+    if (filter.isSystemRole !== undefined) {
+      where.isSystemRole = filter.isSystemRole;
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    // Execute query with count
+    const [data, total] = await Promise.all([
+      this.prisma.role.findMany({
+        where,
+        include: {
+          rolePermissions: {
+            include: {
+              permission: true,
+            },
+            where: { isGranted: true },
+          },
+          _count: {
+            select: {
+              userRoles: true,
+            },
+          },
+        },
+        orderBy: [{ hierarchyLevel: 'asc' }, { name: 'asc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.role.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    const result = {
+      data,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+
+    // Cache the result
+    await this.cache.set(cacheKey, result, this.cacheTTL);
+
+    this.logger.debug(
+      `Role list retrieved from database and cached: ${cacheKey}`,
+      'RolesService',
+    );
+
+    return result;
   }
 
   /**

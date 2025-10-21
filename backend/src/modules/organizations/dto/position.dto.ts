@@ -58,7 +58,8 @@ export class CreatePositionDto {
   departmentId?: string;
 
   @ApiProperty({
-    description: 'Position hierarchy level in organization (1=highest, 10=lowest)',
+    description:
+      'Position hierarchy level in organization (1=highest, 10=lowest)',
     example: 5,
     minimum: 1,
     maximum: 10,

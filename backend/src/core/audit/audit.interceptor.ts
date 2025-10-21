@@ -417,7 +417,7 @@ export class AuditInterceptor implements NestInterceptor {
         'department.create': AuditAction.CREATE,
         'department.update': AuditAction.UPDATE,
         'department.delete': AuditAction.DELETE,
-        'UPDATE_DEPARTMENT': AuditAction.UPDATE,
+        UPDATE_DEPARTMENT: AuditAction.UPDATE,
       };
 
       const action = actionMap[metadata.action] || AuditAction.CREATE;
@@ -456,13 +456,12 @@ export class AuditInterceptor implements NestInterceptor {
 
       // Extract entity info from response
       // Handle wrapped response from TransformInterceptor { success, data, ... }
-      const actualData =
-        (responseData as any)?.data || responseData || {};
+      const actualData = responseData?.data || responseData || {};
 
       const entityId =
-        actualData?.id ||                       // From unwrapped data
-        (request.params as any)?.id ||          // From URL params (UPDATE)
-        `req_${request.id}`;                    // Fallback
+        actualData?.id || // From unwrapped data
+        (request.params as any)?.id || // From URL params (UPDATE)
+        `req_${request.id}`; // Fallback
 
       // Debug logging for entity ID extraction
       if (!entityId.startsWith('req_')) {
@@ -508,7 +507,10 @@ export class AuditInterceptor implements NestInterceptor {
         if (oldValues && newValues) {
           changedFields = this.getChangedFields(oldValues, newValues);
         }
-      } else if (action === AuditAction.CREATE || action === AuditAction.ASSIGN) {
+      } else if (
+        action === AuditAction.CREATE ||
+        action === AuditAction.ASSIGN
+      ) {
         // For CREATE, fetch from database to ensure complete data (same as UPDATE)
         // This ensures consistent format between CREATE and UPDATE operations
         newValues = await this.fetchNewValues(
@@ -572,9 +574,7 @@ export class AuditInterceptor implements NestInterceptor {
 
     const masked = { ...data };
     for (const key of Object.keys(masked)) {
-      if (
-        sensitiveFields.some((field) => key.toLowerCase().includes(field))
-      ) {
+      if (sensitiveFields.some((field) => key.toLowerCase().includes(field))) {
         masked[key] = '***MASKED***';
       }
     }
@@ -597,7 +597,7 @@ export class AuditInterceptor implements NestInterceptor {
     }
 
     // Must have an ID parameter to fetch old data
-    if (!(params as any)?.id) {
+    if (!params?.id) {
       return false;
     }
 
@@ -686,14 +686,18 @@ export class AuditInterceptor implements NestInterceptor {
       const modelName = modelMap[resource?.toLowerCase()];
       if (!modelName || !entityId) {
         // Fallback to responseData if can't fetch from DB
-        return responseData ? this.extractRelevantFields(responseData) : undefined;
+        return responseData
+          ? this.extractRelevantFields(responseData)
+          : undefined;
       }
 
       // Fetch new data from Prisma (after update)
       const model = (this.prisma as any)[modelName];
       if (!model) {
         // Fallback to responseData if model not found
-        return responseData ? this.extractRelevantFields(responseData) : undefined;
+        return responseData
+          ? this.extractRelevantFields(responseData)
+          : undefined;
       }
 
       const newData = await model.findUnique({
@@ -702,14 +706,18 @@ export class AuditInterceptor implements NestInterceptor {
 
       if (!newData) {
         // Fallback to responseData if record not found (might be deleted)
-        return responseData ? this.extractRelevantFields(responseData) : undefined;
+        return responseData
+          ? this.extractRelevantFields(responseData)
+          : undefined;
       }
 
       return this.extractRelevantFields(newData);
     } catch (error) {
       console.error('Failed to fetch new values:', error);
       // Fallback to responseData on error
-      return responseData ? this.extractRelevantFields(responseData) : undefined;
+      return responseData
+        ? this.extractRelevantFields(responseData)
+        : undefined;
     }
   }
 

@@ -102,6 +102,7 @@ export interface CreateRoleHierarchyDto {
 
 export interface QueryRoleParams extends QueryParams {
   includeInactive?: boolean;
+  isActive?: boolean;
   hierarchyLevel?: number;
   isSystemRole?: boolean;
 }

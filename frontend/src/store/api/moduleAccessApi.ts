@@ -81,7 +81,7 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
         };
       },
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'ModuleAccess' as const, id })),
               { type: 'ModuleAccess', id: 'LIST' },

@@ -235,14 +235,6 @@ export interface PaginatedResponse<T> {
   hasNext?: boolean;
   hasPrevious?: boolean;
   hasMore?: boolean;
-  meta?: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNext?: boolean;
-    hasPrevious?: boolean;
-  };
 }
 
 export interface QueryParams {

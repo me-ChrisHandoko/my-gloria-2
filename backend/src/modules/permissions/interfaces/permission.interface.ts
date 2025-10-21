@@ -79,4 +79,5 @@ export interface IPermissionFilter {
   groupId?: string;
   isActive?: boolean;
   isSystemPermission?: boolean;
+  search?: string;
 }

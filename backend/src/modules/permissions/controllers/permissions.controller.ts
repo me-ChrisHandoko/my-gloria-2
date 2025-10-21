@@ -21,6 +21,14 @@ import { ClerkAuthGuard } from '@/core/auth/guards/clerk-auth.guard';
 import { PermissionsGuard } from '@/core/auth/guards/permissions.guard';
 import { RequiredPermission } from '@/core/auth/decorators/permissions.decorator';
 import { CurrentUser } from '@/core/auth/decorators/current-user.decorator';
+import { RateLimit } from '@/core/auth/decorators/rate-limit.decorator';
+import {
+  AuditLog,
+  CriticalAudit,
+  DataModificationAudit,
+  AuditCategory,
+  AuditSeverity,
+} from '@/core/auth/decorators/audit-log.decorator';
 import { PermissionsService } from '../services/permissions.service';
 import { PermissionValidationService } from '../services/permission-validation.service';
 import {
@@ -47,6 +55,7 @@ export class PermissionsController {
 
   @Post()
   @RequiredPermission('permissions', PermissionAction.CREATE)
+  @DataModificationAudit('permission.create', 'permission')
   @ApiOperation({ summary: 'Create a new permission' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -60,42 +69,53 @@ export class PermissionsController {
   }
 
   @Get()
+  @RateLimit({
+    limit: 20,
+    windowMs: 10000, // 20 requests per 10 seconds
+    message:
+      'Too many permission requests. Please wait a moment before trying again.',
+    headers: true,
+  })
   @RequiredPermission('permissions', PermissionAction.READ)
-  @ApiOperation({ summary: 'Get all permissions' })
+  @ApiOperation({
+    summary: 'Get all permissions',
+    description:
+      'Retrieves a paginated list of permissions with optional filtering. Rate limited to 20 requests per 10 seconds.',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Permissions retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    description: 'Rate limit exceeded. Please wait before retrying.',
   })
   async getPermissions(
     @Query('resource') resource?: string,
     @Query('action') action?: PermissionAction,
     @Query('groupId') groupId?: string,
     @Query('isActive') isActive?: boolean,
+    @Query('search') search?: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    const permissions = await this.permissionsService.findMany({
-      resource,
-      action,
-      groupId,
-      isActive,
-    });
-
-    // Return paginated format expected by frontend
+    // Parse pagination parameters
     const currentPage = page ? parseInt(page.toString(), 10) : 1;
-    const pageSize = limit ? parseInt(limit.toString(), 10) : permissions.length;
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const paginatedData = permissions.slice(startIndex, endIndex);
+    const pageSize = limit ? parseInt(limit.toString(), 10) : 10;
 
-    return {
-      data: paginatedData,
-      meta: {
-        total: permissions.length,
-        page: currentPage,
-        limit: pageSize,
+    // Use service method that returns paginated response
+    // This matches the pattern used in roles.controller.ts
+    return this.permissionsService.findManyPaginated(
+      {
+        resource,
+        action,
+        groupId,
+        isActive,
+        search,
       },
-    };
+      currentPage,
+      pageSize,
+    );
   }
 
   @Get('groups')
@@ -148,6 +168,7 @@ export class PermissionsController {
 
   @Put(':id')
   @RequiredPermission('permissions', PermissionAction.UPDATE)
+  @DataModificationAudit('permission.update', 'permission')
   @ApiOperation({ summary: 'Update permission' })
   @ApiParam({ name: 'id', description: 'Permission ID' })
   @ApiResponse({
@@ -164,6 +185,13 @@ export class PermissionsController {
 
   @Delete(':id')
   @RequiredPermission('permissions', PermissionAction.DELETE)
+  @AuditLog({
+    action: 'permission.delete',
+    resource: 'permission',
+    category: AuditCategory.DATA_MODIFICATION,
+    severity: AuditSeverity.HIGH,
+    alert: true,
+  })
   @ApiOperation({ summary: 'Delete permission' })
   @ApiParam({ name: 'id', description: 'Permission ID' })
   @ApiResponse({
@@ -175,6 +203,13 @@ export class PermissionsController {
   }
 
   @Post('check')
+  @AuditLog({
+    action: 'permission.check',
+    resource: 'permission_validation',
+    category: AuditCategory.AUTHORIZATION,
+    severity: AuditSeverity.MEDIUM,
+    includeBody: true,
+  })
   @ApiOperation({ summary: 'Check if current user has permission' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -192,6 +227,7 @@ export class PermissionsController {
 
   @Post('bulk-assign')
   @RequiredPermission('permissions', PermissionAction.UPDATE)
+  @CriticalAudit('permission.bulk_assign')
   @ApiOperation({ summary: 'Bulk assign permissions' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -224,6 +260,13 @@ export class PermissionsController {
 
   @Post('cache/invalidate')
   @RequiredPermission('permissions', PermissionAction.UPDATE)
+  @AuditLog({
+    action: 'permission.cache.invalidate',
+    resource: 'permission_cache',
+    category: AuditCategory.AUTHORIZATION,
+    severity: AuditSeverity.HIGH,
+    includeBody: true,
+  })
   @ApiOperation({
     summary: 'Invalidate permission cache for specific user or all users',
   })
@@ -252,6 +295,12 @@ export class PermissionsController {
 
   @Get('debug/:userProfileId')
   @RequiredPermission('permissions', PermissionAction.READ)
+  @AuditLog({
+    action: 'permission.debug',
+    resource: 'permission_chain',
+    category: AuditCategory.AUTHORIZATION,
+    severity: AuditSeverity.MEDIUM,
+  })
   @ApiOperation({
     summary: 'Debug permission chain for specific user (admin only)',
   })
@@ -276,6 +325,7 @@ export class PermissionsController {
 
   @Post('groups')
   @RequiredPermission('permissions', PermissionAction.CREATE)
+  @DataModificationAudit('permission_group.create', 'permission_group')
   @ApiOperation({ summary: 'Create permission group' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -290,6 +340,7 @@ export class PermissionsController {
 
   @Put('groups/:id')
   @RequiredPermission('permissions', PermissionAction.UPDATE)
+  @DataModificationAudit('permission_group.update', 'permission_group')
   @ApiOperation({ summary: 'Update permission group' })
   @ApiParam({ name: 'id', description: 'Permission group ID' })
   @ApiResponse({

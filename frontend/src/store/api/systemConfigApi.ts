@@ -32,7 +32,7 @@ export const systemConfigApi = apiSlice.injectEndpoints({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Audit' as const, id })),
               { type: 'Audit', id: 'LIST' },
@@ -114,7 +114,7 @@ export const systemConfigApi = apiSlice.injectEndpoints({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'FeatureFlag' as const, id })),
               { type: 'FeatureFlag', id: 'LIST' },
@@ -181,7 +181,7 @@ export const systemConfigApi = apiSlice.injectEndpoints({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'SystemConfig' as const, id })),
               { type: 'SystemConfig', id: 'LIST' },

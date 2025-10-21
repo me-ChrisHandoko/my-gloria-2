@@ -263,6 +263,7 @@ export const createPermissionColumns = ({
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => {
       const permission = row.original;
+      const isSystemPermission = permission.isSystemPermission;
 
       return (
         <div className="text-right whitespace-nowrap">
@@ -279,9 +280,9 @@ export const createPermissionColumns = ({
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => onEdit(permission)}
-                disabled={permission.isSystemPermission}
+                disabled={isSystemPermission}
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
@@ -290,7 +291,7 @@ export const createPermissionColumns = ({
               <DropdownMenuItem
                 onClick={() => onDelete(permission)}
                 className="text-destructive focus:text-destructive"
-                disabled={permission.isSystemPermission}
+                disabled={isSystemPermission}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete

@@ -92,7 +92,8 @@ export class DepartmentsController {
   @RateLimit({
     limit: 20,
     windowMs: 10000, // 20 requests per 10 seconds
-    message: 'Too many search requests. Please wait a moment before trying again.',
+    message:
+      'Too many search requests. Please wait a moment before trying again.',
     headers: true,
   })
   @RequiredPermissions({

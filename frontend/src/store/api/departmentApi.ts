@@ -76,7 +76,7 @@ export const departmentApi = apiSlice.injectEndpoints({
         };
       },
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Department' as const, id })),
               { type: 'Department', id: 'LIST' },

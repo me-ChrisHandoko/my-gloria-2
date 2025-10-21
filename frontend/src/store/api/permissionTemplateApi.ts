@@ -60,7 +60,7 @@ export const permissionTemplateApi = apiSlice.injectEndpoints({
         };
       },
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'PermissionTemplate' as const, id })),
               { type: 'PermissionTemplate', id: 'LIST' },

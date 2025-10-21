@@ -29,13 +29,14 @@ export const schoolApi = apiSlice.injectEndpoints({
         };
       },
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'School' as const, id })),
               { type: 'School', id: 'LIST' },
             ]
           : [{ type: 'School', id: 'LIST' }],
-      keepUnusedDataFor: 300,
+      // Set cache duration to 60 seconds (matches backend Redis TTL)
+      keepUnusedDataFor: 60,
       transformResponse: (response: any) => {
         // Handle wrapped response from backend TransformInterceptor
         let actualResponse: PaginatedResponse<School>;

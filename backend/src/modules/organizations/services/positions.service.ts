@@ -23,7 +23,7 @@ import { Prisma } from '@prisma/client';
 export class PositionsService {
   private readonly logger = new Logger(PositionsService.name);
   private readonly cachePrefix = 'position:';
-  private readonly cacheTTL = 3600; // 1 hour
+  private readonly cacheTTL = 60; // 60 seconds (matches Type C pattern)
 
   constructor(
     private readonly prisma: PrismaService,
@@ -181,7 +181,12 @@ export class PositionsService {
     if (query.isActive !== undefined) {
       // Handle both boolean and string values for isActive
       if (typeof query.isActive === 'string') {
-        where.isActive = query.isActive === 'active' ? true : query.isActive === 'inactive' ? false : undefined;
+        where.isActive =
+          query.isActive === 'active'
+            ? true
+            : query.isActive === 'inactive'
+              ? false
+              : undefined;
       } else {
         where.isActive = query.isActive;
       }

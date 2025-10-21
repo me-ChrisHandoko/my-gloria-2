@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
 import { LoggingService } from '@/core/logging/logging.service';
+import { CacheService } from '@/core/cache/cache.service';
 import {
   Permission,
   PermissionGroup,
@@ -23,9 +24,13 @@ import { IPermissionFilter } from '../interfaces/permission.interface';
 
 @Injectable()
 export class PermissionsService {
+  private readonly cachePrefix = 'permission:';
+  private readonly cacheTTL = 60; // 60 seconds for permissions cache (checked frequently)
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggingService,
+    private readonly cache: CacheService,
   ) {}
 
   /**
@@ -76,6 +81,9 @@ export class PermissionsService {
         },
       });
 
+      // Invalidate cache
+      await this.cache.del(`${this.cachePrefix}list`);
+
       this.logger.log(
         `Permission created: ${permission.code}`,
         'PermissionsService',
@@ -97,8 +105,7 @@ export class PermissionsService {
   async updatePermission(
     id: string,
     dto: UpdatePermissionDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _modifiedBy: string,
+    modifiedBy: string,
   ): Promise<Permission> {
     try {
       const existing = await this.findById(id);
@@ -124,6 +131,11 @@ export class PermissionsService {
         },
       });
 
+      // Invalidate cache
+      await this.cache.del(`${this.cachePrefix}${id}`);
+      await this.cache.del(`${this.cachePrefix}list`);
+      await this.cache.del(`${this.cachePrefix}code:${permission.code}`);
+
       this.logger.log(
         `Permission updated: ${permission.code}`,
         'PermissionsService',
@@ -143,6 +155,13 @@ export class PermissionsService {
    * Find permission by ID
    */
   async findById(id: string): Promise<Permission> {
+    const cacheKey = `${this.cachePrefix}${id}`;
+    const cached = await this.cache.get<Permission>(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
     const permission = await this.prisma.permission.findUnique({
       where: { id },
       include: {
@@ -164,6 +183,7 @@ export class PermissionsService {
       throw new NotFoundException(`Permission with ID ${id} not found`);
     }
 
+    await this.cache.set(cacheKey, permission, this.cacheTTL);
     return permission;
   }
 
@@ -171,6 +191,13 @@ export class PermissionsService {
    * Find permission by code
    */
   async findByCode(code: string): Promise<Permission> {
+    const cacheKey = `${this.cachePrefix}code:${code}`;
+    const cached = await this.cache.get<Permission>(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
     const permission = await this.prisma.permission.findUnique({
       where: { code },
       include: {
@@ -182,11 +209,12 @@ export class PermissionsService {
       throw new NotFoundException(`Permission with code ${code} not found`);
     }
 
+    await this.cache.set(cacheKey, permission, this.cacheTTL);
     return permission;
   }
 
   /**
-   * Find permissions with filters
+   * Find permissions with filters (returns all matches)
    */
   async findMany(filter: IPermissionFilter = {}): Promise<Permission[]> {
     const where: Prisma.PermissionWhereInput = {
@@ -197,6 +225,14 @@ export class PermissionsService {
       ...(filter.isActive !== undefined && { isActive: filter.isActive }),
       ...(filter.isSystemPermission !== undefined && {
         isSystemPermission: filter.isSystemPermission,
+      }),
+      ...(filter.search && {
+        OR: [
+          { code: { contains: filter.search, mode: 'insensitive' } },
+          { name: { contains: filter.search, mode: 'insensitive' } },
+          { description: { contains: filter.search, mode: 'insensitive' } },
+          { resource: { contains: filter.search, mode: 'insensitive' } },
+        ],
       }),
     };
 
@@ -214,12 +250,69 @@ export class PermissionsService {
   }
 
   /**
+   * Find permissions with pagination (returns PaginatedResponse format)
+   * This method follows the same pattern as roles.service.findAll()
+   */
+  async findManyPaginated(
+    filter: IPermissionFilter = {},
+    page = 1,
+    limit = 10,
+  ): Promise<{
+    data: Permission[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  }> {
+    const cacheKey = `${this.cachePrefix}list:${JSON.stringify({ filter, page, limit })}`;
+    const cached = await this.cache.get<{
+      data: Permission[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrevious: boolean;
+    }>(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
+    // Get filtered permissions
+    const allPermissions = await this.findMany(filter);
+
+    // Calculate pagination
+    const total = allPermissions.length;
+    const totalPages = Math.ceil(total / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    // Paginate data
+    const data = allPermissions.slice(startIndex, endIndex);
+
+    const result = {
+      data,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrevious: page > 1,
+    };
+
+    await this.cache.set(cacheKey, result, this.cacheTTL);
+    return result;
+  }
+
+  /**
    * Delete a permission (soft delete by deactivating)
    */
   async deletePermission(
     id: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _deletedBy: string,
+    deletedBy: string,
   ): Promise<void> {
     try {
       const permission = await this.findById(id);
@@ -246,6 +339,11 @@ export class PermissionsService {
           updatedAt: new Date(),
         },
       });
+
+      // Invalidate cache
+      await this.cache.del(`${this.cachePrefix}${id}`);
+      await this.cache.del(`${this.cachePrefix}list`);
+      await this.cache.del(`${this.cachePrefix}code:${permission.code}`);
 
       this.logger.log(
         `Permission deleted: ${permission.code}`,

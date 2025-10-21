@@ -51,7 +51,7 @@ export const permissionDelegationApi = apiSlice.injectEndpoints({
         };
       },
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'PermissionDelegation' as const, id })),
               { type: 'PermissionDelegation', id: 'MY_DELEGATIONS' },
@@ -97,7 +97,7 @@ export const permissionDelegationApi = apiSlice.injectEndpoints({
         };
       },
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'PermissionDelegation' as const, id })),
               { type: 'PermissionDelegation', id: 'DELEGATED_TO_ME' },

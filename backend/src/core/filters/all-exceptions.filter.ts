@@ -40,7 +40,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Debug logging
     this.logger.debug(
       '⚠️ AllExceptionsFilter CAUGHT exception',
-      exception instanceof Error ? exception.constructor.name : typeof exception,
+      exception instanceof Error
+        ? exception.constructor.name
+        : typeof exception,
     );
 
     const errorResponse = this.buildErrorResponse(exception, request);
@@ -111,10 +113,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Preserve validation errors if present
     if (exception instanceof HttpException) {
       const exceptionResponse = exception.getResponse();
-      if (
-        typeof exceptionResponse === 'object' &&
-        exceptionResponse !== null
-      ) {
+      if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const responseObj = exceptionResponse as any;
         if (responseObj.errors) {
           (errorResponse as any).errors = responseObj.errors;

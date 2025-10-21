@@ -102,6 +102,52 @@ const baseQueryWithReauth: BaseQueryFn<
     meta: result.meta
   });
 
+  // Transform paginated responses globally to prevent double wrapping
+  if (result.data && typeof result.data === 'object' && !result.error) {
+    const responseData = result.data as any;
+
+    // Check if it's a backend standard response with success wrapper
+    if (responseData.success === true) {
+      // Check if it's a paginated response
+      if (
+        responseData.data &&
+        Array.isArray(responseData.data) &&
+        typeof responseData.total === 'number' &&
+        typeof responseData.page === 'number' &&
+        typeof responseData.limit === 'number'
+      ) {
+        // Transform paginated response: extract pagination data from wrapper
+        console.log('[API] Transforming paginated response - removing double wrap');
+        result.data = {
+          data: responseData.data,
+          total: responseData.total,
+          page: responseData.page,
+          limit: responseData.limit,
+          totalPages: responseData.totalPages,
+          hasNext: responseData.hasNext,
+          hasPrevious: responseData.hasPrevious,
+        } as any;
+      } else if (Array.isArray(responseData.data)) {
+        // Non-paginated array response: wrap with pagination metadata
+        console.log('[API] Transforming non-paginated array response - adding pagination wrapper');
+        result.data = {
+          data: responseData.data,
+          total: responseData.data.length,
+          page: 1,
+          limit: responseData.data.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false,
+        } as any;
+      } else {
+        // Non-paginated non-array response: extract data from success wrapper
+        console.log('[API] Transforming non-paginated response - extracting data');
+        result.data = responseData.data as any;
+      }
+    }
+    // If no success wrapper, return as-is (backward compatibility)
+  }
+
   if (result.error && result.error.status === 401) {
     // Check if the mutex is locked
     if (!mutex.isLocked()) {
@@ -175,6 +221,9 @@ export const apiSlice = createApi({
     "Department",
     "Position",
     "Permission",
+    "PermissionGroup",
+    "PermissionTemplate",
+    "PermissionDelegation",
     "Role",
     "Workflow",
     "WorkflowTemplate",
@@ -184,6 +233,9 @@ export const apiSlice = createApi({
     "Audit",
     "FeatureFlag",
     "SystemConfig",
+    "Module",
+    "ModuleAccess",
+    "ResourcePermission",
   ],
   endpoints: () => ({}),
   // Refetch on reconnect for network recovery (disabled on focus to prevent rate limiting)

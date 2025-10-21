@@ -23,7 +23,7 @@ export const roleApi = apiSlice.injectEndpoints({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Role' as const, id })),
               { type: 'Role', id: 'LIST' },
@@ -72,7 +72,7 @@ export const roleApi = apiSlice.injectEndpoints({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Permission' as const, id })),
               { type: 'Permission', id: 'LIST' },

@@ -41,10 +41,11 @@ export default function PermissionList() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedPermission, setSelectedPermission] = useState<Permission | null>(null);
 
+  // Increased debounce delay to reduce API call frequency and prevent rate limiting
   const debouncedSearchTerm = useDebounce(searchTerm, 800);
   const itemsPerPage = 10;
 
-  // Fetch permissions using RTK Query
+  // Fetch permissions using RTK Query with Redis caching and rate limiting (20 req/10s)
   const {
     data: permissionsData,
     isLoading: isLoadingPermissions,
@@ -60,12 +61,13 @@ export default function PermissionList() {
       isActive: isActiveFilter === "all" ? undefined : isActiveFilter === "active",
     },
     {
+      // Skip query if search term is still being debounced
       skip: searchTerm !== debouncedSearchTerm,
     }
   );
 
   const permissions = permissionsData?.data || [];
-  const totalItems = permissionsData?.meta?.total || 0;
+  const totalItems = permissionsData?.total || 0;
 
   // Handle RTK Query errors
   useEffect(() => {
@@ -116,6 +118,7 @@ export default function PermissionList() {
   };
 
   // Reset page when filters change
+  // Use debounced search term to prevent premature page resets during typing
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, actionFilter, isActiveFilter]);

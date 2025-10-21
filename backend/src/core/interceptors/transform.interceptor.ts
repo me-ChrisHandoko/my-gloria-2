@@ -36,11 +36,17 @@ export class TransformInterceptor<T>
 
         // Check if response has pagination structure (paginated response)
         if (this.isPaginatedResponse(data)) {
-          // For paginated responses, spread the properties at top level
-          // This prevents double wrapping of the 'data' property
+          // For paginated responses, spread all properties at top level
+          // This prevents double wrapping - data array goes directly to 'data' property
           return {
             success: true,
-            ...data, // Spreads { data: [...], pagination: {...} }
+            data: data.data, // Array goes to data property (not nested!)
+            total: data.total,
+            page: data.page,
+            limit: data.limit,
+            totalPages: data.totalPages,
+            hasNext: data.hasNext,
+            hasPrevious: data.hasPrevious,
             timestamp: new Date().toISOString(),
             path: request.url,
             requestId: request.id,
@@ -68,9 +74,12 @@ export class TransformInterceptor<T>
     return (
       response &&
       typeof response === 'object' &&
-      'pagination' in response &&
       'data' in response &&
-      Array.isArray(response.data)
+      Array.isArray(response.data) &&
+      'total' in response &&
+      'page' in response &&
+      'limit' in response &&
+      'totalPages' in response
     );
   }
 

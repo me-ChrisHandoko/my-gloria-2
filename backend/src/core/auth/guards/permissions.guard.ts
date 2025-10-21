@@ -67,7 +67,9 @@ export class PermissionsGuard implements CanActivate {
     // ✅ SUPERADMIN BYPASS: Users with hierarchy level 0 can do anything
     const userHasLevel0 = await this.checkHierarchyLevel0(user.id);
     if (userHasLevel0) {
-      this.logger.debug(`User ${user.id} has hierarchy level 0 - bypassing permission check`);
+      this.logger.debug(
+        `User ${user.id} has hierarchy level 0 - bypassing permission check`,
+      );
       return true;
     }
 

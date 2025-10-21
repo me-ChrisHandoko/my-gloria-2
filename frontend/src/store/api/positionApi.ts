@@ -30,23 +30,54 @@ export const positionApi = apiSlice.injectEndpoints({
           params: queryParams,
         };
       },
-      providesTags: (result) => {
-        // Debug logging to diagnose response structure issues
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Position API result:', result);
-          console.log('result.data type:', typeof result?.data);
-          console.log('result.data isArray:', Array.isArray(result?.data));
+      // Transform response to handle wrapped response from backend TransformInterceptor
+      // This follows PermissionList and RoleList pattern for consistency
+      transformResponse: (response: any) => {
+        // Handle wrapped response from backend TransformInterceptor
+        let actualResponse: PaginatedResponse<Position>;
+
+        if (response && response.success && response.data) {
+          // Unwrap the response from TransformInterceptor
+          actualResponse = response.data;
+
+          // Check if it's double-wrapped
+          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
+            actualResponse = (actualResponse as any).data;
+          }
+        } else {
+          // Use response directly if not wrapped
+          actualResponse = response;
         }
 
-        // Defensive check: ensure result.data exists and is an array
-        return result?.data && Array.isArray(result.data)
+        // Ensure we have valid data
+        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+          return {
+            data: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 0,
+          };
+        }
+
+        return {
+          ...actualResponse,
+          data: actualResponse.data.map(position => ({
+            ...position,
+            createdAt: new Date(position.createdAt),
+            updatedAt: new Date(position.updatedAt),
+          })),
+        };
+      },
+      providesTags: (result) =>
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Position' as const, id })),
               { type: 'Position', id: 'LIST' },
             ]
-          : [{ type: 'Position', id: 'LIST' }];
-      },
-      keepUnusedDataFor: 300,
+          : [{ type: 'Position', id: 'LIST' }],
+      // Set cache duration to 60 seconds (matches backend Redis TTL)
+      keepUnusedDataFor: 60,
     }),
 
     // Get single position

@@ -74,8 +74,7 @@ export default function DepartmentList() {
   );
 
   const departments = departmentsData?.data || [];
-  const totalItems =
-    departmentsData?.meta?.total || departmentsData?.total || 0;
+  const totalItems = departmentsData?.total || 0;
 
   // Handle RTK Query errors
   useEffect(() => {

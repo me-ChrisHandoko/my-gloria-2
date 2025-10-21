@@ -79,7 +79,7 @@ export const workflowApi = apiSlice.injectEndpoints({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'WorkflowTemplate' as const, id })),
               { type: 'WorkflowTemplate', id: 'LIST' },
@@ -125,7 +125,7 @@ export const workflowApi = apiSlice.injectEndpoints({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'WorkflowInstance' as const, id })),
               { type: 'WorkflowInstance', id: 'LIST' },

@@ -21,6 +21,7 @@ import { ClerkAuthGuard } from '@/core/auth/guards/clerk-auth.guard';
 import { PermissionsGuard } from '@/core/auth/guards/permissions.guard';
 import { RequiredPermission } from '@/core/auth/decorators/permissions.decorator';
 import { CurrentUser } from '@/core/auth/decorators/current-user.decorator';
+import { RateLimit } from '@/core/auth/decorators/rate-limit.decorator';
 import {
   AuditLog,
   CriticalAudit,
@@ -65,14 +66,53 @@ export class RolesController {
   }
 
   @Get()
+  @RateLimit({
+    limit: 20,
+    windowMs: 10000, // 20 requests per 10 seconds
+    message:
+      'Too many role requests. Please wait a moment before trying again.',
+    headers: true,
+  })
   @RequiredPermission('roles', PermissionAction.READ)
-  @ApiOperation({ summary: 'Get all roles' })
+  @ApiOperation({
+    summary: 'Get all roles',
+    description:
+      'Retrieves a paginated list of roles with optional filtering. Rate limited to 20 requests per 10 seconds.',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Roles retrieved successfully',
   })
-  async getRoles(@Query('includeInactive') includeInactive?: boolean) {
-    return this.rolesService.findAll(includeInactive);
+  @ApiResponse({
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    description: 'Rate limit exceeded. Please wait before retrying.',
+  })
+  async getRoles(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('includeInactive') includeInactive?: boolean,
+    @Query('isActive') isActive?: boolean,
+    @Query('hierarchyLevel') hierarchyLevel?: number,
+    @Query('isSystemRole') isSystemRole?: boolean,
+  ) {
+    // Parse pagination parameters
+    const currentPage = page ? parseInt(page.toString(), 10) : 1;
+    const pageSize = limit ? parseInt(limit.toString(), 10) : 10;
+
+    // Use service method that returns paginated response
+    // This matches the pattern used in permissions.controller.ts
+    return this.rolesService.findManyPaginated(
+      {
+        search,
+        includeInactive,
+        isActive,
+        hierarchyLevel,
+        isSystemRole,
+      },
+      currentPage,
+      pageSize,
+    );
   }
 
   @Get('statistics')

@@ -143,9 +143,8 @@ export class AuditInterceptor implements NestInterceptor {
                   const normalizedOldValues = this.normalizeEntityForAudit(
                     oldEntityValues || {},
                   );
-                  const normalizedNewValues = this.normalizeEntityForAudit(
-                    entityData,
-                  );
+                  const normalizedNewValues =
+                    this.normalizeEntityForAudit(entityData);
 
                   await this.auditLogService.logUpdate(
                     auditContext,
@@ -182,8 +181,7 @@ export class AuditInterceptor implements NestInterceptor {
               const createEntityData = response?.data || response;
 
               // Extract ID from unwrapped entity
-              const createdId =
-                createEntityData?.id || requestBody?.id;
+              const createdId = createEntityData?.id || requestBody?.id;
 
               if (createdId) {
                 await this.auditLogService.logCreate(
@@ -209,7 +207,8 @@ export class AuditInterceptor implements NestInterceptor {
             case AuditAction.DELETE:
               if (entityId) {
                 // Unwrap response if wrapped
-                const deleteEntityData = response?.data || response || requestBody;
+                const deleteEntityData =
+                  response?.data || response || requestBody;
 
                 await this.auditLogService.logDelete(
                   auditContext,

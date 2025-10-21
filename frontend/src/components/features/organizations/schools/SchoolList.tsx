@@ -64,10 +64,8 @@ export default function SchoolList() {
   );
 
   const schools = schoolsData?.data || [];
-  const totalPages =
-    schoolsData?.meta?.totalPages || schoolsData?.totalPages || 1;
-  const totalItems =
-    schoolsData?.meta?.total || schoolsData?.total || schools.length;
+  const totalPages = schoolsData?.totalPages || 1;
+  const totalItems = schoolsData?.total || schools.length;
 
   // Handle RTK Query errors
   useEffect(() => {

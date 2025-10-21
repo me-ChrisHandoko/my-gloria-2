@@ -51,7 +51,7 @@ export const notificationApi = apiSlice.injectEndpoints({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'Notification' as const, id })),
               { type: 'Notification', id: 'LIST' },
@@ -83,7 +83,7 @@ export const notificationApi = apiSlice.injectEndpoints({
         params,
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.map(({ id }) => ({ type: 'Notification' as const, id })),
               'Notification',
@@ -107,7 +107,7 @@ export const notificationApi = apiSlice.injectEndpoints({
         },
       }),
       providesTags: (result) =>
-        result
+        result && Array.isArray(result.data)
           ? [
               ...result.data.map(({ id }) => ({ type: 'NotificationTemplate' as const, id })),
               { type: 'NotificationTemplate', id: 'LIST' },

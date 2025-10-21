@@ -556,7 +556,11 @@ export class AuditLogService {
       }
 
       // Skip if key is an object (relational data like parent, school)
-      if (oldValues[key] !== null && typeof oldValues[key] === 'object' && !Array.isArray(oldValues[key])) {
+      if (
+        oldValues[key] !== null &&
+        typeof oldValues[key] === 'object' &&
+        !Array.isArray(oldValues[key])
+      ) {
         continue;
       }
 
