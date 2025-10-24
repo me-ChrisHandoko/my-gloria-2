@@ -52,12 +52,12 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       ? {
           name: user.fullName || user.username || "User",
           email: user.primaryEmailAddress?.emailAddress || "",
-          avatar: user.imageUrl || "/avatars/default.jpg",
+          avatar: user.imageUrl || "",
         }
       : {
           name: "Guest User",
           email: "guest@gloria.gov",
-          avatar: "/avatars/default.jpg",
+          avatar: "",
         },
 
     teams: [
