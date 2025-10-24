@@ -403,6 +403,7 @@ export class AuditInterceptor implements NestInterceptor {
     try {
       // Map decorator action to AuditAction enum
       const actionMap: Record<string, AuditAction> = {
+        // Role actions
         'role.create': AuditAction.CREATE,
         'role.update': AuditAction.UPDATE,
         'role.delete': AuditAction.DELETE,
@@ -414,13 +415,48 @@ export class AuditInterceptor implements NestInterceptor {
         'role.hierarchy.create': AuditAction.CREATE,
         'role.template.create': AuditAction.CREATE,
         'role.template.apply': AuditAction.UPDATE,
+
+        // Permission actions (dot notation)
+        'permission.create': AuditAction.CREATE,
+        'permission.update': AuditAction.UPDATE,
+        'permission.delete': AuditAction.DELETE,
+
+        // Permission group actions
+        'permission_group.create': AuditAction.CREATE,
+        'permission_group.update': AuditAction.UPDATE,
+        'permission_group.delete': AuditAction.DELETE,
+
+        // Department actions (dot notation)
         'department.create': AuditAction.CREATE,
         'department.update': AuditAction.UPDATE,
         'department.delete': AuditAction.DELETE,
+
+        // Department actions (uppercase underscore notation)
+        CREATE_DEPARTMENT: AuditAction.CREATE,
         UPDATE_DEPARTMENT: AuditAction.UPDATE,
+        DELETE_DEPARTMENT: AuditAction.DELETE,
+
+        // School actions (uppercase underscore notation)
+        CREATE_SCHOOL: AuditAction.CREATE,
+        UPDATE_SCHOOL: AuditAction.UPDATE,
+        DELETE_SCHOOL: AuditAction.DELETE,
+        RESTORE_SCHOOL: AuditAction.UPDATE,
+
+        // Position actions (uppercase underscore notation)
+        CREATE_POSITION: AuditAction.CREATE,
+        UPDATE_POSITION: AuditAction.UPDATE,
+        DELETE_POSITION: AuditAction.DELETE,
+        ASSIGN_USER_TO_POSITION: AuditAction.ASSIGN,
       };
 
-      const action = actionMap[metadata.action] || AuditAction.CREATE;
+      // Get action from map with warning for unmapped actions
+      const action = actionMap[metadata.action];
+      if (!action) {
+        this.logger.warn(
+          `⚠️ Unmapped audit action: "${metadata.action}" - defaulting to CREATE. Please add to actionMap.`,
+        );
+      }
+      const finalAction = action || AuditAction.CREATE;
 
       // Build metadata from decorator config
       const logMetadata: any = {
@@ -487,9 +523,9 @@ export class AuditInterceptor implements NestInterceptor {
       let changedFields: string[] | undefined;
 
       if (
-        action === AuditAction.UPDATE ||
-        action === AuditAction.DELETE ||
-        action === AuditAction.REVOKE
+        finalAction === AuditAction.UPDATE ||
+        finalAction === AuditAction.DELETE ||
+        finalAction === AuditAction.REVOKE
       ) {
         // Use pre-fetched old values (captured BEFORE service execution)
         oldValues = preFetchedOldValues;
@@ -508,8 +544,8 @@ export class AuditInterceptor implements NestInterceptor {
           changedFields = this.getChangedFields(oldValues, newValues);
         }
       } else if (
-        action === AuditAction.CREATE ||
-        action === AuditAction.ASSIGN
+        finalAction === AuditAction.CREATE ||
+        finalAction === AuditAction.ASSIGN
       ) {
         // For CREATE, fetch from database to ensure complete data (same as UPDATE)
         // This ensures consistent format between CREATE and UPDATE operations
@@ -529,7 +565,7 @@ export class AuditInterceptor implements NestInterceptor {
       }
 
       await this.auditService.log({
-        action,
+        action: finalAction,
         module: auditContext.module || 'permissions',
         entityType: metadata.resource?.toUpperCase() || 'UNKNOWN',
         entityId,
