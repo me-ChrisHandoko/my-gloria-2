@@ -310,10 +310,7 @@ export class PermissionsService {
   /**
    * Delete a permission (soft delete by deactivating)
    */
-  async deletePermission(
-    id: string,
-    deletedBy: string,
-  ): Promise<void> {
+  async deletePermission(id: string, deletedBy: string): Promise<void> {
     try {
       const permission = await this.findById(id);
 

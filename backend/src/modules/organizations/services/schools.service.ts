@@ -247,7 +247,10 @@ export class SchoolsService {
       // Invalidate cache
       await this.cache.del(`${this.cachePrefix}${id}`);
       await this.cache.del(`${this.cachePrefix}code:${existingSchool.code}`);
-      if (updateSchoolDto.code && updateSchoolDto.code !== existingSchool.code) {
+      if (
+        updateSchoolDto.code &&
+        updateSchoolDto.code !== existingSchool.code
+      ) {
         await this.cache.del(`${this.cachePrefix}code:${updateSchoolDto.code}`);
       }
       await this.cache.del(`${this.cachePrefix}list`);

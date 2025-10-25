@@ -5,7 +5,7 @@ import { UserModuleAccess, RoleModuleAccess } from '@prisma/client';
 import { v7 as uuidv7 } from 'uuid';
 
 @Injectable()
-export class ModuleAccessService {
+export class ModuleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: LoggingService,
@@ -54,14 +54,14 @@ export class ModuleAccessService {
 
       this.logger.log(
         `Module access granted for user ${userProfileId} on module ${moduleId}`,
-        'ModuleAccessService',
+        'ModuleService',
       );
       return moduleAccess;
     } catch (error) {
       this.logger.error(
         'Error granting module access',
         error.stack,
-        'ModuleAccessService',
+        'ModuleService',
       );
       throw error;
     }

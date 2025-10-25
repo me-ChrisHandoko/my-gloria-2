@@ -13,7 +13,7 @@ import { PermissionCacheService } from './services/permission-cache.service';
 import { ResourcePermissionsService } from './services/resource-permissions.service';
 import { PermissionDelegationService } from './services/permission-delegation.service';
 import { PermissionTemplatesService } from './services/permission-templates.service';
-import { ModuleAccessService } from './services/module-access.service';
+import { ModuleService } from './services/module.service';
 import { RoleHierarchyService } from './services/role-hierarchy.service';
 import { PermissionValidationService } from './services/permission-validation.service';
 
@@ -23,7 +23,7 @@ import { RolesController } from './controllers/roles.controller';
 import { ResourcePermissionsController } from './controllers/resource-permissions.controller';
 import { PermissionDelegationController } from './controllers/permission-delegation.controller';
 import { PermissionTemplatesController } from './controllers/permission-templates.controller';
-import { ModuleAccessController } from './controllers/module-access.controller';
+import { ModuleController } from './controllers/module.controller';
 
 @Module({
   imports: [
@@ -39,7 +39,7 @@ import { ModuleAccessController } from './controllers/module-access.controller';
     ResourcePermissionsController,
     PermissionDelegationController,
     PermissionTemplatesController,
-    ModuleAccessController,
+    ModuleController,
   ],
   providers: [
     PermissionsService,
@@ -49,7 +49,7 @@ import { ModuleAccessController } from './controllers/module-access.controller';
     ResourcePermissionsService,
     PermissionDelegationService,
     PermissionTemplatesService,
-    ModuleAccessService,
+    ModuleService,
     RoleHierarchyService,
     PermissionValidationService,
   ],
@@ -61,7 +61,7 @@ import { ModuleAccessController } from './controllers/module-access.controller';
     ResourcePermissionsService,
     PermissionDelegationService,
     PermissionTemplatesService,
-    ModuleAccessService,
+    ModuleService,
     RoleHierarchyService,
     PermissionValidationService,
   ],

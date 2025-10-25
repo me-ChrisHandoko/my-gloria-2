@@ -18,15 +18,15 @@ import { ClerkAuthGuard } from '@/core/auth/guards/clerk-auth.guard';
 import { PermissionsGuard } from '@/core/auth/guards/permissions.guard';
 import { RequiredPermission } from '@/core/auth/decorators/permissions.decorator';
 import { CurrentUser } from '@/core/auth/decorators/current-user.decorator';
-import { ModuleAccessService } from '../services/module-access.service';
+import { ModuleService } from '../services/module.service';
 import { PermissionAction } from '@prisma/client';
 
-@ApiTags('Module Access')
+@ApiTags('Modules')
 @ApiBearerAuth()
-@Controller('module-access')
+@Controller('modules')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
-export class ModuleAccessController {
-  constructor(private readonly moduleAccessService: ModuleAccessService) {}
+export class ModuleController {
+  constructor(private readonly moduleService: ModuleService) {}
 
   @Post('grant')
   @RequiredPermission('modules', PermissionAction.UPDATE)
@@ -36,7 +36,7 @@ export class ModuleAccessController {
     description: 'Module access granted successfully',
   })
   async grantModuleAccess(@Body() dto: any, @CurrentUser() user: any) {
-    return this.moduleAccessService.grantUserModuleAccess(
+    return this.moduleService.grantUserModuleAccess(
       dto.userProfileId,
       dto.moduleId,
       dto.canRead,
@@ -57,7 +57,7 @@ export class ModuleAccessController {
     description: 'Module access retrieved successfully',
   })
   async getUserModuleAccess(@Param('userProfileId') userProfileId: string) {
-    return this.moduleAccessService.getUserModuleAccess(userProfileId);
+    return this.moduleService.getUserModuleAccess(userProfileId);
   }
 
   @Get('check/:userProfileId/:moduleId/:accessType')
@@ -75,7 +75,7 @@ export class ModuleAccessController {
     @Param('moduleId') moduleId: string,
     @Param('accessType') accessType: 'read' | 'write' | 'delete' | 'share',
   ) {
-    const hasAccess = await this.moduleAccessService.checkModuleAccess(
+    const hasAccess = await this.moduleService.checkModuleAccess(
       userProfileId,
       moduleId,
       accessType,
