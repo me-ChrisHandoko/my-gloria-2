@@ -21,11 +21,11 @@ import { CurrentUser } from '@/core/auth/decorators/current-user.decorator';
 import { ModuleService } from '../services/module.service';
 import { PermissionAction } from '@prisma/client';
 
-@ApiTags('Modules')
+@ApiTags('Modules - User Access')
 @ApiBearerAuth()
-@Controller('modules')
+@Controller('modules/user-access')
 @UseGuards(ClerkAuthGuard, PermissionsGuard)
-export class ModuleController {
+export class ModuleUserAccessController {
   constructor(private readonly moduleService: ModuleService) {}
 
   @Post('grant')

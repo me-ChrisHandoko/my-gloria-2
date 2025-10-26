@@ -235,6 +235,8 @@ export const apiSlice = createApi({
     "SystemConfig",
     "Module",
     "ModuleAccess",
+    "ModulePermission",
+    "RoleModuleAccess",
     "ResourcePermission",
   ],
   endpoints: () => ({}),

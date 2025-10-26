@@ -219,21 +219,21 @@ export const API_ENDPOINTS = {
     },
 
     /**
-     * Module Access Sub-module
+     * Module Access Sub-module (User Module Access)
      */
     moduleAccess: {
       list: (params?: { userId?: string; moduleId?: string }) =>
-        addQueryParams(buildUrl('/module-access'), params),
-      grant: () => buildUrl('/module-access'),
-      revoke: (id: string) => buildUrl(`/module-access/${id}`),
+        addQueryParams(buildUrl('/modules/user-access'), params),
+      grant: () => buildUrl('/modules/user-access'),
+      revoke: (id: string) => buildUrl(`/modules/user-access/${id}`),
 
       // Additional module access endpoints
-      byUser: (userId: string) => buildUrl(`/module-access/user/${userId}`),
-      byModule: (moduleId: string) => buildUrl(`/module-access/module/${moduleId}`),
-      bulkGrant: () => buildUrl('/module-access/bulk'),
-      bulkRevoke: () => buildUrl('/module-access/bulk-revoke'),
+      byUser: (userId: string) => buildUrl(`/modules/user-access/user/${userId}`),
+      byModule: (moduleId: string) => buildUrl(`/modules/user-access/module/${moduleId}`),
+      bulkGrant: () => buildUrl('/modules/user-access/bulk'),
+      bulkRevoke: () => buildUrl('/modules/user-access/bulk-revoke'),
       checkAccess: (userId: string, moduleId: string) =>
-        buildUrl(`/module-access/check/${userId}/${moduleId}`),
+        buildUrl(`/modules/user-access/check/${userId}/${moduleId}`),
     },
   },
 

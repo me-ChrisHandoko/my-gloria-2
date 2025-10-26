@@ -32,7 +32,6 @@ export interface Module {
   sortOrder: number;
   isActive: boolean;
   isVisible: boolean;
-  requiredPlan?: string;
   version: number;
   createdAt: string;
   updatedAt: string;
@@ -117,7 +116,7 @@ export interface CheckAccessResponse {
 
 // Module Access service class
 class ModuleAccessService {
-  private readonly baseUrl = '/module-access';
+  private readonly baseUrl = '/modules/user-access';
 
   /**
    * Get paginated list of module access records

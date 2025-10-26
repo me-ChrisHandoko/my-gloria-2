@@ -162,9 +162,11 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
             isActive: pathname === "/permissions/roles",
           },
           {
-            title: "Module Access",
-            url: "/permissions/module-access",
-            isActive: pathname === "/permissions/module-access",
+            title: "Modules",
+            url: "/permissions/modules",
+            isActive: pathname.startsWith("/permissions/modules") ||
+                      pathname.startsWith("/permissions/module") ||
+                      pathname === "/permissions/role-access",
           },
           {
             title: "Permission Delegation",

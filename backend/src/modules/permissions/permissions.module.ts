@@ -14,6 +14,7 @@ import { ResourcePermissionsService } from './services/resource-permissions.serv
 import { PermissionDelegationService } from './services/permission-delegation.service';
 import { PermissionTemplatesService } from './services/permission-templates.service';
 import { ModuleService } from './services/module.service';
+import { ModuleCrudService } from './services/module-crud.service';
 import { RoleHierarchyService } from './services/role-hierarchy.service';
 import { PermissionValidationService } from './services/permission-validation.service';
 
@@ -23,7 +24,10 @@ import { RolesController } from './controllers/roles.controller';
 import { ResourcePermissionsController } from './controllers/resource-permissions.controller';
 import { PermissionDelegationController } from './controllers/permission-delegation.controller';
 import { PermissionTemplatesController } from './controllers/permission-templates.controller';
-import { ModuleController } from './controllers/module.controller';
+import { ModuleCrudController } from './controllers/module-crud.controller';
+import { ModulePermissionController } from './controllers/module-permission.controller';
+import { ModuleRoleAccessController } from './controllers/module-role-access.controller';
+import { ModuleUserAccessController } from './controllers/module-user-access.controller';
 
 @Module({
   imports: [
@@ -39,7 +43,10 @@ import { ModuleController } from './controllers/module.controller';
     ResourcePermissionsController,
     PermissionDelegationController,
     PermissionTemplatesController,
-    ModuleController,
+    ModuleCrudController,
+    ModulePermissionController,
+    ModuleRoleAccessController,
+    ModuleUserAccessController,
   ],
   providers: [
     PermissionsService,
@@ -50,6 +57,7 @@ import { ModuleController } from './controllers/module.controller';
     PermissionDelegationService,
     PermissionTemplatesService,
     ModuleService,
+    ModuleCrudService,
     RoleHierarchyService,
     PermissionValidationService,
   ],
@@ -62,6 +70,7 @@ import { ModuleController } from './controllers/module.controller';
     PermissionDelegationService,
     PermissionTemplatesService,
     ModuleService,
+    ModuleCrudService,
     RoleHierarchyService,
     PermissionValidationService,
   ],

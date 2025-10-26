@@ -39,7 +39,7 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
         if (params.includeGrantedBy) queryParams.includeGrantedBy = params.includeGrantedBy;
 
         return {
-          url: '/module-access',
+          url: '/modules/user-access',
           params: queryParams,
         };
       },
@@ -92,7 +92,7 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
 
     // Get user's module access
     getUserModuleAccess: builder.query<UserModuleAccess[], string>({
-      query: (userProfileId) => `/module-access/user/${userProfileId}`,
+      query: (userProfileId) => `/modules/user-access/user/${userProfileId}`,
       transformResponse: (response: any) => {
         if (response && response.success && response.data) {
           return response.data;
@@ -110,7 +110,7 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
       { userProfileId: string; moduleId: string; accessType: 'read' | 'write' | 'delete' | 'share' }
     >({
       query: ({ userProfileId, moduleId, accessType }) =>
-        `/module-access/check/${userProfileId}/${moduleId}/${accessType}`,
+        `/modules/user-access/check/${userProfileId}/${moduleId}/${accessType}`,
       transformResponse: (response: any) => {
         if (response && response.success && response.data) {
           return response.data;
@@ -177,7 +177,7 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
     // Grant module access (create/update)
     grantModuleAccess: builder.mutation<UserModuleAccess, GrantModuleAccessDto>({
       query: (data) => ({
-        url: '/module-access/grant',
+        url: '/modules/user-access/grant',
         method: 'POST',
         body: data,
       }),
@@ -226,7 +226,7 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
       { userProfileId: string; moduleId: string; data: UpdateModuleAccessDto }
     >({
       query: ({ userProfileId, moduleId, data }) => ({
-        url: '/module-access/grant',
+        url: '/modules/user-access/grant',
         method: 'POST',
         body: {
           userProfileId,
@@ -251,7 +251,7 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
       { userProfileId: string; moduleId: string }
     >({
       query: ({ userProfileId, moduleId }) => ({
-        url: '/module-access/grant',
+        url: '/modules/user-access/grant',
         method: 'POST',
         body: {
           userProfileId,
@@ -295,7 +295,7 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
         for (const userProfileId of arg.userProfileIds) {
           try {
             await baseQuery({
-              url: '/module-access/grant',
+              url: '/modules/user-access/grant',
               method: 'POST',
               body: {
                 userProfileId,
@@ -325,7 +325,7 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
       { userProfileId: string; moduleId: string; newValidUntil: string }
     >({
       query: ({ userProfileId, moduleId, newValidUntil }) => ({
-        url: '/module-access/grant',
+        url: '/modules/user-access/grant',
         method: 'POST',
         body: {
           userProfileId,

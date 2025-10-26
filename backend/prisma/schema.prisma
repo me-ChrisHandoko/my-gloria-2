@@ -609,7 +609,6 @@ model Module {
   sortOrder     Int                   @default(0) @map("sort_order")
   isActive      Boolean               @default(true) @map("is_active")
   isVisible     Boolean               @default(true) @map("is_visible")
-  requiredPlan  String?               @map("required_plan")
   version       Int                   @default(0)
   deletedAt     DateTime?             @map("deleted_at")
   deletedBy     String?               @map("deleted_by")

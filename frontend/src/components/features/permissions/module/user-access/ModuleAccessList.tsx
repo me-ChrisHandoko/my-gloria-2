@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, ArrowLeft, Shield, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -15,27 +14,21 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDebounce } from "@/hooks/useDebounce";
 import { createModuleAccessColumns } from "./ModuleAccessColumns";
 import CreateModuleAccessModal from "./CreateModuleAccessModal";
 import EditModuleAccessModal from "./EditModuleAccessModal";
 import ViewModuleAccessModal from "./ViewModuleAccessModal";
 import DeleteModuleAccessModal from "./DeleteModuleAccessModal";
-import { type UserModuleAccess, ModuleCategory } from "@/lib/api/services/module-access.service";
-import { useGetModuleAccessListQuery } from "@/store/api/moduleAccessApi";
+import { type UserModuleAccess } from "@/lib/api/services/module-access.service";
+import { useGetUserModuleAccessQuery } from "@/store/api/moduleAccessApi";
+import { useGetUsersQuery } from "@/store/api/userApi";
 
 export default function ModuleAccessList() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isActiveFilter, setIsActiveFilter] = useState<string>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [selectedUserId, setSelectedUserId] = useState<string>("all");
 
   // Modal states
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -44,40 +37,33 @@ export default function ModuleAccessList() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedAccess, setSelectedAccess] = useState<UserModuleAccess | null>(null);
 
-  // Debounce search term
-  const debouncedSearchTerm = useDebounce(searchTerm, 800);
-
-  // Fetch module access list using RTK Query
+  // Fetch users for filter
   const {
-    data: accessData,
+    data: usersData,
+    isLoading: isLoadingUsers,
+  } = useGetUsersQuery({
+    page: 1,
+    limit: 100,
+  });
+
+  // Fetch module access by user
+  const {
+    data: accessList,
     isLoading: isLoadingAccess,
     isFetching,
     error: accessError,
     refetch: refetchAccess,
-  } = useGetModuleAccessListQuery(
-    {
-      page: currentPage,
-      limit: itemsPerPage,
-      search: debouncedSearchTerm,
-      isActive: isActiveFilter === "all" ? undefined : isActiveFilter === "active",
-      category: categoryFilter === "all" ? undefined : (categoryFilter as ModuleCategory),
-      includeModule: true,
-      includeUser: true,
-      includeGrantedBy: true,
-    },
-    {
-      skip: searchTerm !== debouncedSearchTerm,
-    }
-  );
+  } = useGetUserModuleAccessQuery(selectedUserId, {
+    skip: selectedUserId === "all",
+  });
 
-  const accessList = accessData?.data || [];
-  const totalItems = accessData?.total || 0;
+  const usersList = usersData?.data || [];
 
   // Handle RTK Query errors
   useEffect(() => {
     if (accessError) {
       console.error("Failed to fetch module access:", accessError);
-      toast.error("Failed to load module access records");
+      toast.error("Failed to load user module access");
     }
   }, [accessError]);
 
@@ -121,11 +107,6 @@ export default function ModuleAccessList() {
     toast.success("Module access revoked successfully");
   };
 
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchTerm, isActiveFilter, categoryFilter]);
-
   // Create columns with action handlers
   const columns = createModuleAccessColumns({
     onView: handleView,
@@ -133,7 +114,7 @@ export default function ModuleAccessList() {
     onRevoke: handleRevoke,
   });
 
-  if (isLoadingAccess && accessList.length === 0) {
+  if (isLoadingUsers) {
     return (
       <Card>
         <CardHeader>
@@ -155,90 +136,83 @@ export default function ModuleAccessList() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Module Access Management
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <UserCircle className="h-6 w-6" />
+            User Module Access
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Grant and manage user access to modules with custom permissions
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={handleCreate}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Grant Access
-          </button>
-        </div>
+        <Button
+          onClick={handleCreate}
+          className="inline-flex items-center px-4 py-2"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Grant Access
+        </Button>
       </div>
 
       <Card>
         <CardContent>
-          {/* Filters */}
-          <div className="mt-6 mb-6 flex flex-wrap gap-4">
-            <Input
-              placeholder="Search by user or module..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-xs"
-            />
-
-            <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All Status" />
+          {/* User Filter */}
+          <div className="mt-6 mb-6 flex items-center gap-2">
+            <label className="text-sm font-medium">Select User:</label>
+            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+              <SelectTrigger className="w-[250px]">
+                <SelectValue placeholder="Select a user" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="all">All Users</SelectItem>
+                {usersList.map((user: any) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name || user.email}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value={ModuleCategory.SERVICE}>Service</SelectItem>
-                <SelectItem value={ModuleCategory.PERFORMANCE}>Performance</SelectItem>
-                <SelectItem value={ModuleCategory.QUALITY}>Quality</SelectItem>
-                <SelectItem value={ModuleCategory.FEEDBACK}>Feedback</SelectItem>
-                <SelectItem value={ModuleCategory.TRAINING}>Training</SelectItem>
-                <SelectItem value={ModuleCategory.SYSTEM}>System</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {(searchTerm || isActiveFilter !== "all" || categoryFilter !== "all") && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setSearchTerm("");
-                  setIsActiveFilter("all");
-                  setCategoryFilter("all");
-                }}
-              >
-                Clear Filters
-              </Button>
-            )}
           </div>
 
-          {/* DataTable */}
-          <DataTable
-            columns={columns}
-            data={accessList}
-            isLoading={isFetching}
-            showSearch={false}
-            showPagination={true}
-            pagination={{
-              page: currentPage,
-              pageSize: itemsPerPage,
-              total: totalItems,
-              onPageChange: setCurrentPage,
-              onPageSizeChange: () => {},
-            }}
-          />
+          {/* DataTable or Empty State */}
+          {selectedUserId === "all" ? (
+            <div className="text-center py-12">
+              <Shield className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Select a User
+              </h3>
+              <p className="text-sm text-gray-600">
+                Please select a user from the dropdown to view their module access permissions
+              </p>
+            </div>
+          ) : isLoadingAccess ? (
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : !accessList || accessList.length === 0 ? (
+            <div className="text-center py-12">
+              <Shield className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Access Granted
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                This user has no module access permissions yet
+              </p>
+              <Button onClick={handleCreate}>
+                <Plus className="h-4 w-4 mr-2" />
+                Grant Access
+              </Button>
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={accessList}
+              isLoading={isFetching}
+              showSearch={false}
+              showPagination={false}
+            />
+          )}
         </CardContent>
       </Card>
 

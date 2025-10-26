@@ -270,7 +270,7 @@ class ApiConfiguration {
       permissions: {
         permissions: `${base}/permissions`,
         roles: `${base}/roles`,
-        moduleAccess: `${base}/module-access`,
+        moduleAccess: `${base}/modules/user-access`,
       },
       workflows: {
         workflows: `${base}/workflows`,
