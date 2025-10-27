@@ -41,6 +41,26 @@ export interface UserRole {
   isActive: boolean;
 }
 
+export interface RoleTemplate {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  category: string;
+  permissions: string[]; // Array of permission IDs
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+}
+
+export interface RoleUser extends UserRole {
+  userProfile?: {
+    id: string;
+    dataKaryawan?: any; // Based on your employee data structure
+  };
+}
+
 export interface CreateRoleDto {
   name: string;
   code: string;
@@ -66,6 +86,11 @@ export interface AssignRoleDto {
   validUntil?: string;
 }
 
+export interface UpdateUserRoleTemporalDto {
+  validFrom?: string;
+  validUntil?: string;
+}
+
 export interface AssignRolePermissionDto {
   permissionId: string;
   isGranted?: boolean;
@@ -87,12 +112,13 @@ export interface CreateRoleTemplateDto {
   name: string;
   description?: string;
   category: string;
-  permissions: any;
+  permissionIds: string[];
 }
 
 export interface ApplyRoleTemplateDto {
   templateId: string;
   roleId: string;
+  overrideExisting?: boolean;
 }
 
 export interface CreateRoleHierarchyDto {
