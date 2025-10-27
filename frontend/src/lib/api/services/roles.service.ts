@@ -187,6 +187,19 @@ class RolesService {
     return response.data;
   }
 
+  // Update user role temporal settings
+  async updateUserRoleTemporal(
+    userProfileId: string,
+    roleId: string,
+    data: UpdateUserRoleTemporalDto
+  ): Promise<UserRole> {
+    const response = await apiClient.put(
+      `/api/v1/roles/users/${userProfileId}/roles/${roleId}`,
+      data
+    );
+    return response.data;
+  }
+
   // Get role statistics
   async getStatistics(): Promise<any> {
     const response = await apiClient.get('/api/v1/roles/statistics');
@@ -245,10 +258,37 @@ class RolesService {
     return response.data;
   }
 
+  // Delete role hierarchy
+  async deleteRoleHierarchy(
+    roleId: string,
+    parentRoleId: string
+  ): Promise<void> {
+    await apiClient.delete(
+      `/api/v1/roles/${roleId}/hierarchy/${parentRoleId}`
+    );
+  }
+
+  // Get all role templates
+  async getRoleTemplates(params?: QueryParams): Promise<PaginatedResponse<RoleTemplate>> {
+    const response = await apiClient.get('/api/v1/roles/templates', { params });
+    return response.data;
+  }
+
+  // Get role template by ID
+  async getRoleTemplateById(id: string): Promise<RoleTemplate> {
+    const response = await apiClient.get(`/api/v1/roles/templates/${id}`);
+    return response.data;
+  }
+
   // Create role template
-  async createRoleTemplate(data: CreateRoleTemplateDto): Promise<any> {
+  async createRoleTemplate(data: CreateRoleTemplateDto): Promise<RoleTemplate> {
     const response = await apiClient.post('/api/v1/roles/templates', data);
     return response.data;
+  }
+
+  // Delete role template
+  async deleteRoleTemplate(id: string): Promise<void> {
+    await apiClient.delete(`/api/v1/roles/templates/${id}`);
   }
 
   // Apply role template
@@ -257,6 +297,18 @@ class RolesService {
       '/api/v1/roles/templates/apply',
       data
     );
+    return response.data;
+  }
+
+  // Get users assigned to a role
+  async getRoleUsers(roleId: string, params?: QueryParams): Promise<PaginatedResponse<RoleUser>> {
+    const response = await apiClient.get(`/api/v1/roles/${roleId}/users`, { params });
+    return response.data;
+  }
+
+  // Get modules accessible by a role
+  async getRoleModules(roleId: string): Promise<any> {
+    const response = await apiClient.get(`/api/v1/roles/${roleId}/modules`);
     return response.data;
   }
 }
