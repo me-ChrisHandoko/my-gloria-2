@@ -12,8 +12,11 @@ import type {
   RoleHierarchy,
   CreateRoleTemplateDto,
   ApplyRoleTemplateDto,
+  UpdateUserRoleTemporalDto,
+  RoleTemplate,
+  RoleUser,
 } from '@/lib/api/services/roles.service';
-import type { PaginatedResponse } from '@/lib/api/types';
+import type { PaginatedResponse, QueryParams } from '@/lib/api/types';
 
 export const rolesApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -130,6 +133,54 @@ export const rolesApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    // Get role templates
+    getRoleTemplates: builder.query<
+      PaginatedResponse<RoleTemplate>,
+      QueryParams | void
+    >({
+      query: (params) => ({
+        url: '/roles/templates',
+        params: params || {},
+      }),
+      providesTags: (result) =>
+        result && Array.isArray(result.data)
+          ? [
+              ...result.data.map(({ id }) => ({ type: 'Role' as const, id: `template-${id}` })),
+              { type: 'Role', id: 'TEMPLATE-LIST' },
+            ]
+          : [{ type: 'Role', id: 'TEMPLATE-LIST' }],
+    }),
+
+    // Get role template by ID
+    getRoleTemplateById: builder.query<RoleTemplate, string>({
+      query: (id) => `/roles/templates/${id}`,
+      providesTags: (_result, _error, id) => [
+        { type: 'Role', id: `template-${id}` },
+      ],
+    }),
+
+    // Get users assigned to a role
+    getRoleUsers: builder.query<
+      PaginatedResponse<RoleUser>,
+      { roleId: string; params?: QueryParams }
+    >({
+      query: ({ roleId, params = {} }) => ({
+        url: `/roles/${roleId}/users`,
+        params,
+      }),
+      providesTags: (_result, _error, { roleId }) => [
+        { type: 'Role', id: `users-${roleId}` },
+      ],
+    }),
+
+    // Get modules accessible by a role
+    getRoleModules: builder.query<any, string>({
+      query: (roleId) => `/roles/${roleId}/modules`,
+      providesTags: (_result, _error, roleId) => [
+        { type: 'Role', id: `modules-${roleId}` },
+      ],
+    }),
+
     // ===== ROLE MUTATIONS =====
 
     // Create new role
@@ -186,12 +237,28 @@ export const rolesApi = apiSlice.injectEndpoints({
       { userProfileId: string; roleId: string }
     >({
       query: ({ userProfileId, roleId }) => ({
-        url: `/roles/remove/${userProfileId}/${roleId}`,
+        url: `/roles/users/${userProfileId}/roles/${roleId}`,
         method: 'DELETE',
       }),
       invalidatesTags: (_result, _error, { userProfileId }) => [
         { type: 'Role', id: `user-${userProfileId}` },
         { type: 'Role', id: 'LIST' },
+      ],
+    }),
+
+    // Update user role temporal settings
+    updateUserRoleTemporal: builder.mutation<
+      UserRole,
+      { userProfileId: string; roleId: string; data: UpdateUserRoleTemporalDto }
+    >({
+      query: ({ userProfileId, roleId, data }) => ({
+        url: `/roles/users/${userProfileId}/roles/${roleId}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { userProfileId, roleId }) => [
+        { type: 'Role', id: `user-${userProfileId}` },
+        { type: 'Role', id: `users-${roleId}` },
       ],
     }),
 
@@ -255,14 +322,44 @@ export const rolesApi = apiSlice.injectEndpoints({
       ],
     }),
 
+    // Delete role hierarchy
+    deleteRoleHierarchy: builder.mutation<
+      void,
+      { roleId: string; parentRoleId: string }
+    >({
+      query: ({ roleId, parentRoleId }) => ({
+        url: `/roles/${roleId}/hierarchy/${parentRoleId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { roleId }) => [
+        { type: 'Role', id: `hierarchy-${roleId}` },
+        { type: 'Role', id: 'LIST' },
+      ],
+    }),
+
     // Create role template
-    createRoleTemplate: builder.mutation<any, CreateRoleTemplateDto>({
+    createRoleTemplate: builder.mutation<RoleTemplate, CreateRoleTemplateDto>({
       query: (data) => ({
         url: '/roles/templates',
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: [{ type: 'Role', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'Role', id: 'TEMPLATE-LIST' },
+        { type: 'Role', id: 'LIST' },
+      ],
+    }),
+
+    // Delete role template
+    deleteRoleTemplate: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/roles/templates/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Role', id: `template-${id}` },
+        { type: 'Role', id: 'TEMPLATE-LIST' },
+      ],
     }),
 
     // Apply role template
@@ -292,17 +389,25 @@ export const {
   useGetUserRolesQuery,
   useGetRoleStatisticsQuery,
   useGetRoleHierarchyQuery,
+  useGetRoleTemplatesQuery,
+  useLazyGetRoleTemplatesQuery,
+  useGetRoleTemplateByIdQuery,
+  useGetRoleUsersQuery,
+  useGetRoleModulesQuery,
   // Mutations
   useCreateRoleMutation,
   useUpdateRoleMutation,
   useDeleteRoleMutation,
   useAssignRoleMutation,
   useRemoveRoleMutation,
+  useUpdateUserRoleTemporalMutation,
   useAssignPermissionToRoleMutation,
   useBulkAssignPermissionsToRoleMutation,
   useRemovePermissionFromRoleMutation,
   useCreateRoleHierarchyMutation,
+  useDeleteRoleHierarchyMutation,
   useCreateRoleTemplateMutation,
+  useDeleteRoleTemplateMutation,
   useApplyRoleTemplateMutation,
 } = rolesApi;
 
