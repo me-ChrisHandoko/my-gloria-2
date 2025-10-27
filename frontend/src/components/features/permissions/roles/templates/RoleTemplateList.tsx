@@ -9,12 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Trash2, Eye } from "lucide-react";
 import RoleTemplateDetail from "./RoleTemplateDetail";
 import RoleTemplateDeleteDialog from "./RoleTemplateDeleteDialog";
+import CreateRoleTemplateModal from "./CreateRoleTemplateModal";
 
 export default function RoleTemplateList() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const { data, isLoading, error } = useGetRoleTemplatesQuery({
     page,
@@ -43,7 +45,7 @@ export default function RoleTemplateList() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Role Templates</h2>
-        <Button disabled>
+        <Button onClick={() => setCreateModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Create Template
         </Button>
@@ -138,6 +140,15 @@ export default function RoleTemplateList() {
       )}
 
       {/* Modals */}
+      <CreateRoleTemplateModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSuccess={() => {
+          setCreateModalOpen(false);
+          // Refetch will happen automatically due to cache invalidation
+        }}
+      />
+
       {selectedTemplate && (
         <RoleTemplateDetail
           templateId={selectedTemplate}
