@@ -782,4 +782,239 @@ export class RolesService {
       })),
     };
   }
+
+  /**
+   * Get all role templates with pagination
+   */
+  async getRoleTemplates(page = 1, limit = 10, search?: string) {
+    try {
+      const skip = (page - 1) * limit;
+      const where: Prisma.RoleTemplateWhereInput = {};
+
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { code: { contains: search, mode: 'insensitive' } },
+          { category: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      const [templates, total] = await Promise.all([
+        this.prisma.roleTemplate.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.roleTemplate.count({ where }),
+      ]);
+
+      return {
+        data: templates,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      this.logger.error(
+        'Error getting role templates',
+        error.stack,
+        'RolesService',
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Get role template by ID
+   */
+  async getRoleTemplateById(id: string): Promise<RoleTemplate> {
+    try {
+      const template = await this.prisma.roleTemplate.findUnique({
+        where: { id },
+      });
+
+      if (!template) {
+        throw new NotFoundException(`Role template with ID ${id} not found`);
+      }
+
+      return template;
+    } catch (error) {
+      this.logger.error(
+        'Error getting role template by ID',
+        error.stack,
+        'RolesService',
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Delete role template
+   */
+  async deleteRoleTemplate(id: string): Promise<void> {
+    try {
+      const template = await this.prisma.roleTemplate.findUnique({
+        where: { id },
+      });
+
+      if (!template) {
+        throw new NotFoundException(`Role template with ID ${id} not found`);
+      }
+
+      await this.prisma.roleTemplate.delete({
+        where: { id },
+      });
+
+      this.logger.log(
+        `Role template deleted: ${template.code}`,
+        'RolesService',
+      );
+    } catch (error) {
+      this.logger.error(
+        'Error deleting role template',
+        error.stack,
+        'RolesService',
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Update user role temporal settings
+   */
+  async updateUserRoleTemporal(
+    userProfileId: string,
+    roleId: string,
+    validFrom?: Date,
+    validUntil?: Date,
+  ): Promise<UserRole> {
+    try {
+      const userRole = await this.prisma.userRole.findFirst({
+        where: {
+          userProfileId,
+          roleId,
+        },
+      });
+
+      if (!userRole) {
+        throw new NotFoundException(
+          `User role assignment not found for user ${userProfileId} and role ${roleId}`,
+        );
+      }
+
+      const updated = await this.prisma.userRole.update({
+        where: { id: userRole.id },
+        data: {
+          validFrom,
+          validUntil,
+        },
+        include: {
+          role: true,
+          userProfile: true,
+        },
+      });
+
+      this.logger.log(
+        `User role temporal updated for user ${userProfileId} and role ${roleId}`,
+        'RolesService',
+      );
+      return updated;
+    } catch (error) {
+      this.logger.error(
+        'Error updating user role temporal',
+        error.stack,
+        'RolesService',
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Get users assigned to a role
+   */
+  async getRoleUsers(roleId: string, page = 1, limit = 20, search?: string) {
+    try {
+      const skip = (page - 1) * limit;
+      const where: Prisma.UserRoleWhereInput = { roleId };
+
+      if (search) {
+        where.userProfile = {
+          OR: [
+            { id: { contains: search, mode: 'insensitive' } },
+          ],
+        };
+      }
+
+      const [userRoles, total] = await Promise.all([
+        this.prisma.userRole.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            role: true,
+            userProfile: {
+              include: {
+                dataKaryawan: true,
+              },
+            },
+          },
+          orderBy: { assignedAt: 'desc' },
+        }),
+        this.prisma.userRole.count({ where }),
+      ]);
+
+      return {
+        data: userRoles,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      this.logger.error(
+        'Error getting role users',
+        error.stack,
+        'RolesService',
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Get modules accessible by a role
+   */
+  async getRoleModules(roleId: string) {
+    try {
+      // Get all module role access for this role
+      const moduleAccess = await this.prisma.roleModuleAccess.findMany({
+        where: {
+          roleId,
+        },
+        include: {
+          module: true,
+        },
+      });
+
+      // Return modules with access information
+      return moduleAccess.map((access) => ({
+        id: access.module.id,
+        code: access.module.code,
+        name: access.module.name,
+        description: access.module.description,
+        isActive: access.module.isActive,
+        requiredPermissions: [], // Module model doesn't have this field
+        hasAccess: true,
+        permissions: access.permissions,
+      }));
+    } catch (error) {
+      this.logger.error(
+        'Error getting role modules',
+        error.stack,
+        'RolesService',
+      );
+      throw error;
+    }
+  }
 }

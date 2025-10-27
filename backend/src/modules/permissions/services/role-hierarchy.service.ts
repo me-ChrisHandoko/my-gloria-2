@@ -119,4 +119,43 @@ export class RoleHierarchyService {
       children: role.childRoles.map((cr) => cr.role),
     };
   }
+
+  /**
+   * Delete role hierarchy relationship
+   */
+  async deleteRoleHierarchy(
+    roleId: string,
+    parentRoleId: string,
+  ): Promise<void> {
+    try {
+      const hierarchy = await this.prisma.roleHierarchy.findFirst({
+        where: {
+          roleId,
+          parentRoleId,
+        },
+      });
+
+      if (!hierarchy) {
+        throw new BadRequestException(
+          `Hierarchy relationship not found between role ${roleId} and parent ${parentRoleId}`,
+        );
+      }
+
+      await this.prisma.roleHierarchy.delete({
+        where: { id: hierarchy.id },
+      });
+
+      this.logger.log(
+        `Role hierarchy deleted: ${roleId} no longer inherits from ${parentRoleId}`,
+        'RoleHierarchyService',
+      );
+    } catch (error) {
+      this.logger.error(
+        'Error deleting role hierarchy',
+        error.stack,
+        'RoleHierarchyService',
+      );
+      throw error;
+    }
+  }
 }

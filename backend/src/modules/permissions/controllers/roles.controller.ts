@@ -341,6 +341,79 @@ export class RolesController {
     return this.hierarchyService.getRoleHierarchy(roleId);
   }
 
+  @Delete(':roleId/hierarchy/:parentRoleId')
+  @RequiredPermission('roles', PermissionAction.UPDATE)
+  @DataModificationAudit('role.hierarchy.delete', 'role_hierarchy')
+  @ApiOperation({ summary: 'Delete role hierarchy relationship' })
+  @ApiParam({ name: 'roleId', description: 'Child Role ID' })
+  @ApiParam({ name: 'parentRoleId', description: 'Parent Role ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role hierarchy deleted successfully',
+  })
+  async deleteRoleHierarchy(
+    @Param('roleId') roleId: string,
+    @Param('parentRoleId') parentRoleId: string,
+  ) {
+    return this.hierarchyService.deleteRoleHierarchy(roleId, parentRoleId);
+  }
+
+  @Get(':roleId/users')
+  @RequiredPermission('roles', PermissionAction.READ)
+  @ApiOperation({ summary: 'Get users assigned to a role' })
+  @ApiParam({ name: 'roleId', description: 'Role ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role users retrieved successfully',
+  })
+  async getRoleUsers(
+    @Param('roleId') roleId: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+  ) {
+    const currentPage = page ? parseInt(page.toString(), 10) : 1;
+    const pageSize = limit ? parseInt(limit.toString(), 10) : 20;
+    return this.rolesService.getRoleUsers(roleId, currentPage, pageSize, search);
+  }
+
+  @Get(':roleId/modules')
+  @RequiredPermission('roles', PermissionAction.READ)
+  @ApiOperation({ summary: 'Get modules accessible by role' })
+  @ApiParam({ name: 'roleId', description: 'Role ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role modules retrieved successfully',
+  })
+  async getRoleModules(@Param('roleId') roleId: string) {
+    return this.rolesService.getRoleModules(roleId);
+  }
+
+  @Put('users/:userProfileId/roles/:roleId')
+  @RequiredPermission('roles', PermissionAction.UPDATE)
+  @DataModificationAudit('role.user.temporal.update', 'user_role')
+  @ApiOperation({ summary: 'Update user role temporal settings' })
+  @ApiParam({ name: 'userProfileId', description: 'User Profile ID' })
+  @ApiParam({ name: 'roleId', description: 'Role ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User role temporal settings updated successfully',
+  })
+  async updateUserRoleTemporal(
+    @Param('userProfileId') userProfileId: string,
+    @Param('roleId') roleId: string,
+    @Body() dto: { validFrom?: string; validUntil?: string },
+  ) {
+    const validFrom = dto.validFrom ? new Date(dto.validFrom) : undefined;
+    const validUntil = dto.validUntil ? new Date(dto.validUntil) : undefined;
+    return this.rolesService.updateUserRoleTemporal(
+      userProfileId,
+      roleId,
+      validFrom,
+      validUntil,
+    );
+  }
+
   @Post('templates')
   @RequiredPermission('roles', PermissionAction.CREATE)
   @DataModificationAudit('role.template.create', 'role_template')
@@ -369,6 +442,48 @@ export class RolesController {
     @CurrentUser() user: any,
   ) {
     return this.rolesService.applyRoleTemplate(dto, user.id);
+  }
+
+  @Get('templates')
+  @RequiredPermission('roles', PermissionAction.READ)
+  @ApiOperation({ summary: 'Get all role templates' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role templates retrieved successfully',
+  })
+  async getRoleTemplates(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+  ) {
+    const currentPage = page ? parseInt(page.toString(), 10) : 1;
+    const pageSize = limit ? parseInt(limit.toString(), 10) : 10;
+    return this.rolesService.getRoleTemplates(currentPage, pageSize, search);
+  }
+
+  @Get('templates/:id')
+  @RequiredPermission('roles', PermissionAction.READ)
+  @ApiOperation({ summary: 'Get role template by ID' })
+  @ApiParam({ name: 'id', description: 'Role Template ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role template retrieved successfully',
+  })
+  async getRoleTemplateById(@Param('id') id: string) {
+    return this.rolesService.getRoleTemplateById(id);
+  }
+
+  @Delete('templates/:id')
+  @RequiredPermission('roles', PermissionAction.DELETE)
+  @DataModificationAudit('role.template.delete', 'role_template')
+  @ApiOperation({ summary: 'Delete role template' })
+  @ApiParam({ name: 'id', description: 'Role Template ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role template deleted successfully',
+  })
+  async deleteRoleTemplate(@Param('id') id: string) {
+    return this.rolesService.deleteRoleTemplate(id);
   }
 
   @Get('user/:userProfileId')
