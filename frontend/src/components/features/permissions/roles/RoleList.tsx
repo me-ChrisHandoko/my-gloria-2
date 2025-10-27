@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, BookTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,6 @@ import { toast } from "sonner";
 import CreateRoleModal from "./CreateRoleModal";
 import EditRoleModal from "./EditRoleModal";
 import DeleteRoleModal from "./DeleteRoleModal";
-import ViewRoleModal from "./ViewRoleModal";
 import { createRoleColumns } from "./RoleColumns";
 import { Role } from "@/lib/api/services/roles.service";
 import { useGetRolesQuery } from "@/store/api/rolesApi";
@@ -31,6 +31,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function RoleList() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [isActiveFilter, setIsActiveFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,7 +40,6 @@ export default function RoleList() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
   // Increased debounce delay to reduce API call frequency and prevent rate limiting
@@ -96,8 +96,8 @@ export default function RoleList() {
   };
 
   const handleView = (role: Role) => {
-    setSelectedRole(role);
-    setViewModalOpen(true);
+    // Navigate to role detail page instead of opening modal
+    router.push(`/permissions/roles/${role.id}`);
   };
 
   const handleCreateSuccess = () => {
@@ -160,6 +160,13 @@ export default function RoleList() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/permissions/roles/templates')}
+          >
+            <BookTemplate className="h-4 w-4 mr-2" />
+            Templates
+          </Button>
           <button
             onClick={handleCreate}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -237,19 +244,6 @@ export default function RoleList() {
               setSelectedRole(null);
             }}
             onSuccess={handleDeleteSuccess}
-          />
-
-          <ViewRoleModal
-            open={viewModalOpen}
-            role={selectedRole}
-            onClose={() => {
-              setViewModalOpen(false);
-              setSelectedRole(null);
-            }}
-            onEdit={() => {
-              setViewModalOpen(false);
-              setEditModalOpen(true);
-            }}
           />
         </>
       )}
