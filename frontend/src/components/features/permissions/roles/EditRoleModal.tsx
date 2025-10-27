@@ -35,7 +35,7 @@ export default function EditRoleModal({
 }: EditRoleModalProps) {
   const [formData, setFormData] = useState<UpdateRoleDto>({
     name: role.name,
-    code: role.code,
+    // code is immutable - not included in update payload
     hierarchyLevel: role.hierarchyLevel,
     description: role.description || "",
     isSystemRole: role.isSystemRole,
@@ -48,7 +48,7 @@ export default function EditRoleModal({
   useEffect(() => {
     setFormData({
       name: role.name,
-      code: role.code,
+      // code is immutable - not included in update payload
       hierarchyLevel: role.hierarchyLevel,
       description: role.description || "",
       isSystemRole: role.isSystemRole,
@@ -65,10 +65,7 @@ export default function EditRoleModal({
       return;
     }
 
-    if (!formData.code?.trim()) {
-      toast.error("Role code is required");
-      return;
-    }
+    // Note: code validation removed - code is immutable and cannot be updated
 
     if (formData.hierarchyLevel !== undefined && formData.hierarchyLevel < 0) {
       toast.error("Hierarchy level must be 0 or greater");
@@ -140,25 +137,18 @@ export default function EditRoleModal({
 
               <div className="space-y-2">
                 <Label htmlFor="code">
-                  Role Code <span className="text-red-500">*</span>
+                  Role Code
                 </Label>
                 <Input
                   id="code"
-                  value={formData.code}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      code: e.target.value.toUpperCase(),
-                    })
-                  }
+                  value={role.code}
                   placeholder="e.g., ADMIN"
-                  required
-                  disabled={isUpdating || role.isSystemRole}
+                  disabled
+                  readOnly
+                  className="bg-muted cursor-not-allowed"
                 />
                 <p className="text-xs text-muted-foreground">
-                  {role.isSystemRole
-                    ? "System role codes cannot be modified"
-                    : "Unique identifier for this role (will be converted to uppercase)"}
+                  Role code is immutable and cannot be changed
                 </p>
               </div>
             </div>

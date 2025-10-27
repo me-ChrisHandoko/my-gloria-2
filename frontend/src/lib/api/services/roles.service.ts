@@ -52,7 +52,7 @@ export interface CreateRoleDto {
 
 export interface UpdateRoleDto {
   name?: string;
-  code?: string;
+  // code is immutable and cannot be updated (backend enforces this)
   hierarchyLevel?: number;
   description?: string;
   isSystemRole?: boolean;
@@ -139,6 +139,11 @@ class RolesService {
     return response.data;
   }
 
+  // Delete role (soft delete)
+  async deleteRole(id: string): Promise<void> {
+    await apiClient.delete(`/api/v1/roles/${id}`);
+  }
+
   // Assign role to user
   async assignRole(data: AssignRoleDto): Promise<UserRole> {
     const response = await apiClient.post('/api/v1/roles/assign', data);
@@ -147,7 +152,7 @@ class RolesService {
 
   // Remove role from user
   async removeRole(userProfileId: string, roleId: string): Promise<void> {
-    await apiClient.delete(`/api/v1/roles/remove/${userProfileId}/${roleId}`);
+    await apiClient.delete(`/api/v1/roles/users/${userProfileId}/roles/${roleId}`);
   }
 
   // Get user roles
