@@ -168,21 +168,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                       pathname.startsWith("/permissions/module") ||
                       pathname === "/permissions/role-access",
           },
-          {
-            title: "Permission Delegation",
-            url: "/permissions/permission-delegation",
-            isActive: pathname === "/permissions/permission-delegation",
-          },
-          {
-            title: "Permission Templates",
-            url: "/permissions/permission-templates",
-            isActive: pathname === "/permissions/permission-templates",
-          },
-          {
-            title: "Resource Permissions",
-            url: "/permissions/resource-permissions",
-            isActive: pathname === "/permissions/resource-permissions",
-          },
         ],
       },
       {

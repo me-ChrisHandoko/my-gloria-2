@@ -10,8 +10,6 @@ import {
   UserPermission,
   UserPosition,
   Position,
-  ResourcePermission,
-  PermissionDelegation,
 } from '@prisma/client';
 import {
   IPermissionCheck,
@@ -35,20 +33,6 @@ export class PermissionCalculationService {
       const directPermission = await this.checkDirectPermission(check);
       if (directPermission) {
         return directPermission;
-      }
-
-      // Check delegated permissions
-      const delegatedPermission = await this.checkDelegatedPermission(check);
-      if (delegatedPermission) {
-        return delegatedPermission;
-      }
-
-      // Check resource-specific permissions
-      if (check.resourceId) {
-        const resourcePermission = await this.checkResourcePermission(check);
-        if (resourcePermission) {
-          return resourcePermission;
-        }
       }
 
       // Check role-based permissions
@@ -122,82 +106,6 @@ export class PermissionCalculationService {
         conditions: userPermission.conditions,
         validUntil: userPermission.validUntil,
         reason: `Direct permission: ${userPermission.permission.code}`,
-      };
-    }
-
-    return null;
-  }
-
-  /**
-   * Check delegated permissions
-   */
-  private async checkDelegatedPermission(
-    check: IPermissionCheck,
-  ): Promise<IPermissionResult | null> {
-    const delegations = await this.prisma.permissionDelegation.findMany({
-      where: {
-        delegateId: check.userId,
-        isRevoked: false,
-        validFrom: { lte: new Date() },
-        validUntil: { gte: new Date() },
-      },
-    });
-
-    for (const delegation of delegations) {
-      const permissions = delegation.permissions as any[];
-      const matchingPermission = permissions?.find(
-        (p) =>
-          p.resource === check.resource &&
-          p.action === check.action &&
-          (!check.scope || p.scope === check.scope),
-      );
-
-      if (matchingPermission) {
-        return {
-          hasPermission: true,
-          source: 'delegation',
-          validUntil: delegation.validUntil,
-          reason: `Delegated permission from ${delegation.delegatorId}`,
-        };
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Check resource-specific permissions
-   */
-  private async checkResourcePermission(
-    check: IPermissionCheck,
-  ): Promise<IPermissionResult | null> {
-    if (!check.resourceId) {
-      return null;
-    }
-
-    const resourcePermission = await this.prisma.resourcePermission.findFirst({
-      where: {
-        userProfileId: check.userId,
-        resourceType: check.resource,
-        resourceId: check.resourceId,
-        permission: {
-          action: check.action,
-        },
-        isGranted: true,
-        OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
-      },
-      include: {
-        permission: true,
-      },
-    });
-
-    if (resourcePermission) {
-      return {
-        hasPermission: true,
-        permission: resourcePermission.permission,
-        source: 'resource',
-        validUntil: resourcePermission.validUntil,
-        reason: `Resource-specific permission for ${check.resourceId}`,
       };
     }
 

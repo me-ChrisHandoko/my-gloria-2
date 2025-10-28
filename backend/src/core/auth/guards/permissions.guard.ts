@@ -170,23 +170,7 @@ export class PermissionsGuard implements CanActivate {
       };
     }
 
-    // 5. Check resource-specific permissions
-    const resourceId = this.extractResourceId(request, permission.resource);
-    if (resourceId) {
-      const resourcePermission = await this.checkResourcePermission(
-        user.id,
-        permission,
-        resourceId,
-      );
-      if (resourcePermission) {
-        return {
-          allowed: true,
-          reason: 'Allowed by resource-specific permission',
-        };
-      }
-    }
-
-    // 6. Check scope-based permissions
+    // 5. Check scope-based permissions
     if (permission.scope) {
       const scopePermission = await this.checkScopePermission(
         user,
@@ -303,24 +287,6 @@ export class PermissionsGuard implements CanActivate {
     // Position hierarchy permissions not directly implemented in current schema
     // This is a placeholder for future implementation
     return false;
-  }
-
-  private async checkResourcePermission(
-    userId: string,
-    permission: RequiredPermissionData,
-    resourceId: string,
-  ): Promise<boolean> {
-    const resourcePermission = await this.prisma.resourcePermission.findFirst({
-      where: {
-        userProfileId: userId,
-        resourceType: permission.resource,
-        resourceId,
-        permissionId: permission.action as any,
-        OR: [{ validUntil: null }, { validUntil: { gt: new Date() } }],
-      },
-    });
-
-    return !!resourcePermission;
   }
 
   private async checkScopePermission(

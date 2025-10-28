@@ -127,18 +127,6 @@ export class ApiPaths {
         base: this.buildPath('module-access'),
         byId: (id: string) => this.buildPath('module-access', id),
       },
-      delegation: {
-        base: this.buildPath('permission-delegation'),
-        byId: (id: string) => this.buildPath('permission-delegation', id),
-      },
-      templates: {
-        base: this.buildPath('permission-templates'),
-        byId: (id: string) => this.buildPath('permission-templates', id),
-      },
-      resources: {
-        base: this.buildPath('resource-permissions'),
-        byId: (id: string) => this.buildPath('resource-permissions', id),
-      },
     };
   }
 
