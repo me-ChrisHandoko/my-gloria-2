@@ -3,10 +3,13 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
 import { LoggingService } from '@/core/logging/logging.service';
 import { CacheService } from '@/core/cache/cache.service';
+import { RolePermissionsService } from './permission-roles.service';
 import {
   Role,
   UserRole,
@@ -19,8 +22,6 @@ import {
   CreateRoleDto,
   UpdateRoleDto,
   AssignRoleDto,
-  AssignRolePermissionDto,
-  BulkAssignRolePermissionsDto,
   CreateRoleTemplateDto,
   ApplyRoleTemplateDto,
 } from '../dto/role.dto';
@@ -34,6 +35,8 @@ export class RolesService {
     private readonly prisma: PrismaService,
     private readonly logger: LoggingService,
     private readonly cache: CacheService,
+    @Inject(forwardRef(() => RolePermissionsService))
+    private readonly rolePermissionsService?: RolePermissionsService,
   ) {}
 
   /**
@@ -495,134 +498,6 @@ export class RolesService {
   }
 
   /**
-   * Assign permission to role
-   */
-  async assignPermissionToRole(
-    roleId: string,
-    dto: AssignRolePermissionDto,
-    grantedBy: string,
-  ): Promise<RolePermission> {
-    try {
-      const rolePermission = await this.prisma.rolePermission.upsert({
-        where: {
-          roleId_permissionId: {
-            roleId,
-            permissionId: dto.permissionId,
-          },
-        },
-        create: {
-          id: uuidv7(),
-          roleId,
-          permissionId: dto.permissionId,
-          isGranted: dto.isGranted ?? true,
-          conditions: dto.conditions,
-          validFrom: dto.validFrom || new Date(),
-          validUntil: dto.validUntil,
-          grantedBy,
-          grantReason: dto.grantReason,
-        },
-        update: {
-          isGranted: dto.isGranted ?? true,
-          conditions: dto.conditions,
-          validFrom: dto.validFrom || new Date(),
-          validUntil: dto.validUntil,
-          grantedBy,
-          grantReason: dto.grantReason,
-          updatedAt: new Date(),
-        },
-        include: {
-          role: true,
-          permission: true,
-        },
-      });
-
-      this.logger.log(
-        `Permission ${rolePermission.permission.code} assigned to role ${rolePermission.role.code}`,
-        'RolesService',
-      );
-      return rolePermission;
-    } catch (error) {
-      this.logger.error(
-        'Error assigning permission to role',
-        error.stack,
-        'RolesService',
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Bulk assign permissions to role
-   */
-  async bulkAssignPermissionsToRole(
-    roleId: string,
-    dto: BulkAssignRolePermissionsDto,
-    grantedBy: string,
-  ): Promise<RolePermission[]> {
-    try {
-      const results: RolePermission[] = [];
-
-      for (const permission of dto.permissions) {
-        const result = await this.assignPermissionToRole(
-          roleId,
-          permission,
-          grantedBy,
-        );
-        results.push(result);
-      }
-
-      this.logger.log(
-        `Bulk assigned ${results.length} permissions to role ${roleId}`,
-        'RolesService',
-      );
-      return results;
-    } catch (error) {
-      this.logger.error(
-        'Error bulk assigning permissions',
-        error.stack,
-        'RolesService',
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Remove permission from role
-   */
-  async removePermissionFromRole(
-    roleId: string,
-    permissionId: string,
-    removedBy: string,
-  ): Promise<void> {
-    try {
-      await this.prisma.rolePermission.update({
-        where: {
-          roleId_permissionId: {
-            roleId,
-            permissionId,
-          },
-        },
-        data: {
-          isGranted: false,
-          updatedAt: new Date(),
-        },
-      });
-
-      this.logger.log(
-        `Permission ${permissionId} removed from role ${roleId}`,
-        'RolesService',
-      );
-    } catch (error) {
-      this.logger.error(
-        'Error removing permission from role',
-        error.stack,
-        'RolesService',
-      );
-      throw error;
-    }
-  }
-
-  /**
    * Create role template
    */
   async createRoleTemplate(
@@ -696,16 +571,21 @@ export class RolesService {
       const permissionIds = template.permissions as string[];
       const results: RolePermission[] = [];
 
+      if (!this.rolePermissionsService) {
+        throw new Error('RolePermissionsService is not available');
+      }
+
       for (const permissionId of permissionIds) {
-        const rolePermission = await this.assignPermissionToRole(
-          dto.roleId,
-          {
-            permissionId,
-            isGranted: true,
-            grantReason: `Applied from template: ${template.code}`,
-          },
-          appliedBy,
-        );
+        const rolePermission =
+          await this.rolePermissionsService.assignPermissionToRole(
+            dto.roleId,
+            {
+              permissionId,
+              isGranted: true,
+              grantReason: `Applied from template: ${template.code}`,
+            },
+            appliedBy,
+          );
         results.push(rolePermission);
       }
 

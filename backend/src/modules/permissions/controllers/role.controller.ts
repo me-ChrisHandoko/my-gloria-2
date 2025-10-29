@@ -251,7 +251,6 @@ export class RolesController {
   async createRoleHierarchy(
     @Param('roleId') roleId: string,
     @Body() dto: CreateRoleHierarchyDto,
-    @CurrentUser() user: any,
   ) {
     return this.hierarchyService.createHierarchy(
       roleId,
