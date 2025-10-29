@@ -23,7 +23,7 @@ import { LoggingModule } from './core/logging/logging.module';
 // Feature Modules
 import { UsersModule } from './modules/users/users.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
-import { PermissionsModule } from './modules/permissions/permissions.module';
+import { PermissionModule } from './modules/permissions/permission.module';
 import { WorkflowsModule } from './modules/workflows/workflows.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AuditModule as AuditFeatureModule } from './modules/audit/audit.module';
@@ -303,7 +303,7 @@ function getFeatureModules(): any[] {
 
   // Permissions Module
   if (process.env.ENABLE_PERMISSIONS_MODULE !== 'false') {
-    modules.push(PermissionsModule);
+    modules.push(PermissionModule);
   }
 
   // Workflows Module

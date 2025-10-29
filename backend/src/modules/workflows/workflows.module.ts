@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '@/core/database/prisma.module';
 import { LoggingModule } from '@/core/logging/logging.module';
 import { CacheModule } from '@/core/cache/cache.module';
-import { PermissionsModule } from '@/modules/permissions/permissions.module';
+import { PermissionModule } from '@/modules/permissions/permission.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 import { WorkflowsController } from './controllers/workflows.controller';
 import { WorkflowInstancesController } from './controllers/workflow-instances.controller';
@@ -21,7 +21,7 @@ import { WorkflowSchedulerService } from './services/workflow-scheduler.service'
     PrismaModule,
     LoggingModule,
     CacheModule,
-    PermissionsModule,
+    PermissionModule,
     NotificationsModule,
   ],
   controllers: [

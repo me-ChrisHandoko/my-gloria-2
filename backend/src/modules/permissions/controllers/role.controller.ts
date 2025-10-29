@@ -29,7 +29,7 @@ import {
   AuditCategory,
   AuditSeverity,
 } from '@/core/auth/decorators/audit-log.decorator';
-import { RolesService } from '../services/roles.service';
+import { RolesService } from '../services/role.service';
 import { RoleHierarchyService } from '../services/role-hierarchy.service';
 import {
   CreateRoleDto,

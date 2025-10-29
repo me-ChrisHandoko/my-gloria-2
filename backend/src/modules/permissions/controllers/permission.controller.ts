@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,8 +30,10 @@ import {
   AuditCategory,
   AuditSeverity,
 } from '@/core/auth/decorators/audit-log.decorator';
-import { PermissionsService } from '../services/permissions.service';
+import { PermissionsService } from '../services/permission.service';
 import { PermissionValidationService } from '../services/permission-validation.service';
+import { RolePermissionsService } from '../services/permission-roles.service';
+import { UserPermissionsService } from '../services/permission-users.service';
 import {
   CreatePermissionDto,
   UpdatePermissionDto,
@@ -51,6 +54,8 @@ export class PermissionsController {
     private readonly permissionsService: PermissionsService,
     private readonly validationService: PermissionValidationService,
     private readonly cacheService: PermissionCacheService,
+    private readonly rolePermissionsService: RolePermissionsService,
+    private readonly userPermissionsService: UserPermissionsService,
   ) {}
 
   @Post()
@@ -237,14 +242,43 @@ export class PermissionsController {
     @Body() dto: BulkAssignPermissionsDto,
     @CurrentUser() user: any,
   ) {
-    // Implementation depends on target type
-    // This is a simplified version
-    return {
-      success: true,
-      targetType: dto.targetType,
-      targetId: dto.targetId,
-      assignedCount: dto.permissionIds.length,
-    };
+    // Route to appropriate service based on targetType
+    switch (dto.targetType) {
+      case 'user':
+        return this.userPermissionsService.bulkAssignUserPermissions(
+          dto.targetId,
+          {
+            permissionIds: dto.permissionIds,
+            grantReason: dto.grantReason || 'Bulk assignment',
+            validUntil: dto.validUntil,
+            isGranted: true,
+          },
+          user.id,
+        );
+
+      case 'role':
+        return this.rolePermissionsService.bulkAssignRolePermissions(
+          dto.targetId,
+          {
+            permissionIds: dto.permissionIds,
+            grantReason: dto.grantReason,
+            validUntil: dto.validUntil,
+            isGranted: true,
+          },
+          user.id,
+        );
+
+      case 'position':
+        // Position-based permissions not supported in schema
+        throw new BadRequestException(
+          'Position-based permissions not supported. Use role-based or user-based assignments.',
+        );
+
+      default:
+        throw new BadRequestException(
+          `Invalid targetType: ${dto.targetType}`,
+        );
+    }
   }
 
   @Post('refresh-cache')
@@ -338,6 +372,22 @@ export class PermissionsController {
     return this.permissionsService.createPermissionGroup(dto, user.id);
   }
 
+  @Get('groups/:id')
+  @RequiredPermission('permissions', PermissionAction.READ)
+  @ApiOperation({ summary: 'Get permission group by ID' })
+  @ApiParam({ name: 'id', description: 'Permission group ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Permission group retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Permission group not found',
+  })
+  async getPermissionGroupById(@Param('id') id: string) {
+    return this.permissionsService.getPermissionGroupById(id);
+  }
+
   @Put('groups/:id')
   @RequiredPermission('permissions', PermissionAction.UPDATE)
   @DataModificationAudit('permission_group.update', 'permission_group')
@@ -353,5 +403,33 @@ export class PermissionsController {
     @CurrentUser() user: any,
   ) {
     return this.permissionsService.updatePermissionGroup(id, dto, user.id);
+  }
+
+  @Delete('groups/:id')
+  @RequiredPermission('permissions', PermissionAction.DELETE)
+  @CriticalAudit('permission_group.delete', 'permission_group')
+  @ApiOperation({
+    summary: 'Delete permission group',
+    description:
+      'Soft deletes a permission group if it has no associated permissions, otherwise restricts deletion',
+  })
+  @ApiParam({ name: 'id', description: 'Permission group ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Permission group deleted successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Cannot delete group with associated permissions',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Permission group not found',
+  })
+  async deletePermissionGroup(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.permissionsService.deletePermissionGroup(id, user.id);
   }
 }

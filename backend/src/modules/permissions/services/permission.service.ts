@@ -449,6 +449,87 @@ export class PermissionsService {
   }
 
   /**
+   * Get permission group by ID
+   */
+  async getPermissionGroupById(id: string): Promise<PermissionGroup> {
+    const group = await this.prisma.permissionGroup.findUnique({
+      where: { id },
+      include: {
+        permissions: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            description: true,
+            resource: true,
+            action: true,
+          },
+        },
+      },
+    });
+
+    if (!group) {
+      throw new NotFoundException(`Permission group with ID ${id} not found`);
+    }
+
+    return group;
+  }
+
+  /**
+   * Delete permission group (soft delete or restrict if has permissions)
+   */
+  async deletePermissionGroup(
+    id: string,
+    deletedBy: string,
+  ): Promise<{ message: string }> {
+    try {
+      const group = await this.prisma.permissionGroup.findUnique({
+        where: { id },
+        include: {
+          permissions: { where: { isActive: true } },
+        },
+      });
+
+      if (!group) {
+        throw new NotFoundException(`Permission group with ID ${id} not found`);
+      }
+
+      // Check if group has associated permissions
+      if (group.permissions && group.permissions.length > 0) {
+        throw new BadRequestException(
+          `Cannot delete permission group "${group.name}" because it has ${group.permissions.length} associated permission(s). Please reassign or delete the permissions first.`,
+        );
+      }
+
+      // Soft delete by setting isActive to false
+      await this.prisma.permissionGroup.update({
+        where: { id },
+        data: {
+          isActive: false,
+          updatedAt: new Date(),
+        },
+      });
+
+      this.logger.log(
+        `Permission group deleted by ${deletedBy}: ${group.code}`,
+        'PermissionsService',
+      );
+
+      return {
+        message: `Permission group "${group.name}" deleted successfully`,
+      };
+    } catch (error) {
+      this.logger.error(
+        'Error deleting permission group',
+        error.stack,
+        'PermissionsService',
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Find all permission groups
    */
   async findAllGroups(includeInactive = false): Promise<PermissionGroup[]> {
