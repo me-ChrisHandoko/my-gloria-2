@@ -8,7 +8,8 @@ import { PrismaService } from '@/core/database/prisma.service';
 import { PermissionCacheService } from './permission-cache.service';
 import { RolePermissionsService } from './permission-roles.service';
 import { UserPermissionsService } from './permission-users.service';
-import { nanoid } from 'nanoid';
+import { v7 as uuidv7 } from 'uuid';
+import { Prisma } from '@prisma/client';
 import {
   CreatePermissionTemplateDto,
   UpdatePermissionTemplateDto,
@@ -42,11 +43,11 @@ export class PermissionTemplateService {
 
     const template = await this.prisma.permissionTemplate.create({
       data: {
-        id: nanoid(),
+        id: uuidv7(),
         code: dto.code,
         name: dto.name,
-        description: dto.description,
-        category: dto.category,
+        description: dto.description || null,
+        category: dto.category || 'general',
         permissions: dto.permissions,
         moduleAccess: dto.moduleAccess,
         isSystem: dto.isSystem || false,
@@ -58,17 +59,17 @@ export class PermissionTemplateService {
     // Record change history
     await this.prisma.permissionChangeHistory.create({
       data: {
-        id: nanoid(),
-        action: 'CREATE',
-        targetType: 'TEMPLATE',
-        targetId: template.id,
-        changedBy: createdBy,
-        reason: 'Template created',
-        metadata: {
+        id: uuidv7(),
+        entityType: 'TEMPLATE',
+        entityId: template.id,
+        operation: 'CREATE',
+        previousState: Prisma.JsonNull,
+        newState: {
           code: dto.code,
           name: dto.name,
           category: dto.category,
         },
+        performedBy: createdBy,
       },
     });
 
@@ -144,8 +145,8 @@ export class PermissionTemplateService {
     }
 
     // Get application count
-    const applicationCount = await this.prisma.templateApplication.count({
-      where: { templateId, isRevoked: false },
+    const applicationCount = await this.prisma.permissionTemplateApplication.count({
+      where: { templateId, isActive: true },
     });
 
     return {
@@ -189,13 +190,14 @@ export class PermissionTemplateService {
     // Record change history
     await this.prisma.permissionChangeHistory.create({
       data: {
-        id: nanoid(),
-        action: 'UPDATE',
-        targetType: 'TEMPLATE',
-        targetId: templateId,
-        changedBy: updatedBy,
-        reason: 'Template updated',
-        metadata: { changes: dto },
+        id: uuidv7(),
+        entityType: 'TEMPLATE',
+        entityId: templateId,
+        operation: 'UPDATE',
+        previousState: existing as Prisma.InputJsonValue,
+        newState: dto as Prisma.InputJsonValue,
+        performedBy: updatedBy,
+        metadata: { changes: dto } as unknown as Prisma.InputJsonValue,
       },
     });
 
@@ -223,8 +225,8 @@ export class PermissionTemplateService {
     }
 
     // Check for active applications
-    const activeApplications = await this.prisma.templateApplication.count({
-      where: { templateId, isRevoked: false },
+    const activeApplications = await this.prisma.permissionTemplateApplication.count({
+      where: { templateId, isActive: true },
     });
 
     if (activeApplications > 0) {
@@ -273,12 +275,12 @@ export class PermissionTemplateService {
     await this.validateTarget(dto.targetType, dto.targetId);
 
     // Check for existing application
-    const existing = await this.prisma.templateApplication.findFirst({
+    const existing = await this.prisma.permissionTemplateApplication.findFirst({
       where: {
         templateId,
         targetType: dto.targetType,
         targetId: dto.targetId,
-        isRevoked: false,
+        isActive: true,
       },
     });
 
@@ -290,9 +292,9 @@ export class PermissionTemplateService {
 
     const result = await this.prisma.$transaction(async (tx) => {
       // Create template application record
-      const application = await tx.templateApplication.create({
+      const application = await tx.permissionTemplateApplication.create({
         data: {
-          id: nanoid(),
+          id: uuidv7(),
           templateId,
           targetType: dto.targetType,
           targetId: dto.targetId,
@@ -375,11 +377,11 @@ export class PermissionTemplateService {
     }
 
     if (filters.isRevoked !== undefined) {
-      where.isRevoked = filters.isRevoked;
+      where.isActive = !filters.isRevoked;
     }
 
     const [applications, total] = await Promise.all([
-      this.prisma.templateApplication.findMany({
+      this.prisma.permissionTemplateApplication.findMany({
         where,
         include: {
           template: true,
@@ -388,7 +390,7 @@ export class PermissionTemplateService {
         skip,
         take: limit,
       }),
-      this.prisma.templateApplication.count({ where }),
+      this.prisma.permissionTemplateApplication.count({ where }),
     ]);
 
     return {
@@ -410,7 +412,7 @@ export class PermissionTemplateService {
     dto: RevokeTemplateApplicationDto,
     revokedBy: string,
   ) {
-    const application = await this.prisma.templateApplication.findUnique({
+    const application = await this.prisma.permissionTemplateApplication.findUnique({
       where: { id: applicationId },
       include: { template: true },
     });
@@ -419,17 +421,17 @@ export class PermissionTemplateService {
       throw new NotFoundException(`Application ${applicationId} not found`);
     }
 
-    if (application.isRevoked) {
+    if (!application.isActive) {
       throw new BadRequestException('Application already revoked');
     }
 
-    await this.prisma.templateApplication.update({
+    await this.prisma.permissionTemplateApplication.update({
       where: { id: applicationId },
       data: {
-        isRevoked: true,
+        isActive: false,
         revokedAt: new Date(),
         revokedBy,
-        revokedReason: dto.revokedReason,
+        notes: dto.revokedReason,
       },
     });
 
@@ -453,7 +455,6 @@ export class PermissionTemplateService {
       by: ['category'],
       where: {
         isActive: true,
-        category: { not: null },
       },
       _count: true,
     });

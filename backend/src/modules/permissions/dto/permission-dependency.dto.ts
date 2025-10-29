@@ -22,24 +22,23 @@ export class CreatePermissionDependencyDto {
   })
   @IsUUID()
   @IsNotEmpty()
-  requiredPermissionId: string;
+  dependsOnId: string;
 
   @ApiPropertyOptional({
-    description: 'Explanation of why this dependency exists',
-    example: 'APPROVE permission requires READ permission to view data first',
+    description: 'Whether this dependency is required (true) or optional (false)',
+    example: true,
+    default: true,
   })
-  @MaxLength(500)
   @IsOptional()
-  description?: string;
+  isRequired?: boolean;
 }
 
 export class UpdatePermissionDependencyDto {
   @ApiPropertyOptional({
-    description: 'Updated description',
+    description: 'Whether this dependency is required',
   })
-  @MaxLength(500)
   @IsOptional()
-  description?: string;
+  isRequired?: boolean;
 }
 
 export class CheckPermissionDependenciesDto {

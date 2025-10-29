@@ -4,7 +4,7 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { PrismaService } from '@/core/prisma/prisma.service';
+import { PrismaService } from '@/core/database/prisma.service';
 import {
   AssignUserPermissionDto,
   UpdateUserPermissionDto,
@@ -14,7 +14,7 @@ import {
 } from '../dto/user-permission.dto';
 import { PermissionCacheService } from './permission-cache.service';
 import { Prisma } from '@prisma/client';
-import { nanoid } from 'nanoid';
+import { v7 as uuidv7 } from 'uuid';
 
 @Injectable()
 export class UserPermissionsService {
@@ -92,11 +92,11 @@ export class UserPermissionsService {
     // Create user permission assignment
     const userPermission = await this.prisma.userPermission.create({
       data: {
-        id: nanoid(),
+        id: uuidv7(),
         userProfileId: userId,
         permissionId: dto.permissionId,
         isGranted: dto.isGranted ?? true,
-        conditions: dto.conditions || null,
+        conditions: dto.conditions ? (dto.conditions as Prisma.InputJsonValue) : Prisma.DbNull,
         validFrom: dto.validFrom || new Date(),
         validUntil: dto.validUntil || null,
         grantedBy,
@@ -571,11 +571,11 @@ export class UserPermissionsService {
         newPermissionIds.map((permissionId) =>
           tx.userPermission.create({
             data: {
-              id: nanoid(),
+              id: uuidv7(),
               userProfileId: userId,
               permissionId,
               isGranted: dto.isGranted ?? true,
-              conditions: dto.conditions || null,
+              conditions: dto.conditions ? (dto.conditions as Prisma.InputJsonValue) : Prisma.DbNull,
               validFrom: dto.validFrom || new Date(),
               validUntil: dto.validUntil || null,
               grantedBy,
@@ -593,11 +593,11 @@ export class UserPermissionsService {
       // Record change history for bulk operation
       await tx.permissionChangeHistory.create({
         data: {
-          id: nanoid(),
+          id: uuidv7(),
           entityType: 'USER_PERMISSION',
           entityId: userId,
           operation: 'BULK_ASSIGN',
-          previousState: null,
+          previousState: Prisma.JsonNull,
           newState: {
             userProfileId: userId,
             permissionIds: newPermissionIds,
@@ -671,7 +671,7 @@ export class UserPermissionsService {
       // Record change history
       await tx.permissionChangeHistory.create({
         data: {
-          id: nanoid(),
+          id: uuidv7(),
           entityType: 'USER_PERMISSION',
           entityId: userId,
           operation: 'BULK_REMOVE',
@@ -680,7 +680,7 @@ export class UserPermissionsService {
             permissions: existing,
             count: existing.length,
           },
-          newState: null,
+          newState: Prisma.JsonNull,
           metadata: {
             reason: dto.reason || null,
           },
@@ -775,7 +775,7 @@ export class UserPermissionsService {
   ) {
     await this.prisma.permissionChangeHistory.create({
       data: {
-        id: nanoid(),
+        id: uuidv7(),
         entityType,
         entityId,
         operation,

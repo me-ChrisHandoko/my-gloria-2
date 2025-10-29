@@ -16,9 +16,9 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { ClerkAuthGuard } from '@/modules/auth/guards/clerk-auth.guard';
-import { PermissionsGuard } from '../guards/permissions.guard';
-import { RequiredPermissions } from '../decorators/permissions.decorator';
+import { ClerkAuthGuard } from '@/core/auth/guards/clerk-auth.guard';
+import { PermissionsGuard } from '@/core/auth/guards/permissions.guard';
+import { RequiredPermission, PermissionAction } from '@/core/auth/decorators/permissions.decorator';
 import { PermissionCheckLogService } from '../services/permission-check-log.service';
 import {
   GetCheckLogFilterDto,
@@ -38,7 +38,7 @@ export class PermissionCheckLogController {
   constructor(private readonly checkLogService: PermissionCheckLogService) {}
 
   @Get()
-  @RequiredPermissions('PERMISSION_CHECK_LOG_VIEW')
+  @RequiredPermission('permission_logs', PermissionAction.READ)
   @ApiOperation({
     summary: 'List permission checks (admin)',
     description: 'Get paginated list of all permission check attempts with optional filters',
@@ -55,7 +55,7 @@ export class PermissionCheckLogController {
   }
 
   @Get('denied')
-  @RequiredPermissions('PERMISSION_CHECK_LOG_VIEW')
+  @RequiredPermission('permission_logs', PermissionAction.READ)
   @ApiOperation({
     summary: 'List denied access attempts',
     description: 'Get all permission checks that resulted in denied access',
@@ -70,7 +70,7 @@ export class PermissionCheckLogController {
   }
 
   @Get('users/:userId')
-  @RequiredPermissions('PERMISSION_CHECK_LOG_VIEW')
+  @RequiredPermission('permission_logs', PermissionAction.READ)
   @ApiOperation({
     summary: "Get user's access history",
     description: 'Get all permission checks performed by a specific user',
@@ -93,7 +93,7 @@ export class PermissionCheckLogController {
   }
 
   @Get('resources/:resource')
-  @RequiredPermissions('PERMISSION_CHECK_LOG_VIEW')
+  @RequiredPermission('permission_logs', PermissionAction.READ)
   @ApiOperation({
     summary: 'Get resource access history',
     description: 'Get all access attempts for a specific resource type',
@@ -116,7 +116,7 @@ export class PermissionCheckLogController {
   }
 
   @Get('slow')
-  @RequiredPermissions('PERMISSION_CHECK_LOG_VIEW')
+  @RequiredPermission('permission_logs', PermissionAction.READ)
   @ApiOperation({
     summary: 'Get slow permission checks',
     description:
@@ -132,7 +132,7 @@ export class PermissionCheckLogController {
   }
 
   @Get('summary')
-  @RequiredPermissions('PERMISSION_CHECK_LOG_VIEW')
+  @RequiredPermission('permission_logs', PermissionAction.READ)
   @ApiOperation({
     summary: 'Get access summary statistics',
     description:
@@ -148,7 +148,7 @@ export class PermissionCheckLogController {
   }
 
   @Get('users/:userId/denied')
-  @RequiredPermissions('PERMISSION_CHECK_LOG_VIEW')
+  @RequiredPermission('permission_logs', PermissionAction.READ)
   @ApiOperation({
     summary: "Get user's denied attempts",
     description: 'Get all denied access attempts for a specific user',
@@ -172,7 +172,7 @@ export class PermissionCheckLogController {
 
   @Post('export')
   @HttpCode(HttpStatus.OK)
-  @RequiredPermissions('PERMISSION_CHECK_LOG_EXPORT')
+  @RequiredPermission('permission_logs', PermissionAction.EXPORT)
   @ApiOperation({
     summary: 'Export check logs for compliance',
     description:

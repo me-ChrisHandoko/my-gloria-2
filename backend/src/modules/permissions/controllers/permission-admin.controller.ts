@@ -15,9 +15,9 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
-import { ClerkAuthGuard } from '@/modules/auth/guards/clerk-auth.guard';
-import { PermissionsGuard } from '../guards/permissions.guard';
-import { RequiredPermissions } from '../decorators/permissions.decorator';
+import { ClerkAuthGuard } from '@/core/auth/guards/clerk-auth.guard';
+import { PermissionsGuard } from '@/core/auth/guards/permissions.guard';
+import { RequiredPermission, PermissionAction } from '@/core/auth/decorators/permissions.decorator';
 import { PermissionAdminService } from '../services/permission-admin.service';
 import {
   SystemOverviewDto,
@@ -38,7 +38,7 @@ export class PermissionAdminController {
   constructor(private readonly adminService: PermissionAdminService) {}
 
   @Get('overview')
-  @RequiredPermissions('PERMISSION_ADMIN_VIEW')
+  @RequiredPermission('permissions', PermissionAction.READ)
   @ApiOperation({
     summary: 'System-wide permission overview',
     description:
@@ -56,7 +56,7 @@ export class PermissionAdminController {
   }
 
   @Get('conflicts')
-  @RequiredPermissions('PERMISSION_ADMIN_VIEW')
+  @RequiredPermission('permissions', PermissionAction.READ)
   @ApiOperation({
     summary: 'Detect permission conflicts',
     description:
@@ -72,7 +72,7 @@ export class PermissionAdminController {
   }
 
   @Get('orphaned')
-  @RequiredPermissions('PERMISSION_ADMIN_VIEW')
+  @RequiredPermission('permissions', PermissionAction.READ)
   @ApiOperation({
     summary: 'Find orphaned permissions',
     description:
@@ -88,7 +88,7 @@ export class PermissionAdminController {
   }
 
   @Get('unused')
-  @RequiredPermissions('PERMISSION_ADMIN_VIEW')
+  @RequiredPermission('permissions', PermissionAction.READ)
   @ApiOperation({
     summary: 'Find unused permissions',
     description:
@@ -113,7 +113,7 @@ export class PermissionAdminController {
 
   @Post('health-check')
   @HttpCode(HttpStatus.OK)
-  @RequiredPermissions('PERMISSION_ADMIN_VIEW')
+  @RequiredPermission('permissions', PermissionAction.READ)
   @ApiOperation({
     summary: 'System health check',
     description:
@@ -130,7 +130,7 @@ export class PermissionAdminController {
 
   @Post('optimize')
   @HttpCode(HttpStatus.OK)
-  @RequiredPermissions('PERMISSION_ADMIN_MANAGE')
+  @RequiredPermission('permissions', PermissionAction.UPDATE)
   @ApiOperation({
     summary: 'Optimize permission cache',
     description:
@@ -150,7 +150,7 @@ export class PermissionAdminController {
   }
 
   @Get('statistics/detailed')
-  @RequiredPermissions('PERMISSION_ADMIN_VIEW')
+  @RequiredPermission('permissions', PermissionAction.READ)
   @ApiOperation({
     summary: 'Detailed statistics dashboard',
     description:

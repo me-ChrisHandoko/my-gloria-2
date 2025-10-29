@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
 import { PermissionCacheService } from './permission-cache.service';
-import { nanoid } from 'nanoid';
+import { v7 as uuidv7 } from 'uuid';
+import { Prisma } from '@prisma/client';
 import {
   CreatePermissionDelegationDto,
   RevokeDelegationDto,
@@ -77,21 +78,20 @@ export class PermissionDelegationService {
     // Create delegation
     const delegation = await this.prisma.permissionDelegation.create({
       data: {
-        id: nanoid(),
+        id: uuidv7(),
         delegatorId,
         delegateId: dto.delegateId,
         permissions: dto.permissions,
         reason: dto.reason,
         validFrom,
         validUntil: dto.validUntil,
-        createdBy,
       },
       include: {
         delegator: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true },
         },
         delegate: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true },
         },
       },
     });
@@ -102,18 +102,21 @@ export class PermissionDelegationService {
     // Record change history
     await this.prisma.permissionChangeHistory.create({
       data: {
-        id: nanoid(),
-        action: 'DELEGATE',
-        targetType: 'DELEGATION',
-        targetId: delegation.id,
-        changedBy: createdBy,
-        reason: dto.reason,
-        metadata: {
+        id: uuidv7(),
+        entityType: 'DELEGATION',
+        entityId: delegation.id,
+        operation: 'DELEGATE',
+        previousState: Prisma.JsonNull,
+        newState: {
           delegatorId,
           delegateId: dto.delegateId,
           permissions: dto.permissions,
           validFrom,
           validUntil: dto.validUntil,
+        },
+        performedBy: createdBy,
+        metadata: {
+          reason: dto.reason,
         },
       },
     });
@@ -159,10 +162,10 @@ export class PermissionDelegationService {
       },
       include: {
         delegator: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true },
         },
         delegate: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true },
         },
       },
     });
@@ -173,15 +176,18 @@ export class PermissionDelegationService {
     // Record change history
     await this.prisma.permissionChangeHistory.create({
       data: {
-        id: nanoid(),
-        action: 'REVOKE',
-        targetType: 'DELEGATION',
-        targetId: delegationId,
-        changedBy: revokedBy,
-        reason: dto.revokedReason,
-        metadata: {
+        id: uuidv7(),
+        entityType: 'DELEGATION',
+        entityId: delegationId,
+        operation: 'REVOKE',
+        previousState: {
           delegatorId: delegation.delegatorId,
           delegateId: delegation.delegateId,
+        },
+        newState: Prisma.JsonNull,
+        performedBy: revokedBy,
+        metadata: {
+          reason: dto.revokedReason,
         },
       },
     });
@@ -230,7 +236,7 @@ export class PermissionDelegationService {
         where,
         include: {
           delegate: {
-            select: { id: true, fullName: true, email: true, nip: true },
+            select: { id: true, nip: true },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -288,7 +294,7 @@ export class PermissionDelegationService {
         where,
         include: {
           delegator: {
-            select: { id: true, fullName: true, email: true, nip: true },
+            select: { id: true, nip: true },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -339,10 +345,10 @@ export class PermissionDelegationService {
         where,
         include: {
           delegator: {
-            select: { id: true, fullName: true, email: true, nip: true },
+            select: { id: true, nip: true },
           },
           delegate: {
-            select: { id: true, fullName: true, email: true, nip: true },
+            select: { id: true, nip: true },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -382,10 +388,10 @@ export class PermissionDelegationService {
       },
       include: {
         delegator: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true },
         },
         delegate: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true },
         },
       },
       orderBy: { validUntil: 'asc' },
@@ -406,10 +412,10 @@ export class PermissionDelegationService {
       where: { id: delegationId },
       include: {
         delegator: {
-          select: { id: true, fullName: true, email: true, nip: true },
+          select: { id: true, nip: true },
         },
         delegate: {
-          select: { id: true, fullName: true, email: true, nip: true },
+          select: { id: true, nip: true },
         },
       },
     });
@@ -475,10 +481,10 @@ export class PermissionDelegationService {
       },
       include: {
         delegator: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true },
         },
         delegate: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true },
         },
       },
     });
@@ -489,15 +495,19 @@ export class PermissionDelegationService {
     // Record change history
     await this.prisma.permissionChangeHistory.create({
       data: {
-        id: nanoid(),
-        action: 'UPDATE',
-        targetType: 'DELEGATION',
-        targetId: delegationId,
-        changedBy: extendedBy,
-        reason: dto.reason,
+        id: uuidv7(),
+        entityType: 'DELEGATION',
+        entityId: delegationId,
+        operation: 'UPDATE',
+        previousState: {
+          validUntil: delegation.validUntil,
+        },
+        newState: {
+          validUntil: dto.newValidUntil,
+        },
+        performedBy: extendedBy,
         metadata: {
-          oldValidUntil: delegation.validUntil,
-          newValidUntil: dto.newValidUntil,
+          reason: dto.reason,
         },
       },
     });

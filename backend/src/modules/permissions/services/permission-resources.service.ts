@@ -4,9 +4,10 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/core/database/prisma.service';
 import { PermissionCacheService } from './permission-cache.service';
-import { nanoid } from 'nanoid';
+import { v7 as uuidv7 } from 'uuid';
 import {
   GrantResourcePermissionDto,
   UpdateResourcePermissionDto,
@@ -81,13 +82,12 @@ export class ResourcePermissionsService {
     // Create resource permission
     const resourcePermission = await this.prisma.resourcePermission.create({
       data: {
-        id: nanoid(),
+        id: uuidv7(),
         userProfileId: dto.userProfileId,
         permissionId: dto.permissionId,
         resourceType: dto.resourceType,
         resourceId: dto.resourceId,
         isGranted: dto.isGranted ?? true,
-        conditions: dto.conditions,
         validFrom: dto.validFrom,
         validUntil: dto.validUntil,
         grantReason: dto.grantReason,
@@ -96,7 +96,7 @@ export class ResourcePermissionsService {
       include: {
         permission: true,
         userProfile: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true },
         },
       },
     });
@@ -107,17 +107,20 @@ export class ResourcePermissionsService {
     // Record change history
     await this.prisma.permissionChangeHistory.create({
       data: {
-        id: nanoid(),
-        action: 'GRANT',
-        targetType: 'RESOURCE_PERMISSION',
-        targetId: resourcePermission.id,
-        permissionId: dto.permissionId,
-        changedBy: grantedBy,
-        reason: dto.grantReason,
-        metadata: {
+        id: uuidv7(),
+        entityType: 'RESOURCE_PERMISSION',
+        entityId: resourcePermission.id,
+        operation: 'GRANT',
+        previousState: Prisma.JsonNull,
+        newState: {
+          permissionId: dto.permissionId,
           resourceType: dto.resourceType,
           resourceId: dto.resourceId,
           userProfileId: dto.userProfileId,
+        },
+        performedBy: grantedBy,
+        metadata: {
+          grantReason: dto.grantReason,
         },
       },
     });
@@ -161,17 +164,20 @@ export class ResourcePermissionsService {
     // Record change history
     await this.prisma.permissionChangeHistory.create({
       data: {
-        id: nanoid(),
-        action: 'REVOKE',
-        targetType: 'RESOURCE_PERMISSION',
-        targetId: resourcePermissionId,
-        permissionId: resourcePermission.permissionId,
-        changedBy: revokedBy,
-        reason,
-        metadata: {
+        id: uuidv7(),
+        entityType: 'RESOURCE_PERMISSION',
+        entityId: resourcePermissionId,
+        operation: 'REVOKE',
+        previousState: {
+          permissionId: resourcePermission.permissionId,
           resourceType: resourcePermission.resourceType,
           resourceId: resourcePermission.resourceId,
           userProfileId: resourcePermission.userProfileId,
+        },
+        newState: Prisma.JsonNull,
+        performedBy: revokedBy,
+        metadata: {
+          reason,
         },
       },
     });
@@ -238,7 +244,7 @@ export class ResourcePermissionsService {
         include: {
           permission: true,
         },
-        orderBy: { grantedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -283,14 +289,13 @@ export class ResourcePermissionsService {
       where: { id: resourcePermissionId },
       data: {
         isGranted: dto.isGranted,
-        conditions: dto.conditions,
         validFrom: dto.validFrom,
         validUntil: dto.validUntil,
       },
       include: {
         permission: true,
         userProfile: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true },
         },
       },
     });
@@ -301,17 +306,19 @@ export class ResourcePermissionsService {
     // Record change history
     await this.prisma.permissionChangeHistory.create({
       data: {
-        id: nanoid(),
-        action: 'UPDATE',
-        targetType: 'RESOURCE_PERMISSION',
-        targetId: resourcePermissionId,
-        permissionId: existing.permissionId,
-        changedBy: updatedBy,
-        reason: dto.reason || 'Resource permission updated',
-        metadata: {
-          changes: dto,
+        id: uuidv7(),
+        entityType: 'RESOURCE_PERMISSION',
+        entityId: resourcePermissionId,
+        operation: 'UPDATE',
+        previousState: {
+          permissionId: existing.permissionId,
           resourceType: existing.resourceType,
           resourceId: existing.resourceId,
+        },
+        newState: dto as Prisma.InputJsonValue,
+        performedBy: updatedBy,
+        metadata: {
+          reason: dto.reason || 'Resource permission updated',
         },
       },
     });
@@ -336,12 +343,8 @@ export class ResourcePermissionsService {
         resourceType: dto.resourceType,
         resourceId: dto.resourceId,
         isGranted: true,
-        OR: [{ validFrom: null }, { validFrom: { lte: now } }],
-        AND: [
-          {
-            OR: [{ validUntil: null }, { validUntil: { gte: now } }],
-          },
-        ],
+        validFrom: { lte: now },
+        OR: [{ validUntil: null }, { validUntil: { gte: now } }],
       },
       include: {
         permission: true,
@@ -350,25 +353,21 @@ export class ResourcePermissionsService {
 
     const hasPermission = !!resourcePermission;
 
-    // Evaluate conditions if provided and permission exists
-    let conditionsMet = true;
-    if (hasPermission && resourcePermission.conditions && dto.context) {
-      conditionsMet = this.evaluateConditions(
-        resourcePermission.conditions,
-        dto.context,
-      );
-    }
+    // Conditions evaluation removed - not in schema
+    const conditionsMet = true;
 
     // Log permission check
     await this.prisma.permissionCheckLog.create({
       data: {
-        id: nanoid(),
+        id: uuidv7(),
         userProfileId: dto.userId,
-        permissionId: dto.permissionId,
-        resourceType: dto.resourceType,
+        resource: dto.resourceType,
+        action: 'CHECK',
         resourceId: dto.resourceId,
-        isGranted: hasPermission && conditionsMet,
-        context: dto.context,
+        isAllowed: hasPermission && conditionsMet,
+        deniedReason: hasPermission && conditionsMet ? null : 'Permission not found or conditions not met',
+        checkDuration: 0,
+        metadata: dto.context as Prisma.InputJsonValue,
       },
     });
 
@@ -411,13 +410,11 @@ export class ResourcePermissionsService {
           userProfile: {
             select: {
               id: true,
-              fullName: true,
-              email: true,
               nip: true,
             },
           },
         },
-        orderBy: { grantedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
@@ -488,19 +485,18 @@ export class ResourcePermissionsService {
     );
 
     // Create permissions for all combinations that don't exist
-    const permissionsToCreate = [];
+    const permissionsToCreate: any[] = [];
     for (const userId of dto.userProfileIds) {
       for (const resourceId of dto.resourceIds) {
         const key = `${userId}:${resourceId}`;
         if (!existingSet.has(key)) {
           permissionsToCreate.push({
-            id: nanoid(),
+            id: uuidv7(),
             userProfileId: userId,
             permissionId: dto.permissionId,
             resourceType: dto.resourceType,
             resourceId,
             isGranted: dto.isGranted ?? true,
-            conditions: dto.conditions,
             validFrom: dto.validFrom,
             validUntil: dto.validUntil,
             grantReason: dto.grantReason,
@@ -528,18 +524,22 @@ export class ResourcePermissionsService {
       // Record change history
       await tx.permissionChangeHistory.create({
         data: {
-          id: nanoid(),
-          action: 'BULK_GRANT',
-          targetType: 'RESOURCE_PERMISSION',
-          permissionId: dto.permissionId,
-          changedBy: grantedBy,
-          reason: dto.grantReason,
-          metadata: {
+          id: uuidv7(),
+          entityType: 'RESOURCE_PERMISSION',
+          entityId: `bulk_${Date.now()}`,
+          operation: 'BULK_GRANT',
+          previousState: Prisma.JsonNull,
+          newState: {
+            permissionId: dto.permissionId,
             userProfileIds: dto.userProfileIds,
             resourceType: dto.resourceType,
             resourceIds: dto.resourceIds,
             created: created.count,
             skipped: existing.length,
+          },
+          performedBy: grantedBy,
+          metadata: {
+            grantReason: dto.grantReason,
           },
         },
       });
@@ -582,16 +582,20 @@ export class ResourcePermissionsService {
       // Record change history
       await tx.permissionChangeHistory.create({
         data: {
-          id: nanoid(),
-          action: 'BULK_REVOKE',
-          targetType: 'RESOURCE_PERMISSION',
-          permissionId: dto.permissionId,
-          changedBy: revokedBy,
-          reason: dto.reason,
-          metadata: {
+          id: uuidv7(),
+          entityType: 'RESOURCE_PERMISSION',
+          entityId: `bulk_${Date.now()}`,
+          operation: 'BULK_REVOKE',
+          previousState: {
+            permissionId: dto.permissionId,
             userProfileIds: dto.userProfileIds,
             resourceType: dto.resourceType,
             resourceIds: dto.resourceIds,
+          },
+          newState: Prisma.JsonNull,
+          performedBy: revokedBy,
+          metadata: {
+            reason: dto.reason,
             revoked: result.count,
           },
         },
@@ -681,13 +685,12 @@ export class ResourcePermissionsService {
           // Create for target user
           await tx.resourcePermission.create({
             data: {
-              id: nanoid(),
+              id: uuidv7(),
               userProfileId: dto.toUserId,
               permissionId: sourcePerm.permissionId,
               resourceType: sourcePerm.resourceType,
               resourceId: sourcePerm.resourceId,
               isGranted: sourcePerm.isGranted,
-              conditions: sourcePerm.conditions,
               validFrom: sourcePerm.validFrom,
               validUntil: sourcePerm.validUntil,
               grantReason: dto.transferReason,
@@ -710,18 +713,23 @@ export class ResourcePermissionsService {
       // Record change history
       await tx.permissionChangeHistory.create({
         data: {
-          id: nanoid(),
-          action: 'TRANSFER',
-          targetType: 'RESOURCE_PERMISSION',
-          changedBy: transferredBy,
-          reason: dto.transferReason,
-          metadata: {
+          id: uuidv7(),
+          entityType: 'RESOURCE_PERMISSION',
+          entityId: `transfer_${Date.now()}`,
+          operation: 'TRANSFER',
+          previousState: {
             fromUserId: dto.fromUserId,
+          },
+          newState: {
             toUserId: dto.toUserId,
             resourceType: dto.resourceType,
             resourceIds: dto.resourceIds,
             transferred,
             skipped,
+          },
+          performedBy: transferredBy,
+          metadata: {
+            transferReason: dto.transferReason,
             revokedFromSource: dto.revokeFromSource !== false,
           },
         },

@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/core/database/prisma.service';
 import { AuditService } from '@/core/audit/audit.service';
 import {
@@ -45,9 +44,18 @@ export class PermissionHistoryService {
     const [data, total] = await Promise.all([
       this.prisma.permissionChangeHistory.findMany({
         where,
-        orderBy: { performedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
+        include: {
+          performer: {
+            select: {
+              id: true,
+              nip: true,
+              fullName: true,
+            },
+          },
+        },
       }),
       this.prisma.permissionChangeHistory.count({ where }),
     ]);
@@ -86,9 +94,18 @@ export class PermissionHistoryService {
     const [data, total] = await Promise.all([
       this.prisma.permissionChangeHistory.findMany({
         where,
-        orderBy: { performedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
+        include: {
+          performer: {
+            select: {
+              id: true,
+              nip: true,
+              fullName: true,
+            },
+          },
+        },
       }),
       this.prisma.permissionChangeHistory.count({ where }),
     ]);
@@ -124,9 +141,18 @@ export class PermissionHistoryService {
     const [data, total] = await Promise.all([
       this.prisma.permissionChangeHistory.findMany({
         where,
-        orderBy: { performedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
+        include: {
+          performer: {
+            select: {
+              id: true,
+              nip: true,
+              fullName: true,
+            },
+          },
+        },
       }),
       this.prisma.permissionChangeHistory.count({ where }),
     ]);
@@ -161,9 +187,18 @@ export class PermissionHistoryService {
     const [data, total] = await Promise.all([
       this.prisma.permissionChangeHistory.findMany({
         where,
-        orderBy: { performedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
+        include: {
+          performer: {
+            select: {
+              id: true,
+              nip: true,
+              fullName: true,
+            },
+          },
+        },
       }),
       this.prisma.permissionChangeHistory.count({ where }),
     ]);
@@ -181,6 +216,15 @@ export class PermissionHistoryService {
     // Get the original change
     const change = await this.prisma.permissionChangeHistory.findUnique({
       where: { id: changeId },
+      include: {
+        performer: {
+          select: {
+            id: true,
+            nip: true,
+            fullName: true,
+          },
+        },
+      },
     });
 
     if (!change) {
@@ -206,41 +250,44 @@ export class PermissionHistoryService {
         entityType: change.entityType,
         entityId: change.entityId,
         operation: `ROLLBACK_${change.operation}` as any,
-        previousState: change.newState as Prisma.InputJsonValue,
-        newState: change.previousState as Prisma.InputJsonValue,
+        previousState: change.newState,
+        newState: change.previousState,
         performedBy,
+        reason: dto.reason,
         metadata: {
           rollbackOf: changeId,
           originalChange: {
             id: change.id,
             operation: change.operation,
             performedBy: change.performedBy,
-            performedAt: change.performedAt,
+            createdAt: change.createdAt,
           },
           confirmedBy: dto.confirmedBy,
         },
         isRollbackable: false,
         rollbackOf: changeId,
       },
+      include: {
+        performer: {
+          select: {
+            id: true,
+            nip: true,
+            fullName: true,
+          },
+        },
+      },
     });
 
     // Audit log
     await this.auditService.log({
-      action: 'REVOKE',
-      module: 'permissions',
-      entityType: 'PermissionChangeHistory',
-      entityId: changeId,
-      targetUserId: performedBy,
-      metadata: {
-        operation: 'ROLLBACK',
+      action: 'ROLLBACK_PERMISSION_CHANGE',
+      userId: performedBy,
+      resourceType: 'PermissionChangeHistory',
+      resourceId: changeId,
+      details: {
         originalChange: change.id,
         reason: dto.reason,
         confirmedBy: dto.confirmedBy,
-      },
-      context: {
-        actorId: performedBy,
-        ip: '',
-        userAgent: '',
       },
     });
 
@@ -251,7 +298,7 @@ export class PermissionHistoryService {
    * Perform the actual rollback operation
    */
   private async performRollback(change: any): Promise<void> {
-    const { entityType, entityId, beforeState } = change;
+    const { entityType, entityId, previousState } = change;
 
     switch (entityType) {
       case 'ROLE':
@@ -262,7 +309,7 @@ export class PermissionHistoryService {
           });
         } else if (change.operation === 'REVOKE') {
           await this.prisma.rolePermission.create({
-            data: beforeState,
+            data: previousState,
           });
         }
         break;
@@ -275,7 +322,7 @@ export class PermissionHistoryService {
           });
         } else if (change.operation === 'REVOKE') {
           await this.prisma.userPermission.create({
-            data: beforeState,
+            data: previousState,
           });
         }
         break;
@@ -288,7 +335,7 @@ export class PermissionHistoryService {
           });
         } else if (change.operation === 'REVOKE') {
           await this.prisma.resourcePermission.create({
-            data: beforeState,
+            data: previousState,
           });
         }
         break;
@@ -298,12 +345,12 @@ export class PermissionHistoryService {
         if (change.operation === 'CREATE') {
           await this.prisma.permissionDelegation.update({
             where: { id: entityId },
-            data: { isRevoked: true },
+            data: { isActive: false },
           });
         } else if (change.operation === 'REVOKE') {
           await this.prisma.permissionDelegation.update({
             where: { id: entityId },
-            data: { isRevoked: false },
+            data: { isActive: true },
           });
         }
         break;
@@ -320,9 +367,27 @@ export class PermissionHistoryService {
     const [change1, change2] = await Promise.all([
       this.prisma.permissionChangeHistory.findUnique({
         where: { id: dto.changeId1 },
+        include: {
+          performer: {
+            select: {
+              id: true,
+              nip: true,
+              fullName: true,
+            },
+          },
+        },
       }),
       this.prisma.permissionChangeHistory.findUnique({
         where: { id: dto.changeId2 },
+        include: {
+          performer: {
+            select: {
+              id: true,
+              nip: true,
+              fullName: true,
+            },
+          },
+        },
       }),
     ]);
 
@@ -380,7 +445,7 @@ export class PermissionHistoryService {
   private generateComparisonSummary(change1: any, change2: any, differences: any): string {
     const parts: string[] = [];
 
-    parts.push(`Comparing changes from ${change1.performedAt.toISOString()} to ${change2.performedAt.toISOString()}`);
+    parts.push(`Comparing changes from ${change1.createdAt.toISOString()} to ${change2.createdAt.toISOString()}`);
 
     const addedCount = Object.keys(differences.added).length;
     const removedCount = Object.keys(differences.removed).length;
@@ -410,9 +475,18 @@ export class PermissionHistoryService {
     const [data, total] = await Promise.all([
       this.prisma.permissionChangeHistory.findMany({
         where,
-        orderBy: { performedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
+        include: {
+          performer: {
+            select: {
+              id: true,
+              nip: true,
+              fullName: true,
+            },
+          },
+        },
       }),
       this.prisma.permissionChangeHistory.count({ where }),
     ]);
@@ -445,8 +519,17 @@ export class PermissionHistoryService {
 
     const data = await this.prisma.permissionChangeHistory.findMany({
       where,
-      orderBy: { performedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 10000,
+      include: {
+        performer: {
+          select: {
+            id: true,
+            nip: true,
+            fullName: true,
+          },
+        },
+      },
     });
 
     if (format === 'JSON') {
@@ -483,9 +566,9 @@ export class PermissionHistoryService {
         item.entityType,
         item.entityId,
         item.operation,
-        item.performedBy,
+        item.performer?.fullName || item.performedBy,
         item.reason || '',
-        item.performedAt.toISOString(),
+        item.createdAt.toISOString(),
       ];
 
       if (includeMetadata) {
@@ -508,13 +591,13 @@ export class PermissionHistoryService {
       entityId: item.entityId,
       operation: item.operation,
       performedBy: item.performedBy,
-      beforeState: item.previousState || {},
-      afterState: item.newState || {},
+      previousState: item.previousState,
+      newState: item.newState,
       reason: item.reason || '',
       metadata: item.metadata || {},
       isRollbackable: item.isRollbackable,
       rollbackOf: item.rollbackOf,
-      createdAt: item.performedAt,
+      createdAt: item.createdAt,
     };
   }
 }

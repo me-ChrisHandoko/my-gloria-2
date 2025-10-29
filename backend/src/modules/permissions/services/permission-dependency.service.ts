@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
-import { nanoid } from 'nanoid';
+import { v7 as uuidv7 } from 'uuid';
 import {
   CreatePermissionDependencyDto,
   UpdatePermissionDependencyDto,
@@ -29,7 +29,7 @@ export class PermissionDependencyService {
         where: { id: dto.permissionId },
       }),
       this.prisma.permission.findUnique({
-        where: { id: dto.requiredPermissionId },
+        where: { id: dto.dependsOnId },
       }),
     ]);
 
@@ -40,7 +40,7 @@ export class PermissionDependencyService {
     }
     if (!requiredPermission) {
       throw new NotFoundException(
-        `Required permission with ID ${dto.requiredPermissionId} not found`,
+        `Required permission with ID ${dto.dependsOnId} not found`,
       );
     }
 
@@ -56,7 +56,7 @@ export class PermissionDependencyService {
     }
 
     // Prevent self-dependency
-    if (dto.permissionId === dto.requiredPermissionId) {
+    if (dto.permissionId === dto.dependsOnId) {
       throw new BadRequestException(
         'Permission cannot depend on itself',
       );
@@ -66,7 +66,7 @@ export class PermissionDependencyService {
     const existing = await this.prisma.permissionDependency.findFirst({
       where: {
         permissionId: dto.permissionId,
-        requiredPermissionId: dto.requiredPermissionId,
+        dependsOnId: dto.dependsOnId,
       },
     });
 
@@ -79,7 +79,7 @@ export class PermissionDependencyService {
     // Check for circular dependencies
     const wouldCreateCircular = await this.checkCircularDependency(
       dto.permissionId,
-      dto.requiredPermissionId,
+      dto.dependsOnId,
     );
 
     if (wouldCreateCircular) {
@@ -91,15 +91,14 @@ export class PermissionDependencyService {
     // Create dependency
     const dependency = await this.prisma.permissionDependency.create({
       data: {
-        id: nanoid(),
+        id: uuidv7(),
         permissionId: dto.permissionId,
-        requiredPermissionId: dto.requiredPermissionId,
-        description: dto.description,
-        createdBy,
+        dependsOnId: dto.dependsOnId,
+        isRequired: dto.isRequired ?? true,
       },
       include: {
         permission: true,
-        requiredPermission: true,
+        dependsOn: true,
       },
     });
 
@@ -127,9 +126,8 @@ export class PermissionDependencyService {
     const dependencies = await this.prisma.permissionDependency.findMany({
       where: { permissionId },
       include: {
-        requiredPermission: true,
+        dependsOn: true,
       },
-      orderBy: { createdAt: 'asc' },
     });
 
     return {
@@ -154,11 +152,10 @@ export class PermissionDependencyService {
     }
 
     const dependents = await this.prisma.permissionDependency.findMany({
-      where: { requiredPermissionId: permissionId },
+      where: { dependsOnId: permissionId },
       include: {
         permission: true,
       },
-      orderBy: { createdAt: 'asc' },
     });
 
     return {
@@ -189,11 +186,11 @@ export class PermissionDependencyService {
     const updated = await this.prisma.permissionDependency.update({
       where: { id: dependencyId },
       data: {
-        description: dto.description,
+        isRequired: dto.isRequired ?? existing.isRequired,
       },
       include: {
         permission: true,
-        requiredPermission: true,
+        dependsOn: true,
       },
     });
 
@@ -212,7 +209,7 @@ export class PermissionDependencyService {
       where: { id: dependencyId },
       include: {
         permission: true,
-        requiredPermission: true,
+        dependsOn: true,
       },
     });
 
@@ -228,7 +225,7 @@ export class PermissionDependencyService {
 
     return {
       success: true,
-      message: `Dependency removed: ${existing.permission.code} no longer requires ${existing.requiredPermission.code}`,
+      message: `Dependency removed: ${existing.permission.code} no longer requires ${existing.dependsOn.code}`,
     };
   }
 
@@ -263,7 +260,7 @@ export class PermissionDependencyService {
     const dependencies = await this.prisma.permissionDependency.findMany({
       where: { permissionId: dto.permissionId },
       include: {
-        requiredPermission: true,
+        dependsOn: true,
       },
     });
 
@@ -278,7 +275,7 @@ export class PermissionDependencyService {
 
     const now = new Date();
     const requiredPermissionIds = dependencies.map(
-      (d) => d.requiredPermissionId,
+      (d) => d.dependsOnId,
     );
 
     // Check if user has all required permissions
@@ -295,10 +292,10 @@ export class PermissionDependencyService {
             },
           },
         },
-        OR: [{ validFrom: null }, { validFrom: { lte: now } }],
+        OR: [{ validFrom: undefined }, { validFrom: { lte: now } }],
         AND: [
           {
-            OR: [{ validUntil: null }, { validUntil: { gte: now } }],
+            OR: [{ validUntil: undefined }, { validUntil: { gte: now } }],
           },
         ],
       },
@@ -311,10 +308,10 @@ export class PermissionDependencyService {
         userProfileId: dto.userId,
         permissionId: { in: requiredPermissionIds },
         isGranted: true,
-        OR: [{ validFrom: null }, { validFrom: { lte: now } }],
+        OR: [{ validFrom: undefined }, { validFrom: { lte: now } }],
         AND: [
           {
-            OR: [{ validUntil: null }, { validUntil: { gte: now } }],
+            OR: [{ validUntil: undefined }, { validUntil: { gte: now } }],
           },
         ],
       },
@@ -331,10 +328,10 @@ export class PermissionDependencyService {
           resourceType: dto.resourceType,
           resourceId: dto.resourceId,
           isGranted: true,
-          OR: [{ validFrom: null }, { validFrom: { lte: now } }],
+          OR: [{ validFrom: undefined }, { validFrom: { lte: now } }],
           AND: [
             {
-              OR: [{ validUntil: null }, { validUntil: { gte: now } }],
+              OR: [{ validUntil: undefined }, { validUntil: { gte: now } }],
             },
           ],
         },
@@ -351,7 +348,7 @@ export class PermissionDependencyService {
 
     // Find missing dependencies
     const missingDependencies = dependencies.filter(
-      (dep) => !grantedPermissionIds.has(dep.requiredPermissionId),
+      (dep) => !grantedPermissionIds.has(dep.dependsOnId),
     );
 
     const hasAllDependencies = missingDependencies.length === 0;
@@ -359,17 +356,17 @@ export class PermissionDependencyService {
     return {
       hasAllDependencies,
       requiredPermissions: dependencies.map((d) => ({
-        id: d.requiredPermission.id,
-        code: d.requiredPermission.code,
-        name: d.requiredPermission.name,
-        description: d.description,
-        hasPermission: grantedPermissionIds.has(d.requiredPermissionId),
+        id: d.dependsOn.id,
+        code: d.dependsOn.code,
+        name: d.dependsOn.name,
+        isRequired: d.isRequired,
+        hasPermission: grantedPermissionIds.has(d.dependsOnId),
       })),
       missingPermissions: missingDependencies.map((d) => ({
-        id: d.requiredPermission.id,
-        code: d.requiredPermission.code,
-        name: d.requiredPermission.name,
-        description: d.description,
+        id: d.dependsOn.id,
+        code: d.dependsOn.code,
+        name: d.dependsOn.name,
+        isRequired: d.isRequired,
       })),
       message: hasAllDependencies
         ? 'User has all required dependencies'
@@ -408,13 +405,13 @@ export class PermissionDependencyService {
       // Get dependencies of current permission
       const dependencies = await this.prisma.permissionDependency.findMany({
         where: { permissionId: currentId },
-        select: { requiredPermissionId: true },
+        select: { dependsOnId: true },
       });
 
       // Add to queue for checking
       for (const dep of dependencies) {
-        if (!visited.has(dep.requiredPermissionId)) {
-          queue.push(dep.requiredPermissionId);
+        if (!visited.has(dep.dependsOnId)) {
+          queue.push(dep.dependsOnId);
         }
       }
     }
@@ -438,7 +435,7 @@ export class PermissionDependencyService {
     const dependencies = await this.prisma.permissionDependency.findMany({
       where: { permissionId },
       include: {
-        requiredPermission: true,
+        dependsOn: true,
       },
     });
 
@@ -446,13 +443,13 @@ export class PermissionDependencyService {
 
     for (const dep of dependencies) {
       const subChain = await this.buildDependencyChain(
-        dep.requiredPermissionId,
+        dep.dependsOnId,
         visited,
       );
 
       chain.push({
-        permission: dep.requiredPermission,
-        description: dep.description,
+        permission: dep.dependsOn,
+        isRequired: dep.isRequired,
         dependencies: subChain,
       });
     }

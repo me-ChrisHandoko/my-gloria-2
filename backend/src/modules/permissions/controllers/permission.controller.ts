@@ -407,7 +407,7 @@ export class PermissionsController {
 
   @Delete('groups/:id')
   @RequiredPermission('permissions', PermissionAction.DELETE)
-  @CriticalAudit('permission_group.delete', 'permission_group')
+  @CriticalAudit('permission_group.delete')
   @ApiOperation({
     summary: 'Delete permission group',
     description:

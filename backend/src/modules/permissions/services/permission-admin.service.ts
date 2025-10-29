@@ -44,7 +44,7 @@ export class PermissionAdminService {
       this.prisma.resourcePermission.count(),
       this.prisma.permissionDelegation.count({
         where: {
-          isActive: true,
+          isRevoked: false,
           validUntil: { gte: new Date() },
         },
       }),
@@ -80,7 +80,10 @@ export class PermissionAdminService {
 
     // Find users with explicit deny and grant for same permission
     const userPermissions = await this.prisma.userPermission.findMany({
-      where: { isActive: true },
+      where: {
+        validFrom: { lte: new Date() },
+        OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+      },
       include: {
         permission: true,
         userProfile: true,
@@ -160,8 +163,20 @@ export class PermissionAdminService {
     const allPermissions = await this.prisma.permission.findMany({
       where: { isActive: true },
       include: {
-        rolePermissions: { where: { isActive: true }, take: 1 },
-        userPermissions: { where: { isActive: true }, take: 1 },
+        rolePermissions: {
+          where: {
+            validFrom: { lte: new Date() },
+            OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+          },
+          take: 1,
+        },
+        userPermissions: {
+          where: {
+            validFrom: { lte: new Date() },
+            OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+          },
+          take: 1,
+        },
         resourcePermissions: { take: 1 },
       },
     });
@@ -196,34 +211,41 @@ export class PermissionAdminService {
 
     const allPermissions = await this.prisma.permission.findMany({
       where: { isActive: true },
-      include: {
-        checkLogs: {
-          where: {
-            checkedAt: { gte: cutoffDate },
-          },
-        },
-      },
     });
 
     const unused: UnusedPermissionDto[] = [];
 
     for (const perm of allPermissions) {
-      const totalUsage = perm.checkLogs.length;
-      const lastCheck = perm.checkLogs[0]?.checkedAt;
+      // Get check logs count for this permission
+      const checkLogCount = await this.prisma.permissionCheckLog.count({
+        where: {
+          resource: perm.resource,
+          action: perm.action,
+          createdAt: { gte: cutoffDate },
+        },
+      });
+
+      const lastCheckLog = await this.prisma.permissionCheckLog.findFirst({
+        where: {
+          resource: perm.resource,
+          action: perm.action,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
 
       let daysSinceLastUse = daysThreshold;
-      if (lastCheck) {
-        const diffMs = Date.now() - lastCheck.getTime();
+      if (lastCheckLog) {
+        const diffMs = Date.now() - lastCheckLog.createdAt.getTime();
         daysSinceLastUse = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       }
 
-      if (totalUsage === 0 || daysSinceLastUse >= daysThreshold) {
+      if (checkLogCount === 0 || daysSinceLastUse >= daysThreshold) {
         unused.push({
           id: perm.id,
           code: perm.code,
           name: perm.name,
           daysSinceLastUse,
-          totalUsage,
+          totalUsage: checkLogCount,
         });
       }
     }
@@ -277,7 +299,7 @@ export class PermissionAdminService {
     // Check 3: Expired delegations
     const expiredDelegations = await this.prisma.permissionDelegation.count({
       where: {
-        isActive: true,
+        isRevoked: false,
         validUntil: { lt: new Date() },
       },
     });
@@ -355,7 +377,7 @@ export class PermissionAdminService {
 
     if (dto.clearAll) {
       // Clear all permission-related cache keys
-      await this.cacheService.invalidateAll();
+      await this.cacheService.invalidateAllCaches();
       keysCleared = -1; // Indicate full clear
     }
 
@@ -415,13 +437,17 @@ export class PermissionAdminService {
     ]);
 
     // User permission statistics
+    const validUserPermWhere = {
+      validFrom: { lte: new Date() },
+      OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+    };
     const [totalUserPerms, tempUserPerms, avgPriority] = await Promise.all([
-      this.prisma.userPermission.count({ where: { isActive: true } }),
+      this.prisma.userPermission.count({ where: validUserPermWhere }),
       this.prisma.userPermission.count({
-        where: { isActive: true, isTemporary: true },
+        where: { ...validUserPermWhere, isTemporary: true },
       }),
       this.prisma.userPermission.aggregate({
-        where: { isActive: true },
+        where: validUserPermWhere,
         _avg: { priority: true },
       }),
     ]);
@@ -444,19 +470,19 @@ export class PermissionAdminService {
       await Promise.all([
         this.prisma.permissionDelegation.count({
           where: {
-            isActive: true,
+            isRevoked: false,
             validUntil: { gte: new Date() },
           },
         }),
         this.prisma.permissionDelegation.count({
           where: {
-            isActive: true,
+            isRevoked: false,
             validUntil: { lt: new Date() },
           },
         }),
         this.prisma.permissionDelegation.count({
           where: {
-            isActive: true,
+            isRevoked: false,
             validUntil: {
               gte: new Date(),
               lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
@@ -488,7 +514,7 @@ export class PermissionAdminService {
         this.prisma.permissionCheckLog.count({
           where: {
             isAllowed: false,
-            checkedAt: { gte: last24h },
+            createdAt: { gte: last24h },
           },
         }),
       ]);
@@ -528,7 +554,7 @@ export class PermissionAdminService {
         total: totalUserPerms,
         temporary: tempUserPerms,
         permanent: totalUserPerms - tempUserPerms,
-        avgPriorityScore: avgPriority._avg.priority || 0,
+        avgPriorityScore: avgPriority._avg?.priority ?? 0,
       },
       resourcePermissions: {
         total: totalResourcePerms,

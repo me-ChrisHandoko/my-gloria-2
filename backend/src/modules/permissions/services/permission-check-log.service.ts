@@ -42,9 +42,9 @@ export class PermissionCheckLogService {
     if (typeof isAllowed === 'boolean') where.isAllowed = isAllowed;
 
     if (startDate || endDate) {
-      where.checkedAt = {};
-      if (startDate) where.checkedAt.gte = startDate;
-      if (endDate) where.checkedAt.lte = endDate;
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = startDate;
+      if (endDate) where.createdAt.lte = endDate;
     }
 
     if (minDuration !== undefined) {
@@ -54,7 +54,7 @@ export class PermissionCheckLogService {
     const [data, total] = await Promise.all([
       this.prisma.permissionCheckLog.findMany({
         where,
-        orderBy: { checkedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -86,15 +86,15 @@ export class PermissionCheckLogService {
     if (action) where.action = action;
 
     if (startDate || endDate) {
-      where.checkedAt = {};
-      if (startDate) where.checkedAt.gte = startDate;
-      if (endDate) where.checkedAt.lte = endDate;
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = startDate;
+      if (endDate) where.createdAt.lte = endDate;
     }
 
     const [data, total] = await Promise.all([
       this.prisma.permissionCheckLog.findMany({
         where,
-        orderBy: { checkedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -124,15 +124,15 @@ export class PermissionCheckLogService {
     if (action) where.action = action;
 
     if (startDate || endDate) {
-      where.checkedAt = {};
-      if (startDate) where.checkedAt.gte = startDate;
-      if (endDate) where.checkedAt.lte = endDate;
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = startDate;
+      if (endDate) where.createdAt.lte = endDate;
     }
 
     const [data, total] = await Promise.all([
       this.prisma.permissionCheckLog.findMany({
         where,
-        orderBy: { checkedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -162,15 +162,15 @@ export class PermissionCheckLogService {
     if (userProfileId) where.userProfileId = userProfileId;
 
     if (startDate || endDate) {
-      where.checkedAt = {};
-      if (startDate) where.checkedAt.gte = startDate;
-      if (endDate) where.checkedAt.lte = endDate;
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = startDate;
+      if (endDate) where.createdAt.lte = endDate;
     }
 
     const [data, total] = await Promise.all([
       this.prisma.permissionCheckLog.findMany({
         where,
-        orderBy: { checkedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -224,9 +224,9 @@ export class PermissionCheckLogService {
     if (action) where.action = action;
 
     if (startDate || endDate) {
-      where.checkedAt = {};
-      if (startDate) where.checkedAt.gte = startDate;
-      if (endDate) where.checkedAt.lte = endDate;
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = startDate;
+      if (endDate) where.createdAt.lte = endDate;
     }
 
     // Get aggregate statistics
@@ -314,15 +314,15 @@ export class PermissionCheckLogService {
     if (action) where.action = action;
 
     if (startDate || endDate) {
-      where.checkedAt = {};
-      if (startDate) where.checkedAt.gte = startDate;
-      if (endDate) where.checkedAt.lte = endDate;
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = startDate;
+      if (endDate) where.createdAt.lte = endDate;
     }
 
     const [data, total] = await Promise.all([
       this.prisma.permissionCheckLog.findMany({
         where,
-        orderBy: { checkedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -363,7 +363,7 @@ export class PermissionCheckLogService {
     // Get data (limit to 10000 records for export)
     const data = await this.prisma.permissionCheckLog.findMany({
       where,
-      orderBy: { checkedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 10000,
     });
 
@@ -445,7 +445,7 @@ export class PermissionCheckLogService {
       denialReason: item.denialReason,
       checkDuration: item.checkDuration,
       metadata: item.metadata || {},
-      checkedAt: item.checkedAt,
+      checkedAt: item.createdAt,
     };
   }
 }

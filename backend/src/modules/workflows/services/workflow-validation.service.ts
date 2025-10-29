@@ -4,7 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '@/core/database/prisma.service';
-import { PermissionsService } from '@/modules/permissions/services/permissions.service';
+import { PermissionsService } from '@/modules/permissions/services/permission.service';
 import { ExecuteWorkflowDto } from '../dto/execute-workflow.dto';
 
 @Injectable()

@@ -3,7 +3,7 @@
  * Tests core permission management functionality
  */
 import { Test, TestingModule } from '@nestjs/testing';
-import { PermissionsService } from './permissions.service';
+import { PermissionsService } from './permission.service';
 import { PrismaService } from '@/core/database/prisma.service';
 import { LoggingService } from '@/core/logging/logging.service';
 import {

@@ -18,10 +18,10 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { ClerkAuthGuard } from '@/modules/auth/guards/clerk-auth.guard';
-import { PermissionsGuard } from '../guards/permissions.guard';
-import { RequiredPermissions } from '../decorators/permissions.decorator';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { ClerkAuthGuard } from '@/core/auth/guards/clerk-auth.guard';
+import { PermissionsGuard } from '@/core/auth/guards/permissions.guard';
+import { RequiredPermission, PermissionAction } from '@/core/auth/decorators/permissions.decorator';
+import { CurrentUser } from '@/core/auth/decorators/current-user.decorator';
 import { PermissionHistoryService } from '../services/permission-history.service';
 import {
   GetHistoryFilterDto,
@@ -42,7 +42,7 @@ export class PermissionHistoryController {
   constructor(private readonly historyService: PermissionHistoryService) {}
 
   @Get()
-  @RequiredPermissions('PERMISSION_HISTORY_VIEW')
+  @RequiredPermission('permission_history', PermissionAction.READ)
   @ApiOperation({
     summary: 'List all permission changes',
     description: 'Get paginated list of all permission change history with optional filters',
@@ -59,7 +59,7 @@ export class PermissionHistoryController {
   }
 
   @Get(':entityType/:entityId')
-  @RequiredPermissions('PERMISSION_HISTORY_VIEW')
+  @RequiredPermission('permission_history', PermissionAction.READ)
   @ApiOperation({
     summary: 'Get entity change history',
     description: 'Get all changes for a specific entity (role, user, resource, etc.)',
@@ -88,7 +88,7 @@ export class PermissionHistoryController {
   }
 
   @Get('users/:userId')
-  @RequiredPermissions('PERMISSION_HISTORY_VIEW')
+  @RequiredPermission('permission_history', PermissionAction.READ)
   @ApiOperation({
     summary: 'Get changes by user',
     description: 'Get all changes performed by a specific user',
@@ -111,7 +111,7 @@ export class PermissionHistoryController {
   }
 
   @Get('date-range')
-  @RequiredPermissions('PERMISSION_HISTORY_VIEW')
+  @RequiredPermission('permission_history', PermissionAction.READ)
   @ApiOperation({
     summary: 'Get changes in date range',
     description: 'Get all changes within a specified date range',
@@ -147,7 +147,7 @@ export class PermissionHistoryController {
 
   @Post(':changeId/rollback')
   @HttpCode(HttpStatus.OK)
-  @RequiredPermissions('PERMISSION_HISTORY_ROLLBACK')
+  @RequiredPermission('permission_history', PermissionAction.UPDATE)
   @ApiOperation({
     summary: 'Rollback a change',
     description:
@@ -180,7 +180,7 @@ export class PermissionHistoryController {
   }
 
   @Get('compare/:id1/:id2')
-  @RequiredPermissions('PERMISSION_HISTORY_VIEW')
+  @RequiredPermission('permission_history', PermissionAction.READ)
   @ApiOperation({
     summary: 'Compare two states',
     description:
@@ -217,7 +217,7 @@ export class PermissionHistoryController {
   }
 
   @Get('rollbacks')
-  @RequiredPermissions('PERMISSION_HISTORY_VIEW')
+  @RequiredPermission('permission_history', PermissionAction.READ)
   @ApiOperation({
     summary: 'List rollback history',
     description: 'Get all rollback operations performed on permission changes',
@@ -233,7 +233,7 @@ export class PermissionHistoryController {
 
   @Post('export')
   @HttpCode(HttpStatus.OK)
-  @RequiredPermissions('PERMISSION_HISTORY_EXPORT')
+  @RequiredPermission('permission_history', PermissionAction.EXPORT)
   @ApiOperation({
     summary: 'Export history for compliance',
     description:
