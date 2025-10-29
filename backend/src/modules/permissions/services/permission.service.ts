@@ -166,16 +166,8 @@ export class PermissionsService {
       where: { id },
       include: {
         group: true,
-        dependencies: {
-          include: {
-            dependsOn: true,
-          },
-        },
-        dependentOn: {
-          include: {
-            permission: true,
-          },
-        },
+        // Removed: dependencies relation no longer exists
+        // Removed: dependentOn relation no longer exists
       },
     });
 
@@ -318,16 +310,16 @@ export class PermissionsService {
         throw new BadRequestException('System permissions cannot be deleted');
       }
 
-      // Check for dependencies
-      const dependentCount = await this.prisma.permissionDependency.count({
-        where: { dependsOnId: id },
-      });
-
-      if (dependentCount > 0) {
-        throw new BadRequestException(
-          `Cannot delete permission: ${dependentCount} other permissions depend on it`,
-        );
-      }
+      // Removed: dependency check - permissionDependency model no longer exists
+      // const dependentCount = await this.prisma.permissionDependency.count({
+      //   where: { dependsOnId: id },
+      // });
+      //
+      // if (dependentCount > 0) {
+      //   throw new BadRequestException(
+      //     `Cannot delete permission: ${dependentCount} other permissions depend on it`,
+      //   );
+      // }
 
       await this.prisma.permission.update({
         where: { id },
@@ -545,71 +537,73 @@ export class PermissionsService {
     });
   }
 
-  /**
-   * Add permission dependency
-   */
-  async addDependency(
-    permissionId: string,
-    dependsOnId: string,
-    isRequired = true,
-  ): Promise<void> {
-    try {
-      // Check for circular dependencies
-      await this.checkCircularDependency(permissionId, dependsOnId);
+  // Removed: addDependency method - permissionDependency model no longer exists
+  // /**
+  //  * Add permission dependency
+  //  */
+  // async addDependency(
+  //   permissionId: string,
+  //   dependsOnId: string,
+  //   isRequired = true,
+  // ): Promise<void> {
+  //   try {
+  //     // Check for circular dependencies
+  //     await this.checkCircularDependency(permissionId, dependsOnId);
+  //
+  //     await this.prisma.permissionDependency.create({
+  //       data: {
+  //         id: uuidv7(),
+  //         permissionId,
+  //         dependsOnId,
+  //         isRequired,
+  //       },
+  //     });
+  //
+  //     this.logger.log(
+  //       `Permission dependency added: ${permissionId} depends on ${dependsOnId}`,
+  //       'PermissionsService',
+  //     );
+  //   } catch (error) {
+  //     this.logger.error(
+  //       'Error adding permission dependency',
+  //       error.stack,
+  //       'PermissionsService',
+  //     );
+  //     throw error;
+  //   }
+  // }
 
-      await this.prisma.permissionDependency.create({
-        data: {
-          id: uuidv7(),
-          permissionId,
-          dependsOnId,
-          isRequired,
-        },
-      });
-
-      this.logger.log(
-        `Permission dependency added: ${permissionId} depends on ${dependsOnId}`,
-        'PermissionsService',
-      );
-    } catch (error) {
-      this.logger.error(
-        'Error adding permission dependency',
-        error.stack,
-        'PermissionsService',
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Check for circular dependencies
-   */
-  private async checkCircularDependency(
-    permissionId: string,
-    dependsOnId: string,
-    visited = new Set<string>(),
-  ): Promise<void> {
-    if (permissionId === dependsOnId) {
-      throw new BadRequestException('Permission cannot depend on itself');
-    }
-
-    if (visited.has(dependsOnId)) {
-      throw new BadRequestException('Circular dependency detected');
-    }
-
-    visited.add(dependsOnId);
-
-    const dependencies = await this.prisma.permissionDependency.findMany({
-      where: { permissionId: dependsOnId },
-    });
-
-    for (const dep of dependencies) {
-      await this.checkCircularDependency(
-        permissionId,
-        dep.dependsOnId,
-        visited,
-      );
-    }
-  }
+  // Removed: checkCircularDependency method - permissionDependency model no longer exists
+  // /**
+  //  * Check for circular dependencies
+  //  */
+  // private async checkCircularDependency(
+  //   permissionId: string,
+  //   dependsOnId: string,
+  //   visited = new Set<string>(),
+  // ): Promise<void> {
+  //   if (permissionId === dependsOnId) {
+  //     throw new BadRequestException('Permission cannot depend on itself');
+  //   }
+  //
+  //   if (visited.has(dependsOnId)) {
+  //     throw new BadRequestException('Circular dependency detected');
+  //   }
+  //
+  //   visited.add(dependsOnId);
+  //
+  //   const dependencies = await this.prisma.permissionDependency.findMany({
+  //     where: { permissionId: dependsOnId },
+  //   });
+  //
+  //   for (const dep of dependencies) {
+  //     await this.checkCircularDependency(
+  //       permissionId,
+  //       dep.dependsOnId,
+  //       visited,
+  //     );
+  //   }
+  // }
 
   /**
    * Get permission statistics

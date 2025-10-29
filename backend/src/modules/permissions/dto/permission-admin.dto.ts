@@ -23,11 +23,13 @@ export class SystemOverviewDto {
   @ApiProperty({ description: 'Total number of active delegations' })
   activeDelegations: number;
 
-  @ApiProperty({ description: 'Total number of permission templates' })
-  totalTemplates: number;
+  // Removed: totalTemplates - templates no longer used
+  // @ApiProperty({ description: 'Total number of permission templates' })
+  // totalTemplates: number;
 
-  @ApiProperty({ description: 'Total number of dependencies' })
-  totalDependencies: number;
+  // Removed: totalDependencies - dependencies no longer used
+  // @ApiProperty({ description: 'Total number of dependencies' })
+  // totalDependencies: number;
 
   @ApiProperty({ description: 'System health status' })
   healthStatus: 'healthy' | 'warning' | 'critical';
@@ -183,13 +185,14 @@ export class DetailedStatisticsDto {
     expiringIn7Days: number;
   };
 
-  @ApiProperty({ description: 'Template statistics' })
-  templates: {
-    total: number;
-    active: number;
-    system: number;
-    totalApplications: number;
-  };
+  // Removed: templates section - templates no longer used
+  // @ApiProperty({ description: 'Template statistics' })
+  // templates: {
+  //   total: number;
+  //   active: number;
+  //   system: number;
+  //   totalApplications: number;
+  // };
 
   @ApiProperty({ description: 'Audit statistics' })
   audit: {

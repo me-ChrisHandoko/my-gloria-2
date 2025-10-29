@@ -17,9 +17,7 @@ import { PermissionValidationService } from './services/permission-validation.se
 import { RolePermissionsService } from './services/permission-roles.service';
 import { UserPermissionsService } from './services/permission-users.service';
 import { ResourcePermissionsService } from './services/permission-resources.service';
-import { PermissionDependencyService } from './services/permission-dependency.service';
 import { PermissionDelegationService } from './services/permission-delegation.service';
-import { PermissionTemplateService } from './services/permission-template.service';
 import { PermissionHistoryService } from './services/permission-history.service';
 import { PermissionCheckLogService } from './services/permission-check-log.service';
 import { PermissionAdminService } from './services/permission-admin.service';
@@ -34,9 +32,7 @@ import { ModuleUserAccessController } from './controllers/module-user-access.con
 import { RolePermissionsController } from './controllers/permission-roles.controller';
 import { UserPermissionsController } from './controllers/permission-users.controller';
 import { ResourcePermissionsController } from './controllers/permission-resources.controller';
-import { PermissionDependencyController } from './controllers/permission-dependency.controller';
 import { PermissionDelegationController } from './controllers/permission-delegation.controller';
-import { PermissionTemplateController } from './controllers/permission-template.controller';
 import { PermissionHistoryController } from './controllers/permission-history.controller';
 import { PermissionCheckLogController } from './controllers/permission-check-log.controller';
 import { PermissionAdminController } from './controllers/permission-admin.controller';
@@ -55,9 +51,7 @@ import { PermissionAdminController } from './controllers/permission-admin.contro
     RolePermissionsController,
     UserPermissionsController,
     ResourcePermissionsController,
-    PermissionDependencyController,
     PermissionDelegationController,
-    PermissionTemplateController,
     PermissionHistoryController,
     PermissionCheckLogController,
     PermissionAdminController,
@@ -72,9 +66,7 @@ import { PermissionAdminController } from './controllers/permission-admin.contro
     RolePermissionsService,
     UserPermissionsService,
     ResourcePermissionsService,
-    PermissionDependencyService,
     PermissionDelegationService,
-    PermissionTemplateService,
     PermissionHistoryService,
     PermissionCheckLogService,
     PermissionAdminService,
@@ -91,9 +83,7 @@ import { PermissionAdminController } from './controllers/permission-admin.contro
     RolePermissionsService,
     UserPermissionsService,
     ResourcePermissionsService,
-    PermissionDependencyService,
     PermissionDelegationService,
-    PermissionTemplateService,
     PermissionHistoryService,
     PermissionCheckLogService,
     PermissionAdminService,

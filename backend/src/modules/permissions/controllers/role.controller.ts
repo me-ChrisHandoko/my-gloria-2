@@ -24,7 +24,6 @@ import { CurrentUser } from '@/core/auth/decorators/current-user.decorator';
 import { RateLimit } from '@/core/auth/decorators/rate-limit.decorator';
 import {
   AuditLog,
-  CriticalAudit,
   DataModificationAudit,
   AuditCategory,
   AuditSeverity,
@@ -35,8 +34,6 @@ import {
   CreateRoleDto,
   UpdateRoleDto,
   AssignRoleDto,
-  CreateRoleTemplateDto,
-  ApplyRoleTemplateDto,
   CreateRoleHierarchyDto,
 } from '../dto/role.dto';
 import { PermissionAction } from '@prisma/client';
@@ -349,77 +346,78 @@ export class RolesController {
     );
   }
 
-  @Post('templates')
-  @RequiredPermission('roles', PermissionAction.CREATE)
-  @DataModificationAudit('role.template.create', 'role_template')
-  @ApiOperation({ summary: 'Create role template' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'Role template created successfully',
-  })
-  async createRoleTemplate(
-    @Body() dto: CreateRoleTemplateDto,
-    @CurrentUser() user: any,
-  ) {
-    return this.rolesService.createRoleTemplate(dto, user.id);
-  }
+  // Removed: Template endpoints - RoleTemplate model no longer exists
+  // @Post('templates')
+  // @RequiredPermission('roles', PermissionAction.CREATE)
+  // @DataModificationAudit('role.template.create', 'role_template')
+  // @ApiOperation({ summary: 'Create role template' })
+  // @ApiResponse({
+  //   status: HttpStatus.CREATED,
+  //   description: 'Role template created successfully',
+  // })
+  // async createRoleTemplate(
+  //   @Body() dto: CreateRoleTemplateDto,
+  //   @CurrentUser() user: any,
+  // ) {
+  //   return this.rolesService.createRoleTemplate(dto, user.id);
+  // }
 
-  @Post('templates/apply')
-  @RequiredPermission('roles', PermissionAction.UPDATE)
-  @CriticalAudit('role.template.apply')
-  @ApiOperation({ summary: 'Apply role template' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Role template applied successfully',
-  })
-  async applyRoleTemplate(
-    @Body() dto: ApplyRoleTemplateDto,
-    @CurrentUser() user: any,
-  ) {
-    return this.rolesService.applyRoleTemplate(dto, user.id);
-  }
+  // @Post('templates/apply')
+  // @RequiredPermission('roles', PermissionAction.UPDATE)
+  // @CriticalAudit('role.template.apply')
+  // @ApiOperation({ summary: 'Apply role template' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Role template applied successfully',
+  // })
+  // async applyRoleTemplate(
+  //   @Body() dto: ApplyRoleTemplateDto,
+  //   @CurrentUser() user: any,
+  // ) {
+  //   return this.rolesService.applyRoleTemplate(dto, user.id);
+  // }
 
-  @Get('templates')
-  @RequiredPermission('roles', PermissionAction.READ)
-  @ApiOperation({ summary: 'Get all role templates' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Role templates retrieved successfully',
-  })
-  async getRoleTemplates(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-    @Query('search') search?: string,
-  ) {
-    const currentPage = page ? parseInt(page.toString(), 10) : 1;
-    const pageSize = limit ? parseInt(limit.toString(), 10) : 10;
-    return this.rolesService.getRoleTemplates(currentPage, pageSize, search);
-  }
+  // @Get('templates')
+  // @RequiredPermission('roles', PermissionAction.READ)
+  // @ApiOperation({ summary: 'Get all role templates' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Role templates retrieved successfully',
+  // })
+  // async getRoleTemplates(
+  //   @Query('page') page?: number,
+  //   @Query('limit') limit?: number,
+  //   @Query('search') search?: string,
+  // ) {
+  //   const currentPage = page ? parseInt(page.toString(), 10) : 1;
+  //   const pageSize = limit ? parseInt(limit.toString(), 10) : 10;
+  //   return this.rolesService.getRoleTemplates(currentPage, pageSize, search);
+  // }
 
-  @Get('templates/:id')
-  @RequiredPermission('roles', PermissionAction.READ)
-  @ApiOperation({ summary: 'Get role template by ID' })
-  @ApiParam({ name: 'id', description: 'Role Template ID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Role template retrieved successfully',
-  })
-  async getRoleTemplateById(@Param('id') id: string) {
-    return this.rolesService.getRoleTemplateById(id);
-  }
+  // @Get('templates/:id')
+  // @RequiredPermission('roles', PermissionAction.READ)
+  // @ApiOperation({ summary: 'Get role template by ID' })
+  // @ApiParam({ name: 'id', description: 'Role Template ID' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Role template retrieved successfully',
+  // })
+  // async getRoleTemplateById(@Param('id') id: string) {
+  //   return this.rolesService.getRoleTemplateById(id);
+  // }
 
-  @Delete('templates/:id')
-  @RequiredPermission('roles', PermissionAction.DELETE)
-  @DataModificationAudit('role.template.delete', 'role_template')
-  @ApiOperation({ summary: 'Delete role template' })
-  @ApiParam({ name: 'id', description: 'Role Template ID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Role template deleted successfully',
-  })
-  async deleteRoleTemplate(@Param('id') id: string) {
-    return this.rolesService.deleteRoleTemplate(id);
-  }
+  // @Delete('templates/:id')
+  // @RequiredPermission('roles', PermissionAction.DELETE)
+  // @DataModificationAudit('role.template.delete', 'role_template')
+  // @ApiOperation({ summary: 'Delete role template' })
+  // @ApiParam({ name: 'id', description: 'Role Template ID' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Role template deleted successfully',
+  // })
+  // async deleteRoleTemplate(@Param('id') id: string) {
+  //   return this.rolesService.deleteRoleTemplate(id);
+  // }
 
   @Get('user/:userProfileId')
   @RequiredPermission('roles', PermissionAction.READ)

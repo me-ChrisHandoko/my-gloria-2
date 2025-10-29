@@ -14,7 +14,7 @@ import {
   Role,
   UserRole,
   RolePermission,
-  RoleTemplate,
+  // Removed: RoleTemplate import - model no longer exists
   Prisma,
 } from '@prisma/client';
 import { v7 as uuidv7 } from 'uuid';
@@ -497,112 +497,114 @@ export class RolesService {
     }
   }
 
-  /**
-   * Create role template
-   */
-  async createRoleTemplate(
-    dto: CreateRoleTemplateDto,
-    createdBy: string,
-  ): Promise<RoleTemplate> {
-    try {
-      const existing = await this.prisma.roleTemplate.findUnique({
-        where: { code: dto.code },
-      });
+  // Removed: createRoleTemplate method - RoleTemplate model no longer exists
+  // /**
+  //  * Create role template
+  //  */
+  // async createRoleTemplate(
+  //   dto: CreateRoleTemplateDto,
+  //   createdBy: string,
+  // ): Promise<RoleTemplate> {
+  //   try {
+  //     const existing = await this.prisma.roleTemplate.findUnique({
+  //       where: { code: dto.code },
+  //     });
+  //
+  //     if (existing) {
+  //       throw new ConflictException(
+  //         `Role template with code ${dto.code} already exists`,
+  //       );
+  //     }
+  //
+  //     const template = await this.prisma.roleTemplate.create({
+  //       data: {
+  //         id: uuidv7(),
+  //         code: dto.code,
+  //         name: dto.name,
+  //         description: dto.description,
+  //         category: dto.category,
+  //         permissions: dto.permissionIds,
+  //         createdBy,
+  //       },
+  //     });
+  //
+  //     this.logger.log(
+  //       `Role template created: ${template.code}`,
+  //       'RolesService',
+  //     );
+  //     return template;
+  //   } catch (error) {
+  //     this.logger.error(
+  //       'Error creating role template',
+  //       error.stack,
+  //       'RolesService',
+  //     );
+  //     throw error;
+  //   }
+  // }
 
-      if (existing) {
-        throw new ConflictException(
-          `Role template with code ${dto.code} already exists`,
-        );
-      }
-
-      const template = await this.prisma.roleTemplate.create({
-        data: {
-          id: uuidv7(),
-          code: dto.code,
-          name: dto.name,
-          description: dto.description,
-          category: dto.category,
-          permissions: dto.permissionIds,
-          createdBy,
-        },
-      });
-
-      this.logger.log(
-        `Role template created: ${template.code}`,
-        'RolesService',
-      );
-      return template;
-    } catch (error) {
-      this.logger.error(
-        'Error creating role template',
-        error.stack,
-        'RolesService',
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Apply role template
-   */
-  async applyRoleTemplate(
-    dto: ApplyRoleTemplateDto,
-    appliedBy: string,
-  ): Promise<RolePermission[]> {
-    try {
-      const template = await this.prisma.roleTemplate.findUnique({
-        where: { id: dto.templateId },
-      });
-
-      if (!template) {
-        throw new NotFoundException(
-          `Role template with ID ${dto.templateId} not found`,
-        );
-      }
-
-      // Remove existing permissions if overrideExisting is true
-      if (dto.overrideExisting) {
-        await this.prisma.rolePermission.updateMany({
-          where: { roleId: dto.roleId },
-          data: { isGranted: false },
-        });
-      }
-
-      const permissionIds = template.permissions as string[];
-      const results: RolePermission[] = [];
-
-      if (!this.rolePermissionsService) {
-        throw new Error('RolePermissionsService is not available');
-      }
-
-      for (const permissionId of permissionIds) {
-        const rolePermission =
-          await this.rolePermissionsService.assignPermissionToRole(
-            dto.roleId,
-            {
-              permissionId,
-              isGranted: true,
-              grantReason: `Applied from template: ${template.code}`,
-            },
-            appliedBy,
-          );
-        results.push(rolePermission);
-      }
-
-      this.logger.log(
-        `Template ${template.code} applied to role ${dto.roleId}`,
-        'RolesService',
-      );
-      return results;
-    } catch (error) {
-      this.logger.error(
-        'Error applying role template',
-        error.stack,
-        'RolesService',
-      );
-      throw error;
-    }
-  }
+  // Removed: applyRoleTemplate method - RoleTemplate model no longer exists
+  // /**
+  //  * Apply role template
+  //  */
+  // async applyRoleTemplate(
+  //   dto: ApplyRoleTemplateDto,
+  //   appliedBy: string,
+  // ): Promise<RolePermission[]> {
+  //   try {
+  //     const template = await this.prisma.roleTemplate.findUnique({
+  //       where: { id: dto.templateId },
+  //     });
+  //
+  //     if (!template) {
+  //       throw new NotFoundException(
+  //         `Role template with ID ${dto.templateId} not found`,
+  //       );
+  //     }
+  //
+  //     // Remove existing permissions if overrideExisting is true
+  //     if (dto.overrideExisting) {
+  //       await this.prisma.rolePermission.updateMany({
+  //         where: { roleId: dto.roleId },
+  //         data: { isGranted: false },
+  //       });
+  //     }
+  //
+  //     const permissionIds = template.permissions as string[];
+  //     const results: RolePermission[] = [];
+  //
+  //     if (!this.rolePermissionsService) {
+  //       throw new Error('RolePermissionsService is not available');
+  //     }
+  //
+  //     for (const permissionId of permissionIds) {
+  //       const rolePermission =
+  //         await this.rolePermissionsService.assignPermissionToRole(
+  //           dto.roleId,
+  //           {
+  //             permissionId,
+  //             isGranted: true,
+  //             grantReason: `Applied from template: ${template.code}`,
+  //           },
+  //           appliedBy,
+  //         );
+  //       results.push(rolePermission);
+  //     }
+  //
+  //     this.logger.log(
+  //       `Template ${template.code} applied to role ${dto.roleId}`,
+  //       'RolesService',
+  //     );
+  //     return results;
+  //   } catch (error) {
+  //     this.logger.error(
+  //       'Error applying role template',
+  //       error.stack,
+  //       'RolesService',
+  //     );
+  //     throw error;
+  //   }
+  // }
 
   /**
    * Get user roles
@@ -663,103 +665,106 @@ export class RolesService {
     };
   }
 
-  /**
-   * Get all role templates with pagination
-   */
-  async getRoleTemplates(page = 1, limit = 10, search?: string) {
-    try {
-      const skip = (page - 1) * limit;
-      const where: Prisma.RoleTemplateWhereInput = {};
+  // Removed: getRoleTemplates method - RoleTemplate model no longer exists
+  // /**
+  //  * Get all role templates with pagination
+  //  */
+  // async getRoleTemplates(page = 1, limit = 10, search?: string) {
+  //   try {
+  //     const skip = (page - 1) * limit;
+  //     const where: Prisma.RoleTemplateWhereInput = {};
+  //
+  //     if (search) {
+  //       where.OR = [
+  //         { name: { contains: search, mode: 'insensitive' } },
+  //         { code: { contains: search, mode: 'insensitive' } },
+  //         { category: { contains: search, mode: 'insensitive' } },
+  //       ];
+  //     }
+  //
+  //     const [templates, total] = await Promise.all([
+  //       this.prisma.roleTemplate.findMany({
+  //         where,
+  //         skip,
+  //         take: limit,
+  //         orderBy: { createdAt: 'desc' },
+  //       }),
+  //       this.prisma.roleTemplate.count({ where }),
+  //     ]);
+  //
+  //     return {
+  //       data: templates,
+  //       total,
+  //       page,
+  //       limit,
+  //       totalPages: Math.ceil(total / limit),
+  //     };
+  //   } catch (error) {
+  //     this.logger.error(
+  //       'Error getting role templates',
+  //       error.stack,
+  //       'RolesService',
+  //     );
+  //     throw error;
+  //   }
+  // }
 
-      if (search) {
-        where.OR = [
-          { name: { contains: search, mode: 'insensitive' } },
-          { code: { contains: search, mode: 'insensitive' } },
-          { category: { contains: search, mode: 'insensitive' } },
-        ];
-      }
+  // Removed: getRoleTemplateById method - RoleTemplate model no longer exists
+  // /**
+  //  * Get role template by ID
+  //  */
+  // async getRoleTemplateById(id: string): Promise<RoleTemplate> {
+  //   try {
+  //     const template = await this.prisma.roleTemplate.findUnique({
+  //       where: { id },
+  //     });
+  //
+  //     if (!template) {
+  //       throw new NotFoundException(`Role template with ID ${id} not found`);
+  //     }
+  //
+  //     return template;
+  //   } catch (error) {
+  //     this.logger.error(
+  //       'Error getting role template by ID',
+  //       error.stack,
+  //       'RolesService',
+  //     );
+  //     throw error;
+  //   }
+  // }
 
-      const [templates, total] = await Promise.all([
-        this.prisma.roleTemplate.findMany({
-          where,
-          skip,
-          take: limit,
-          orderBy: { createdAt: 'desc' },
-        }),
-        this.prisma.roleTemplate.count({ where }),
-      ]);
-
-      return {
-        data: templates,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      };
-    } catch (error) {
-      this.logger.error(
-        'Error getting role templates',
-        error.stack,
-        'RolesService',
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Get role template by ID
-   */
-  async getRoleTemplateById(id: string): Promise<RoleTemplate> {
-    try {
-      const template = await this.prisma.roleTemplate.findUnique({
-        where: { id },
-      });
-
-      if (!template) {
-        throw new NotFoundException(`Role template with ID ${id} not found`);
-      }
-
-      return template;
-    } catch (error) {
-      this.logger.error(
-        'Error getting role template by ID',
-        error.stack,
-        'RolesService',
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Delete role template
-   */
-  async deleteRoleTemplate(id: string): Promise<void> {
-    try {
-      const template = await this.prisma.roleTemplate.findUnique({
-        where: { id },
-      });
-
-      if (!template) {
-        throw new NotFoundException(`Role template with ID ${id} not found`);
-      }
-
-      await this.prisma.roleTemplate.delete({
-        where: { id },
-      });
-
-      this.logger.log(
-        `Role template deleted: ${template.code}`,
-        'RolesService',
-      );
-    } catch (error) {
-      this.logger.error(
-        'Error deleting role template',
-        error.stack,
-        'RolesService',
-      );
-      throw error;
-    }
-  }
+  // Removed: deleteRoleTemplate method - RoleTemplate model no longer exists
+  // /**
+  //  * Delete role template
+  //  */
+  // async deleteRoleTemplate(id: string): Promise<void> {
+  //   try {
+  //     const template = await this.prisma.roleTemplate.findUnique({
+  //       where: { id },
+  //     });
+  //
+  //     if (!template) {
+  //       throw new NotFoundException(`Role template with ID ${id} not found`);
+  //     }
+  //
+  //     await this.prisma.roleTemplate.delete({
+  //       where: { id },
+  //     });
+  //
+  //     this.logger.log(
+  //       `Role template deleted: ${template.code}`,
+  //       'RolesService',
+  //     );
+  //   } catch (error) {
+  //     this.logger.error(
+  //       'Error deleting role template',
+  //       error.stack,
+  //       'RolesService',
+  //     );
+  //     throw error;
+  //   }
+  // }
 
   /**
    * Update user role temporal settings

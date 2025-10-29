@@ -488,52 +488,12 @@ describe('PermissionsService', () => {
     });
   });
 
-  describe('Permission Dependencies', () => {
-    describe('addDependency', () => {
-      it('should add permission dependency successfully', async () => {
-        mockPrismaService.permissionDependency.findMany.mockResolvedValue([]);
-        mockPrismaService.permissionDependency.create.mockResolvedValue({
-          id: 'dep-id',
-          permissionId: 'perm1',
-          dependsOnId: 'perm2',
-          isRequired: true,
-          createdAt: new Date(),
-        });
-
-        await service.addDependency('perm1', 'perm2', true);
-
-        expect(
-          mockPrismaService.permissionDependency.create,
-        ).toHaveBeenCalledWith({
-          data: expect.objectContaining({
-            permissionId: 'perm1',
-            dependsOnId: 'perm2',
-            isRequired: true,
-          }),
-        });
-      });
-
-      it('should prevent circular dependencies', async () => {
-        mockPrismaService.permissionDependency.findMany.mockResolvedValueOnce([
-          {
-            id: 'dep1',
-            permissionId: 'perm2',
-            dependsOnId: 'perm1',
-            isRequired: true,
-            createdAt: new Date(),
-          },
-        ]);
-
-        await expect(service.addDependency('perm1', 'perm2')).rejects.toThrow(
-          BadRequestException,
-        );
-      });
-
-      it('should prevent self-dependency', async () => {
-        await expect(service.addDependency('perm1', 'perm1')).rejects.toThrow(
-          BadRequestException,
-        );
-      });
-    });
-  });
+  // Removed: Permission Dependencies tests - dependencies no longer used
+  // describe('Permission Dependencies', () => {
+  //   describe('addDependency', () => {
+  //     it('should add permission dependency successfully', async () => {
+  //       ...
+  //     });
+  //   });
+  // });
 });

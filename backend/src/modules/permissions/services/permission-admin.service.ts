@@ -31,8 +31,6 @@ export class PermissionAdminService {
       usersWithPermissions,
       resourcePermissions,
       activeDelegations,
-      totalTemplates,
-      totalDependencies,
     ] = await Promise.all([
       this.prisma.permission.count(),
       this.prisma.permission.count({ where: { isActive: true } }),
@@ -48,8 +46,6 @@ export class PermissionAdminService {
           validUntil: { gte: new Date() },
         },
       }),
-      this.prisma.permissionTemplate.count(),
-      this.prisma.permissionDependency.count(),
     ]);
 
     // Perform health check
@@ -63,8 +59,8 @@ export class PermissionAdminService {
       totalUsersWithPermissions: usersWithPermissions.length,
       totalResourcePermissions: resourcePermissions,
       activeDelegations,
-      totalTemplates,
-      totalDependencies,
+      // Removed: totalTemplates - templates no longer used
+      // Removed: totalDependencies - dependencies no longer used
       healthStatus: health.status,
       healthIssues: health.checks
         .filter((c) => c.status !== 'pass')
@@ -491,16 +487,7 @@ export class PermissionAdminService {
         }),
       ]);
 
-    // Template statistics
-    const [totalTemplates, activeTemplates, systemTemplates, totalApplications] =
-      await Promise.all([
-        this.prisma.permissionTemplate.count(),
-        this.prisma.permissionTemplate.count({ where: { isActive: true } }),
-        this.prisma.permissionTemplate.count({
-          where: { isActive: true, isSystem: true },
-        }),
-        this.prisma.permissionTemplateApplication.count(),
-      ]);
+    // Template statistics removed - templates no longer used
 
     // Audit statistics
     const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -572,12 +559,13 @@ export class PermissionAdminService {
         expired: expiredDelegations,
         expiringIn7Days: expiringSoon,
       },
-      templates: {
-        total: totalTemplates,
-        active: activeTemplates,
-        system: systemTemplates,
-        totalApplications,
-      },
+      // Removed: templates section - templates no longer used
+      // templates: {
+      //   total: totalTemplates,
+      //   active: activeTemplates,
+      //   system: systemTemplates,
+      //   totalApplications,
+      // },
       audit: {
         totalChanges,
         totalChecks,

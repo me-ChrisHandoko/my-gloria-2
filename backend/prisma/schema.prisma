@@ -265,24 +265,22 @@ model UserRole {
 }
 
 model Permission {
-  id                  String                 @id
-  code                String                 @unique
+  id                  String               @id
+  code                String               @unique
   name                String
   description         String?
   resource            String
   action              PermissionAction
   scope               PermissionScope?
-  groupId             String?                @map("group_id")
+  groupId             String?              @map("group_id")
   conditions          Json?
   metadata            Json?
-  isSystemPermission  Boolean                @default(false) @map("is_system_permission")
-  isActive            Boolean                @default(true) @map("is_active")
-  createdAt           DateTime               @default(now()) @map("created_at")
-  updatedAt           DateTime               @updatedAt @map("updated_at")
-  createdBy           String?                @map("created_by")
-  dependentOn         PermissionDependency[] @relation("DependentRelation")
-  dependencies        PermissionDependency[] @relation("PermissionRelation")
-  group               PermissionGroup?       @relation(fields: [groupId], references: [id])
+  isSystemPermission  Boolean              @default(false) @map("is_system_permission")
+  isActive            Boolean              @default(true) @map("is_active")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+  createdBy           String?              @map("created_by")
+  group               PermissionGroup?     @relation(fields: [groupId], references: [id])
   resourcePermissions ResourcePermission[]
   rolePermissions     RolePermission[]
   userPermissions     UserPermission[]
@@ -380,19 +378,6 @@ model PermissionCache {
   @@schema("gloria_ops")
 }
 
-model PermissionDependency {
-  id           String     @id
-  permissionId String     @map("permission_id")
-  dependsOnId  String     @map("depends_on_id")
-  isRequired   Boolean    @default(true) @map("is_required")
-  dependsOn    Permission @relation("DependentRelation", fields: [dependsOnId], references: [id], onDelete: Cascade)
-  permission   Permission @relation("PermissionRelation", fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@unique([permissionId, dependsOnId])
-  @@map("permission_dependencies")
-  @@schema("gloria_ops")
-}
-
 model ResourcePermission {
   id            String      @id
   userProfileId String      @map("user_profile_id")
@@ -413,63 +398,6 @@ model ResourcePermission {
   @@index([userProfileId, resourceType, resourceId])
   @@index([permissionId])
   @@map("resource_permissions")
-  @@schema("gloria_ops")
-}
-
-model RoleTemplate {
-  id          String   @id
-  code        String   @unique
-  name        String
-  description String?
-  category    String
-  permissions Json
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  createdBy   String?  @map("created_by")
-
-  @@map("role_templates")
-  @@schema("gloria_ops")
-}
-
-model PermissionTemplate {
-  id                   String                          @id
-  code                 String                          @unique
-  name                 String
-  description          String?
-  category             String
-  permissions          Json
-  moduleAccess         Json?
-  isSystem             Boolean                         @default(false) @map("is_system")
-  isActive             Boolean                         @default(true) @map("is_active")
-  createdAt            DateTime                        @default(now()) @map("created_at")
-  updatedAt            DateTime                        @updatedAt @map("updated_at")
-  createdBy            String?                         @map("created_by")
-  version              Int                             @default(0)
-  templateApplications PermissionTemplateApplication[]
-
-  @@index([category, isActive])
-  @@index([id, version])
-  @@map("permission_templates")
-  @@schema("gloria_ops")
-}
-
-model PermissionTemplateApplication {
-  id         String             @id
-  templateId String             @map("template_id")
-  targetType String             @map("target_type")
-  targetId   String             @map("target_id")
-  appliedBy  String             @map("applied_by")
-  appliedAt  DateTime           @default(now()) @map("applied_at")
-  revokedBy  String?            @map("revoked_by")
-  revokedAt  DateTime?          @map("revoked_at")
-  isActive   Boolean            @default(true) @map("is_active")
-  notes      String?
-  template   PermissionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-
-  @@unique([templateId, targetType, targetId])
-  @@index([targetType, targetId, isActive])
-  @@map("permission_template_applications")
   @@schema("gloria_ops")
 }
 
@@ -516,65 +444,6 @@ model PermissionChangeHistory {
   @@index([performedBy, performedAt])
   @@index([rollbackOf])
   @@map("permission_change_history")
-  @@schema("gloria_ops")
-}
-
-model PermissionAnalytics {
-  id             String   @id
-  userProfileId  String   @map("user_profile_id")
-  permissionCode String   @map("permission_code")
-  action         String
-  resource       String?
-  resourceId     String?  @map("resource_id")
-  result         String?
-  responseTime   Int?     @map("response_time")
-  context        Json?
-  anomalyScore   Float?   @map("anomaly_score")
-  anomalyReasons Json?    @map("anomaly_reasons")
-  timestamp      DateTime @default(now())
-
-  @@index([userProfileId, timestamp])
-  @@index([permissionCode, timestamp])
-  @@index([anomalyScore])
-  @@map("permission_analytics")
-  @@schema("gloria_ops")
-}
-
-model PermissionPolicy {
-  id                String             @id
-  code              String             @unique
-  name              String
-  description       String?
-  policyType        PolicyType         @map("policy_type")
-  rules             Json
-  priority          Int                @default(100)
-  isActive          Boolean            @default(true) @map("is_active")
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
-  createdBy         String?            @map("created_by")
-  policyAssignments PolicyAssignment[]
-
-  @@index([policyType, isActive])
-  @@map("permission_policies")
-  @@schema("gloria_ops")
-}
-
-model PolicyAssignment {
-  id           String           @id
-  policyId     String           @map("policy_id")
-  assigneeType AssigneeType     @map("assignee_type")
-  assigneeId   String           @map("assignee_id")
-  conditions   Json?
-  validFrom    DateTime         @default(now()) @map("valid_from")
-  validUntil   DateTime?        @map("valid_until")
-  assignedBy   String           @map("assigned_by")
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @updatedAt @map("updated_at")
-  policy       PermissionPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
-
-  @@unique([policyId, assigneeType, assigneeId])
-  @@index([assigneeType, assigneeId])
-  @@map("policy_assignments")
   @@schema("gloria_ops")
 }
 
@@ -1467,25 +1336,6 @@ enum AuditAction {
   GRANT
   REVOKE
   DELEGATE
-
-  @@schema("gloria_ops")
-}
-
-enum PolicyType {
-  TIME_BASED
-  LOCATION_BASED
-  ATTRIBUTE_BASED
-  CONTEXTUAL
-  HIERARCHICAL
-
-  @@schema("gloria_ops")
-}
-
-enum AssigneeType {
-  ROLE
-  USER
-  DEPARTMENT
-  POSITION
 
   @@schema("gloria_ops")
 }
