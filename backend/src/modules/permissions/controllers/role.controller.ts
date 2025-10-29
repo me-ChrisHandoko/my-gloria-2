@@ -35,8 +35,6 @@ import {
   CreateRoleDto,
   UpdateRoleDto,
   AssignRoleDto,
-  AssignRolePermissionDto,
-  BulkAssignRolePermissionsDto,
   CreateRoleTemplateDto,
   ApplyRoleTemplateDto,
   CreateRoleHierarchyDto,
@@ -235,73 +233,6 @@ export class RolesController {
     await this.rolesService.removeRole(userProfileId, roleId, user.id);
   }
 
-  @Post(':roleId/permissions')
-  @RequiredPermission('roles', PermissionAction.UPDATE)
-  @AuditLog({
-    action: 'role.permission.assign',
-    resource: 'role_permission',
-    category: AuditCategory.AUTHORIZATION,
-    severity: AuditSeverity.HIGH,
-    includeBody: true,
-  })
-  @ApiOperation({ summary: 'Assign permission to role' })
-  @ApiParam({ name: 'roleId', description: 'Role ID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Permission assigned to role successfully',
-  })
-  async assignPermissionToRole(
-    @Param('roleId') roleId: string,
-    @Body() dto: AssignRolePermissionDto,
-    @CurrentUser() user: any,
-  ) {
-    return this.rolesService.assignPermissionToRole(roleId, dto, user.id);
-  }
-
-  @Post(':roleId/permissions/bulk')
-  @RequiredPermission('roles', PermissionAction.UPDATE)
-  @CriticalAudit('role.permission.bulk_assign')
-  @ApiOperation({ summary: 'Bulk assign permissions to role' })
-  @ApiParam({ name: 'roleId', description: 'Role ID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Permissions assigned successfully',
-  })
-  async bulkAssignPermissionsToRole(
-    @Param('roleId') roleId: string,
-    @Body() dto: BulkAssignRolePermissionsDto,
-    @CurrentUser() user: any,
-  ) {
-    return this.rolesService.bulkAssignPermissionsToRole(roleId, dto, user.id);
-  }
-
-  @Delete(':roleId/permissions/:permissionId')
-  @RequiredPermission('roles', PermissionAction.UPDATE)
-  @AuditLog({
-    action: 'role.permission.remove',
-    resource: 'role_permission',
-    category: AuditCategory.AUTHORIZATION,
-    severity: AuditSeverity.HIGH,
-  })
-  @ApiOperation({ summary: 'Remove permission from role' })
-  @ApiParam({ name: 'roleId', description: 'Role ID' })
-  @ApiParam({ name: 'permissionId', description: 'Permission ID' })
-  @ApiResponse({
-    status: HttpStatus.NO_CONTENT,
-    description: 'Permission removed from role',
-  })
-  async removePermissionFromRole(
-    @Param('roleId') roleId: string,
-    @Param('permissionId') permissionId: string,
-    @CurrentUser() user: any,
-  ) {
-    await this.rolesService.removePermissionFromRole(
-      roleId,
-      permissionId,
-      user.id,
-    );
-  }
-
   @Post(':roleId/hierarchy')
   @RequiredPermission('roles', PermissionAction.UPDATE)
   @AuditLog({
@@ -374,7 +305,12 @@ export class RolesController {
   ) {
     const currentPage = page ? parseInt(page.toString(), 10) : 1;
     const pageSize = limit ? parseInt(limit.toString(), 10) : 20;
-    return this.rolesService.getRoleUsers(roleId, currentPage, pageSize, search);
+    return this.rolesService.getRoleUsers(
+      roleId,
+      currentPage,
+      pageSize,
+      search,
+    );
   }
 
   @Get(':roleId/modules')
