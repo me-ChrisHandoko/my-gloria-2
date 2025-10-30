@@ -43,7 +43,6 @@ import {
   BulkAssignPermissionsDto,
 } from '../dto/permission.dto';
 import { PermissionAction } from '@prisma/client';
-import { PermissionCacheService } from '../services/permission-cache.service';
 
 @ApiTags('Permissions')
 @ApiBearerAuth()
@@ -53,7 +52,6 @@ export class PermissionsController {
   constructor(
     private readonly permissionsService: PermissionsService,
     private readonly validationService: PermissionValidationService,
-    private readonly cacheService: PermissionCacheService,
     private readonly rolePermissionsService: RolePermissionsService,
     private readonly userPermissionsService: UserPermissionsService,
   ) {}
@@ -133,7 +131,7 @@ export class PermissionsController {
   async getPermissionGroups(
     @Query('includeInactive') includeInactive?: boolean,
   ) {
-    return this.permissionsService.findAllGroups(includeInactive);
+    return this.permissionsService.findAll({ includeInactive });
   }
 
   @Get('code/:code')
@@ -250,7 +248,7 @@ export class PermissionsController {
           {
             permissionIds: dto.permissionIds,
             grantReason: dto.grantReason || 'Bulk assignment',
-            validUntil: dto.validUntil,
+            effectiveUntil: dto.effectiveUntil,
             isGranted: true,
           },
           user.id,
@@ -262,7 +260,7 @@ export class PermissionsController {
           {
             permissionIds: dto.permissionIds,
             grantReason: dto.grantReason,
-            validUntil: dto.validUntil,
+            effectiveUntil: dto.effectiveUntil,
             isGranted: true,
           },
           user.id,
@@ -290,41 +288,6 @@ export class PermissionsController {
   async refreshCache(@CurrentUser() user: any) {
     await this.validationService.refreshUserPermissions(user.id);
     return { success: true, message: 'Permission cache refreshed' };
-  }
-
-  @Post('cache/invalidate')
-  @RequiredPermission('permissions', PermissionAction.UPDATE)
-  @AuditLog({
-    action: 'permission.cache.invalidate',
-    resource: 'permission_cache',
-    category: AuditCategory.AUTHORIZATION,
-    severity: AuditSeverity.HIGH,
-    includeBody: true,
-  })
-  @ApiOperation({
-    summary: 'Invalidate permission cache for specific user or all users',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Cache invalidated successfully',
-  })
-  async invalidateCache(
-    @Body() body: { userProfileId?: string },
-    @CurrentUser() user: any,
-  ) {
-    if (body.userProfileId) {
-      await this.cacheService.invalidateUserCache(body.userProfileId);
-      return {
-        success: true,
-        message: `Permission cache invalidated for user ${body.userProfileId}`,
-      };
-    } else {
-      await this.cacheService.invalidateAllCaches();
-      return {
-        success: true,
-        message: 'All permission caches invalidated',
-      };
-    }
   }
 
   @Get('debug/:userProfileId')
@@ -355,81 +318,4 @@ export class PermissionsController {
     );
   }
 
-  // Permission Groups
-
-  @Post('groups')
-  @RequiredPermission('permissions', PermissionAction.CREATE)
-  @DataModificationAudit('permission_group.create', 'permission_group')
-  @ApiOperation({ summary: 'Create permission group' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'Permission group created successfully',
-  })
-  async createPermissionGroup(
-    @Body() dto: CreatePermissionGroupDto,
-    @CurrentUser() user: any,
-  ) {
-    return this.permissionsService.createPermissionGroup(dto, user.id);
-  }
-
-  @Get('groups/:id')
-  @RequiredPermission('permissions', PermissionAction.READ)
-  @ApiOperation({ summary: 'Get permission group by ID' })
-  @ApiParam({ name: 'id', description: 'Permission group ID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Permission group retrieved successfully',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Permission group not found',
-  })
-  async getPermissionGroupById(@Param('id') id: string) {
-    return this.permissionsService.getPermissionGroupById(id);
-  }
-
-  @Put('groups/:id')
-  @RequiredPermission('permissions', PermissionAction.UPDATE)
-  @DataModificationAudit('permission_group.update', 'permission_group')
-  @ApiOperation({ summary: 'Update permission group' })
-  @ApiParam({ name: 'id', description: 'Permission group ID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Permission group updated successfully',
-  })
-  async updatePermissionGroup(
-    @Param('id') id: string,
-    @Body() dto: UpdatePermissionGroupDto,
-    @CurrentUser() user: any,
-  ) {
-    return this.permissionsService.updatePermissionGroup(id, dto, user.id);
-  }
-
-  @Delete('groups/:id')
-  @RequiredPermission('permissions', PermissionAction.DELETE)
-  @CriticalAudit('permission_group.delete')
-  @ApiOperation({
-    summary: 'Delete permission group',
-    description:
-      'Soft deletes a permission group if it has no associated permissions, otherwise restricts deletion',
-  })
-  @ApiParam({ name: 'id', description: 'Permission group ID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Permission group deleted successfully',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Cannot delete group with associated permissions',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Permission group not found',
-  })
-  async deletePermissionGroup(
-    @Param('id') id: string,
-    @CurrentUser() user: any,
-  ) {
-    return this.permissionsService.deletePermissionGroup(id, user.id);
-  }
 }

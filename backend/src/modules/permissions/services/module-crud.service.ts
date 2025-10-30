@@ -386,20 +386,6 @@ export class ModuleCrudService {
       },
     });
 
-    // Record change history
-    await this.prisma.moduleChangeHistory.create({
-      data: {
-        id: uuidv7(),
-        moduleId: id,
-        changeType: 'UPDATE',
-        changeVersion: updated.version,
-        previousData: current as any,
-        newData: updated as any,
-        changedFields: Object.keys(dto),
-        changedBy: modifiedBy,
-      },
-    });
-
     // Invalidate ALL related caches
     try {
       await this.cache.del(`${this.cachePrefix}${id}`);
@@ -616,14 +602,4 @@ export class ModuleCrudService {
     return updated;
   }
 
-  /**
-   * Get change history for a module
-   */
-  async getChangeHistory(moduleId: string) {
-    return this.prisma.moduleChangeHistory.findMany({
-      where: { moduleId },
-      orderBy: { changedAt: 'desc' },
-      take: 50, // Limit to last 50 changes
-    });
-  }
 }

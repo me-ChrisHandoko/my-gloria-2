@@ -544,7 +544,7 @@ export class ClerkAuthService {
         where: {
           userProfileId,
           isGranted: true,
-          validFrom: {
+          effectiveFrom: {
             lte: new Date(),
           },
         },

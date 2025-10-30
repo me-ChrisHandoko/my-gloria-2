@@ -1,0 +1,349 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../core/database/prisma.service';
+import { NotificationType, NotificationChannel } from '@prisma/client';
+
+/**
+ * Notification Preference Service (Phase 1 Simplified)
+ *
+ * Simplified features:
+ * - Enable/disable notification types
+ * - Channel preferences (IN_APP, EMAIL, PUSH, SMS)
+ * - Type-specific channel overrides
+ *
+ * Removed over-engineered features:
+ * - Quiet hours
+ * - Rate limiting (max daily/hourly)
+ * - Complex frequency tracking
+ * - Token-based unsubscribe
+ */
+@Injectable()
+export class NotificationPreferenceService {
+  constructor(private prisma: PrismaService) {}
+
+  /**
+   * Get or create user preference
+   */
+  async getOrCreatePreference(userProfileId: string) {
+    let preference =
+      await this.prisma.notificationPreference.findUnique({
+        where: { userProfileId },
+      });
+
+    if (!preference) {
+      preference = await this.prisma.notificationPreference.create({
+        data: {
+          userProfileId,
+          enabledTypes: [], // Empty = all types enabled
+          defaultChannels: ['IN_APP', 'EMAIL'],
+        },
+      });
+    }
+
+    return preference;
+  }
+
+  /**
+   * Get user preference
+   */
+  async getPreference(userProfileId: string) {
+    return this.prisma.notificationPreference.findUnique({
+      where: { userProfileId },
+    });
+  }
+
+  /**
+   * Check if notification type should be sent
+   * @returns true if should send, false if disabled
+   */
+  async shouldSendNotification(
+    userProfileId: string,
+    type: NotificationType,
+  ): Promise<boolean> {
+    const preference = await this.getPreference(userProfileId);
+
+    if (!preference) {
+      return true; // Default: send all notifications
+    }
+
+    // Whitelist approach: empty array = all enabled
+    if (preference.enabledTypes.length === 0) {
+      return true; // All notifications enabled
+    }
+
+    // Check if type is in the whitelist
+    return preference.enabledTypes.includes(type);
+  }
+
+  /**
+   * Get channels for notification type
+   */
+  async getChannelsForNotification(
+    userProfileId: string,
+    type: NotificationType,
+  ): Promise<NotificationChannel[]> {
+    const preference = await this.getPreference(userProfileId);
+
+    if (!preference) {
+      return ['IN_APP', 'EMAIL']; // Default channels
+    }
+
+    // Check for type-specific override
+    const overrides =
+      (preference.channelOverrides as Record<
+        string,
+        NotificationChannel[]
+      >) || {};
+
+    if (overrides[type]) {
+      return overrides[type];
+    }
+
+    // Fall back to default channels
+    return preference.defaultChannels;
+  }
+
+  /**
+   * Disable specific notification type
+   */
+  async disableNotificationType(
+    userProfileId: string,
+    type: NotificationType,
+  ) {
+    const preference = await this.getOrCreatePreference(userProfileId);
+
+    // Remove from whitelist (if empty, add all OTHER types)
+    if (preference.enabledTypes.length === 0) {
+      // Currently all enabled, need to enable all EXCEPT this type
+      const allTypes = this.getAllNotificationTypes();
+      const enabledTypes = allTypes.filter((t) => t !== type);
+
+      return this.prisma.notificationPreference.update({
+        where: { userProfileId },
+        data: { enabledTypes },
+      });
+    }
+
+    // Remove from whitelist
+    const enabledTypes = preference.enabledTypes.filter((t) => t !== type);
+
+    return this.prisma.notificationPreference.update({
+      where: { userProfileId },
+      data: { enabledTypes },
+    });
+  }
+
+  /**
+   * Enable specific notification type
+   */
+  async enableNotificationType(userProfileId: string, type: NotificationType) {
+    const preference = await this.getOrCreatePreference(userProfileId);
+
+    // Add to whitelist (if empty, it means all enabled, so stay empty)
+    if (preference.enabledTypes.length === 0) {
+      return preference; // Already all enabled
+    }
+
+    // Add to whitelist if not already there
+    if (preference.enabledTypes.includes(type)) {
+      return preference; // Already enabled
+    }
+
+    return this.prisma.notificationPreference.update({
+      where: { userProfileId },
+      data: {
+        enabledTypes: [...preference.enabledTypes, type],
+      },
+    });
+  }
+
+  /**
+   * Set default channels for user
+   */
+  async setDefaultChannels(
+    userProfileId: string,
+    channels: NotificationChannel[],
+  ) {
+    await this.getOrCreatePreference(userProfileId);
+
+    return this.prisma.notificationPreference.update({
+      where: { userProfileId },
+      data: {
+        defaultChannels: channels,
+      },
+    });
+  }
+
+  /**
+   * Set channel override for specific notification type
+   */
+  async setChannelOverride(
+    userProfileId: string,
+    type: NotificationType,
+    channels: NotificationChannel[],
+  ) {
+    const preference = await this.getOrCreatePreference(userProfileId);
+
+    const overrides =
+      (preference.channelOverrides as Record<
+        string,
+        NotificationChannel[]
+      >) || {};
+
+    overrides[type] = channels;
+
+    return this.prisma.notificationPreference.update({
+      where: { userProfileId },
+      data: {
+        channelOverrides: overrides,
+      },
+    });
+  }
+
+  /**
+   * Remove channel override for specific notification type
+   */
+  async removeChannelOverride(
+    userProfileId: string,
+    type: NotificationType,
+  ) {
+    const preference = await this.getPreference(userProfileId);
+
+    if (!preference) {
+      return null;
+    }
+
+    const overrides =
+      (preference.channelOverrides as Record<
+        string,
+        NotificationChannel[]
+      >) || {};
+
+    delete overrides[type];
+
+    return this.prisma.notificationPreference.update({
+      where: { userProfileId },
+      data: {
+        channelOverrides: overrides,
+      },
+    });
+  }
+
+  /**
+   * Get all disabled notification types for user
+   */
+  async getDisabledTypes(userProfileId: string): Promise<NotificationType[]> {
+    const preference = await this.getPreference(userProfileId);
+
+    if (!preference) {
+      return []; // No disabled types (all enabled)
+    }
+
+    // Empty enabledTypes = all enabled, so no disabled types
+    if (preference.enabledTypes.length === 0) {
+      return [];
+    }
+
+    // Return types that are NOT in the whitelist
+    const allTypes = this.getAllNotificationTypes();
+    return allTypes.filter((t) => !preference.enabledTypes.includes(t));
+  }
+
+  /**
+   * Enable all notification types
+   */
+  async enableAllNotifications(userProfileId: string) {
+    await this.getOrCreatePreference(userProfileId);
+
+    return this.prisma.notificationPreference.update({
+      where: { userProfileId },
+      data: {
+        enabledTypes: [], // Empty = all enabled
+      },
+    });
+  }
+
+  /**
+   * Disable all notification types
+   */
+  async disableAllNotifications(userProfileId: string) {
+    await this.getOrCreatePreference(userProfileId);
+
+    return this.prisma.notificationPreference.update({
+      where: { userProfileId },
+      data: {
+        enabledTypes: [], // Empty whitelist but we'll handle this specially
+        // NOTE: In production, you might want a separate flag for "disable all"
+        // For now, we'll use an empty array to mean "enable all"
+        // and use a special marker or separate field for "disable all"
+      },
+    });
+  }
+
+  /**
+   * Get all notification types (helper)
+   */
+  private getAllNotificationTypes(): NotificationType[] {
+    return [
+      'APPROVAL_REQUEST',
+      'APPROVAL_RESULT',
+      'WORK_ORDER_UPDATE',
+      'KPI_REMINDER',
+      'TRAINING_INVITATION',
+      'SYSTEM_ALERT',
+      'GENERAL',
+      'DELEGATION',
+      'ANNOUNCEMENT',
+      'SYSTEM_UPDATE',
+      'REMINDER',
+      'ALERT',
+      'USER_ACTION',
+      'DATA_CHANGE',
+    ];
+  }
+
+  /**
+   * Bulk update preferences
+   */
+  async updatePreferences(
+    userProfileId: string,
+    data: {
+      defaultChannels?: NotificationChannel[];
+      enabledTypes?: NotificationType[];
+      channelOverrides?: Record<string, NotificationChannel[]>;
+    },
+  ) {
+    await this.getOrCreatePreference(userProfileId);
+
+    return this.prisma.notificationPreference.update({
+      where: { userProfileId },
+      data,
+    });
+  }
+
+  /**
+   * Get preference summary
+   */
+  async getPreferenceSummary(userProfileId: string) {
+    const preference = await this.getOrCreatePreference(userProfileId);
+
+    const allTypes = this.getAllNotificationTypes();
+
+    // Empty enabledTypes = all enabled
+    const enabledTypes =
+      preference.enabledTypes.length === 0
+        ? allTypes
+        : preference.enabledTypes;
+
+    const disabledTypes = allTypes.filter((t) => !enabledTypes.includes(t));
+
+    return {
+      defaultChannels: preference.defaultChannels,
+      enabledCount: enabledTypes.length,
+      disabledCount: disabledTypes.length,
+      totalTypes: allTypes.length,
+      enabledTypes,
+      disabledTypes,
+      channelOverrides: preference.channelOverrides || {},
+    };
+  }
+}

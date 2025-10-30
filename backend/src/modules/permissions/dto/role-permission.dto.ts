@@ -33,12 +33,12 @@ export class AssignRolePermissionDto {
   @ApiPropertyOptional({ description: 'Valid from date' })
   @IsOptional()
   @Type(() => Date)
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({ description: 'Valid until date' })
   @IsOptional()
   @Type(() => Date)
-  validUntil?: Date;
+  effectiveUntil?: Date;
 
   @ApiPropertyOptional({ description: 'Reason for granting permission' })
   @IsString()
@@ -63,12 +63,12 @@ export class UpdateRolePermissionDto {
   @ApiPropertyOptional({ description: 'Valid from date' })
   @IsOptional()
   @Type(() => Date)
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({ description: 'Valid until date' })
   @IsOptional()
   @Type(() => Date)
-  validUntil?: Date;
+  effectiveUntil?: Date;
 
   @ApiPropertyOptional({ description: 'Reason for update' })
   @IsString()
@@ -98,12 +98,12 @@ export class BulkAssignRolePermissionsDto {
   @ApiPropertyOptional({ description: 'Valid from date' })
   @IsOptional()
   @Type(() => Date)
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({ description: 'Valid until date' })
   @IsOptional()
   @Type(() => Date)
-  validUntil?: Date;
+  effectiveUntil?: Date;
 
   @ApiPropertyOptional({ description: 'Reason for bulk assignment' })
   @IsString()

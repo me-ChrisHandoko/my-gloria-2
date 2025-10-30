@@ -426,15 +426,15 @@ export class RolesService {
           userProfileId: dto.userProfileId,
           roleId: dto.roleId,
           assignedBy,
-          validFrom: dto.validFrom || new Date(),
-          validUntil: dto.validUntil,
+          effectiveFrom: dto.effectiveFrom || new Date(),
+          effectiveUntil: dto.effectiveUntil,
           isActive: true,
         },
         update: {
           isActive: true,
           assignedBy,
-          validFrom: dto.validFrom || new Date(),
-          validUntil: dto.validUntil,
+          effectiveFrom: dto.effectiveFrom || new Date(),
+          effectiveUntil: dto.effectiveUntil,
         },
         include: {
           role: true,
@@ -614,7 +614,7 @@ export class RolesService {
       where: {
         userProfileId,
         isActive: true,
-        OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+        OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: new Date() } }],
       },
       include: {
         role: {
@@ -772,8 +772,8 @@ export class RolesService {
   async updateUserRoleTemporal(
     userProfileId: string,
     roleId: string,
-    validFrom?: Date,
-    validUntil?: Date,
+    effectiveFrom?: Date,
+    effectiveUntil?: Date,
   ): Promise<UserRole> {
     try {
       const userRole = await this.prisma.userRole.findFirst({
@@ -792,8 +792,8 @@ export class RolesService {
       const updated = await this.prisma.userRole.update({
         where: { id: userRole.id },
         data: {
-          validFrom,
-          validUntil,
+          effectiveFrom,
+          effectiveUntil,
         },
         include: {
           role: true,

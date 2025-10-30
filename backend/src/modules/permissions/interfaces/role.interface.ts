@@ -19,8 +19,8 @@ export interface IRolePermission {
   permissionId: string;
   isGranted: boolean;
   conditions?: any;
-  validFrom: Date;
-  validUntil?: Date;
+  effectiveFrom: Date;
+  effectiveUntil?: Date;
   grantedBy?: string;
   grantReason?: string;
 }
@@ -30,8 +30,8 @@ export interface IUserRole {
   roleId: string;
   assignedAt: Date;
   assignedBy?: string;
-  validFrom: Date;
-  validUntil?: Date;
+  effectiveFrom: Date;
+  effectiveUntil?: Date;
   isActive: boolean;
 }
 

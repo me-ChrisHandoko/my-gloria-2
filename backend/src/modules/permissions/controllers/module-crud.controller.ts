@@ -243,24 +243,6 @@ export class ModuleCrudController {
     return this.moduleCrudService.getAncestors(id);
   }
 
-  @Get(':id/history')
-  @RateLimit({
-    limit: 20,
-    windowMs: 10000,
-    message: 'Too many requests.',
-    headers: true,
-  })
-  @RequiredPermission('module', PermissionAction.READ)
-  @ApiOperation({ summary: 'Get module change history' })
-  @ApiParam({ name: 'id', description: 'Module ID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Change history retrieved successfully',
-  })
-  async getHistory(@Param('id', ParseUUIDPipe) id: string) {
-    return this.moduleCrudService.getChangeHistory(id);
-  }
-
   @Patch(':id')
   @RequiredPermission('module', PermissionAction.UPDATE)
   @ApiOperation({ summary: 'Update module' })

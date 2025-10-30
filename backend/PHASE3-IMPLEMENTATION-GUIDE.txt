@@ -1,0 +1,353 @@
+═══════════════════════════════════════════════════════════════════
+  PHASE 3 IMPLEMENTATION GUIDE: TEMPORAL.IO WORKFLOW MIGRATION
+═══════════════════════════════════════════════════════════════════
+
+Status: ✅ IMPLEMENTATION COMPLETE - READY FOR DEPLOYMENT
+
+This guide documents the Phase 3 implementation that replaces the custom
+workflow engine (11 tables) with Temporal.io, reducing complexity by 90%.
+
+═══════════════════════════════════════════════════════════════════
+📋 WHAT WAS IMPLEMENTED
+═══════════════════════════════════════════════════════════════════
+
+1. ✅ Temporal.io Infrastructure
+   - Docker Compose configuration for Temporal server + UI
+   - PostgreSQL database for Temporal persistence
+   - Network configuration and health checks
+
+2. ✅ Temporal SDK Integration
+   - Installed @temporalio/* packages
+   - Created NestJS service integration
+   - Worker process for executing workflows
+
+3. ✅ Workflow Implementation
+   - Approval workflow with escalation logic
+   - Simple approval workflow (no escalation)
+   - Activity functions for notifications, approvals, audit logs
+
+4. ✅ Migration Tooling
+   - Script to migrate active workflows from old system
+   - Dry-run capability for testing
+   - Progress tracking and error handling
+
+5. ✅ Database Schema Changes
+   - SQL migration to remove 11 old workflow tables
+   - New simplified WorkflowHistory table for audit
+   - Cleanup of foreign key constraints
+
+6. ✅ Testing Suite
+   - Workflow tests using Temporal test environment
+   - Activity unit tests
+   - Integration test examples
+
+7. ✅ Documentation & Scripts
+   - Worker startup script
+   - Environment configuration
+   - Deployment guides
+
+═══════════════════════════════════════════════════════════════════
+🚀 DEPLOYMENT STEPS
+═══════════════════════════════════════════════════════════════════
+
+STEP 1: Setup Environment Variables
+─────────────────────────────────────────────────────────────────
+
+Add to your .env file:
+
+TEMPORAL_ADDRESS=localhost:7233
+TEMPORAL_NAMESPACE=default
+TEMPORAL_TASK_QUEUE=gloria-workflows
+TEMPORAL_UI_URL=http://localhost:8233
+
+
+STEP 2: Start Temporal Infrastructure
+─────────────────────────────────────────────────────────────────
+
+cd /path/to/backend
+
+# Start Temporal server, UI, and PostgreSQL
+docker-compose -f docker-compose.temporal.yml up -d
+
+# Verify Temporal is running
+curl http://localhost:8233  # Should show Temporal UI
+
+# Check logs
+docker logs gloria-temporal
+
+
+STEP 3: Migrate Active Workflows (DRY RUN FIRST)
+─────────────────────────────────────────────────────────────────
+
+# First, run in dry-run mode to see what will be migrated
+npx ts-node scripts/migrations/migrate-workflows-to-temporal.ts --dry-run
+
+# Review the output, then run actual migration
+npx ts-node scripts/migrations/migrate-workflows-to-temporal.ts
+
+Expected output:
+  - Total workflows found
+  - Migration progress
+  - Success/failure counts
+
+
+STEP 4: Run Database Migration
+─────────────────────────────────────────────────────────────────
+
+# ⚠️ CRITICAL: Backup database first!
+pg_dump $DATABASE_URL > backup_pre_phase3.sql
+
+# Run the migration SQL
+psql $DATABASE_URL < prisma/migrations/phase3-temporal-migration.sql
+
+# Verify migration success
+psql $DATABASE_URL -c "SELECT COUNT(*) FROM gloria_ops.workflow_history;"
+
+
+STEP 5: Start Temporal Worker
+─────────────────────────────────────────────────────────────────
+
+# In a separate terminal, start the worker
+./scripts/start-temporal-worker.sh
+
+# Or run directly:
+npx ts-node src/temporal/worker.ts
+
+Expected output:
+  ✓ Connected to Temporal
+  ✓ Worker started, polling for tasks...
+
+
+STEP 6: Update Application Code
+─────────────────────────────────────────────────────────────────
+
+# Add TemporalModule to your AppModule
+Edit src/app.module.ts:
+
+import { TemporalModule } from './temporal/temporal.module';
+
+@Module({
+  imports: [
+    // ... existing imports
+    TemporalModule,
+  ],
+})
+export class AppModule {}
+
+
+STEP 7: Update Workflow Controllers
+─────────────────────────────────────────────────────────────────
+
+Replace old workflow service calls with Temporal service:
+
+import { TemporalService } from './temporal/temporal.service';
+
+@Controller('approvals')
+export class ApprovalsController {
+  constructor(private temporalService: TemporalService) {}
+
+  @Post()
+  async createApproval(@Body() dto: CreateApprovalDto) {
+    const request: ApprovalRequest = {
+      id: generateId(),
+      requestId: dto.requestId,
+      initiatorId: dto.userId,
+      approverId: dto.approverId,
+      module: dto.module,
+      entityType: dto.entityType,
+      entityId: dto.entityId,
+      priority: dto.priority,
+    };
+
+    const { workflowId, runId } = await this.temporalService
+      .startApprovalWorkflow(request);
+
+    return {
+      workflowId,
+      runId,
+      status: 'STARTED',
+    };
+  }
+
+  @Get(':workflowId/status')
+  async getStatus(@Param('workflowId') workflowId: string) {
+    return this.temporalService.getWorkflowStatus(workflowId);
+  }
+}
+
+
+STEP 8: Run Tests
+─────────────────────────────────────────────────────────────────
+
+npm run test src/temporal/__tests__/approval.workflow.test.ts
+
+
+STEP 9: Monitor & Verify
+─────────────────────────────────────────────────────────────────
+
+1. Access Temporal UI: http://localhost:8233
+2. Check workflow executions
+3. Monitor worker logs
+4. Verify WorkflowHistory table populates correctly
+
+
+═══════════════════════════════════════════════════════════════════
+📊 EXPECTED OUTCOMES
+═══════════════════════════════════════════════════════════════════
+
+Database Complexity Reduction:
+  ❌ Workflow              (removed)
+  ❌ WorkflowTemplate      (removed)
+  ❌ WorkflowInstance      (removed)
+  ❌ WorkflowStepInstance  (removed)
+  ❌ WorkflowAction        (removed)
+  ❌ WorkflowDelegation    (removed)
+  ❌ WorkflowEscalation    (removed)
+  ❌ WorkflowTransition    (removed)
+  ❌ WorkflowHistory (old) (removed)
+
+  ✅ WorkflowHistory (new) (1 simple audit table)
+
+Reduction: 11 tables → 1 table (90% reduction)
+
+Performance Improvements:
+  - Workflow execution handled by production-grade Temporal
+  - No more complex SQL joins for workflow state
+  - Built-in retry, timeout, versioning capabilities
+  - Time-travel debugging via Temporal UI
+
+Maintenance Benefits:
+  - No custom workflow engine code to maintain
+  - Temporal team handles infrastructure updates
+  - Easy to add new workflow types
+  - Better observability and monitoring
+
+
+═══════════════════════════════════════════════════════════════════
+🔧 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════
+
+Issue: "Cannot connect to Temporal"
+Solution:
+  - Check Docker containers: docker ps | grep temporal
+  - Check logs: docker logs gloria-temporal
+  - Verify port 7233 is not blocked
+  - Restart: docker-compose -f docker-compose.temporal.yml restart
+
+Issue: "Worker not processing workflows"
+Solution:
+  - Check worker logs for errors
+  - Verify TEMPORAL_ADDRESS and TEMPORAL_NAMESPACE
+  - Ensure task queue name matches: "gloria-workflows"
+  - Restart worker
+
+Issue: "Migration script fails"
+Solution:
+  - Run with --dry-run first
+  - Check database connection
+  - Verify Temporal is running and accessible
+  - Check logs for specific error messages
+
+Issue: "Old workflow data lost"
+Solution:
+  - Restore from backup: psql $DATABASE_URL < backup_pre_phase3.sql
+  - Re-run migration with fixes
+  - Contact DBA for assistance
+
+
+═══════════════════════════════════════════════════════════════════
+🛡️ ROLLBACK PROCEDURE
+═══════════════════════════════════════════════════════════════════
+
+If issues occur, rollback as follows:
+
+1. Stop Temporal worker
+   pkill -f "temporal/worker.ts"
+
+2. Stop Temporal infrastructure
+   docker-compose -f docker-compose.temporal.yml down
+
+3. Restore database backup
+   psql $DATABASE_URL < backup_pre_phase3.sql
+
+4. Revert application code changes
+   git revert <commit-hash>
+
+5. Restart application
+   npm run start:dev
+
+
+═══════════════════════════════════════════════════════════════════
+📁 FILE STRUCTURE
+═══════════════════════════════════════════════════════════════════
+
+backend/
+├── docker-compose.temporal.yml          # Temporal infrastructure
+├── src/
+│   └── temporal/
+│       ├── activities/
+│       │   ├── approval.activities.ts   # Approval-related activities
+│       │   ├── notification.activities.ts # Notification activities
+│       │   └── index.ts
+│       ├── workflows/
+│       │   ├── approval.workflow.ts     # Workflow definitions
+│       │   └── index.ts
+│       ├── types/
+│       │   └── workflow.types.ts        # TypeScript interfaces
+│       ├── temporal.service.ts          # NestJS service integration
+│       ├── temporal.module.ts           # NestJS module
+│       ├── worker.ts                    # Worker process
+│       └── __tests__/
+│           └── approval.workflow.test.ts # Tests
+├── scripts/
+│   ├── migrations/
+│   │   └── migrate-workflows-to-temporal.ts # Migration script
+│   └── start-temporal-worker.sh         # Worker startup script
+├── prisma/
+│   ├── migrations/
+│   │   └── phase3-temporal-migration.sql # Database migration
+│   └── schema-phase3-temporal.prisma    # New schema definition
+└── PHASE3-IMPLEMENTATION-GUIDE.txt      # This file
+
+
+═══════════════════════════════════════════════════════════════════
+✅ SUCCESS CRITERIA
+═══════════════════════════════════════════════════════════════════
+
+Phase 3 is successful when:
+
+☑ Temporal infrastructure running (docker ps shows 3 containers)
+☑ Temporal UI accessible at http://localhost:8233
+☑ Worker process running without errors
+☑ New approval requests create Temporal workflows
+☑ Workflows visible in Temporal UI
+☑ WorkflowHistory table populating correctly
+☑ Old workflow tables removed from database
+☑ All tests passing
+☑ No errors in application logs
+☑ Rollback procedure tested and documented
+
+
+═══════════════════════════════════════════════════════════════════
+📞 SUPPORT & NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+
+Questions or Issues?
+1. Check troubleshooting section above
+2. Review Temporal docs: https://docs.temporal.io
+3. Check worker and server logs
+4. Consult with DBA or senior developer
+
+After Successful Deployment:
+1. Monitor system for 1 week
+2. Collect performance metrics
+3. Document any edge cases found
+4. Train team on Temporal UI usage
+5. Plan Phase 4: Data Normalization
+
+
+═══════════════════════════════════════════════════════════════════
+Document Version: 1.0
+Last Updated: 2025-10-29
+Status: ✅ Ready for Deployment
+═══════════════════════════════════════════════════════════════════

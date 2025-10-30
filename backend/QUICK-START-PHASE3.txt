@@ -1,0 +1,270 @@
+╔═══════════════════════════════════════════════════════════════════╗
+║  PHASE 3: QUICK START DEPLOYMENT GUIDE                           ║
+║  Temporal.io Workflow Migration - Step by Step                    ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+Status: ✅ READY TO DEPLOY
+Complexity Reduction: 11 tables → 1 table (90% reduction)
+
+═══════════════════════════════════════════════════════════════════
+🚀 DEPLOYMENT STEPS (30-45 minutes)
+═══════════════════════════════════════════════════════════════════
+
+STEP 1: Start Temporal Infrastructure (5 min)
+─────────────────────────────────────────────────────────────────
+
+cd /Users/christianhandoko/Development/work/my-gloria-2/backend
+
+# Start Temporal server, UI, and PostgreSQL
+npm run temporal:up
+
+# Verify Temporal is running
+curl http://localhost:8233  # Should return HTML
+
+# Check logs (optional)
+npm run temporal:logs
+
+
+STEP 2: Verify Database Connection (2 min)
+─────────────────────────────────────────────────────────────────
+
+# Test database connection
+npx prisma db pull --schema prisma/schema.prisma
+
+# Should complete without errors
+
+
+STEP 3: Backup Database (CRITICAL - 5 min)
+─────────────────────────────────────────────────────────────────
+
+# Create backup before migration
+pg_dump $DATABASE_URL > backups/pre-phase3-$(date +%Y%m%d-%H%M%S).sql
+
+# Verify backup file exists and has size > 0
+ls -lh backups/
+
+
+STEP 4: Test Migration (Dry Run) (3 min)
+─────────────────────────────────────────────────────────────────
+
+# Run migration in dry-run mode
+npm run workflows:migrate:dry
+
+# Review output - check how many workflows will be migrated
+# Expected: List of workflows with their IDs and current state
+
+
+STEP 5: Migrate Active Workflows (5 min)
+─────────────────────────────────────────────────────────────────
+
+# Run actual migration
+npm run workflows:migrate
+
+# Expected output:
+#   ✓ Connected to Temporal
+#   Found X active workflows to migrate
+#   ✓ Migrated workflow xxx → Temporal workflow yyy
+#   Migration Summary:
+#     Total Workflows: X
+#     Migrated: X
+#     Failed: 0
+
+
+STEP 6: Run Database Migration (3 min)
+─────────────────────────────────────────────────────────────────
+
+# Apply Prisma schema changes
+npx prisma migrate dev --name phase3-temporal-migration
+
+# This will:
+#   - Remove 11 old workflow tables
+#   - Create new simplified WorkflowHistory table
+#   - Update foreign key constraints
+
+
+STEP 7: Start Temporal Worker (2 min)
+─────────────────────────────────────────────────────────────────
+
+# In a NEW terminal window
+cd /Users/christianhandoko/Development/work/my-gloria-2/backend
+npm run temporal:worker
+
+# Keep this terminal open - worker must run continuously
+# Expected output:
+#   ✓ Connected to Temporal
+#   ✓ Worker started, polling for tasks...
+
+
+STEP 8: Start Backend Application (3 min)
+─────────────────────────────────────────────────────────────────
+
+# In ANOTHER terminal window
+npm run start:dev
+
+# Expected output:
+#   Application is running on: http://localhost:3000
+
+
+STEP 9: Verify Integration (5 min)
+─────────────────────────────────────────────────────────────────
+
+# Test 1: Check Temporal UI
+open http://localhost:8233
+# Should see Temporal UI with migrated workflows
+
+# Test 2: Test approval endpoint
+curl -X POST http://localhost:3000/api/approvals \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_CLERK_TOKEN" \
+  -d '{
+    "requestId": "test-001",
+    "approverId": "user-123",
+    "module": "TEST",
+    "entityType": "TEST_ENTITY",
+    "entityId": "entity-1",
+    "priority": "MEDIUM"
+  }'
+
+# Expected response:
+# {
+#   "statusCode": 201,
+#   "message": "Approval workflow started successfully",
+#   "data": {
+#     "workflowId": "approval-test-001",
+#     "runId": "...",
+#     "status": "STARTED"
+#   }
+# }
+
+# Test 3: Check workflow in Temporal UI
+# Refresh http://localhost:8233 - should see new workflow
+
+
+STEP 10: Monitor & Validate (5 min)
+─────────────────────────────────────────────────────────────────
+
+# Check database for WorkflowHistory entries
+psql $DATABASE_URL -c "SELECT COUNT(*) FROM gloria_ops.workflow_history;"
+
+# Check Temporal worker logs
+# Should see: "Workflow started", "Activity executed"
+
+# Check application logs
+# No errors related to workflows
+
+
+═══════════════════════════════════════════════════════════════════
+✅ SUCCESS CRITERIA
+═══════════════════════════════════════════════════════════════════
+
+All deployments should verify:
+
+☑ Temporal infrastructure running (3 containers)
+☑ Temporal UI accessible at http://localhost:8233
+☑ Worker process running without errors
+☑ Backend application starts without errors
+☑ New approval requests create Temporal workflows
+☑ Workflows visible in Temporal UI
+☑ WorkflowHistory table has entries
+☑ Old workflow tables removed from database
+☑ No errors in application logs
+
+
+═══════════════════════════════════════════════════════════════════
+🛠️ QUICK COMMANDS REFERENCE
+═══════════════════════════════════════════════════════════════════
+
+# Temporal Operations
+npm run temporal:up          # Start Temporal
+npm run temporal:down        # Stop Temporal
+npm run temporal:logs        # View Temporal logs
+npm run temporal:worker      # Start worker
+
+# Workflow Operations
+npm run workflows:migrate:dry  # Dry run migration
+npm run workflows:migrate      # Actual migration
+
+# Database Operations
+npx prisma generate          # Regenerate Prisma client
+npx prisma migrate dev       # Create and apply migration
+npx prisma studio            # Open Prisma Studio
+
+# Application Operations
+npm run start:dev            # Start backend
+npm run build                # Build for production
+npm test                     # Run tests
+
+
+═══════════════════════════════════════════════════════════════════
+🔧 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════
+
+Issue: "Cannot connect to Temporal"
+Solution:
+  $ npm run temporal:logs
+  $ docker ps | grep temporal
+  # Restart if needed:
+  $ npm run temporal:down && npm run temporal:up
+
+Issue: "Worker not processing workflows"
+Solution:
+  # Check worker logs in terminal
+  # Verify TEMPORAL_ADDRESS in .env
+  # Restart worker: Ctrl+C, then npm run temporal:worker
+
+Issue: "Prisma migration fails"
+Solution:
+  # Restore from backup
+  $ psql $DATABASE_URL < backups/pre-phase3-XXXXXX.sql
+  # Re-run migration
+  $ npx prisma migrate dev --name phase3-temporal-migration
+
+Issue: "Old workflows not migrated"
+Solution:
+  # Check migration logs
+  # Verify workflows exist:
+  $ psql $DATABASE_URL -c "SELECT COUNT(*) FROM gloria_ops.workflow_instances WHERE state IN ('INITIALIZED','IN_PROGRESS','WAITING');"
+  # Re-run migration
+
+
+═══════════════════════════════════════════════════════════════════
+📋 CHECKLIST FOR PRODUCTION
+═══════════════════════════════════════════════════════════════════
+
+Before deploying to production:
+
+□ Full database backup created and verified
+□ Temporal infrastructure deployed (separate from local Docker)
+□ Environment variables configured for production Temporal
+□ Worker process deployed as systemd service or K8s deployment
+□ Monitoring alerts configured for workflow failures
+□ Rollback procedure tested in staging
+□ Team trained on Temporal UI usage
+□ Documentation updated with new workflow process
+□ Old workflow code archived (not deleted)
+
+
+═══════════════════════════════════════════════════════════════════
+📞 SUPPORT & NEXT STEPS
+═══════════════════════════════════════════════════════════════════
+
+Questions?
+1. Check PHASE3-IMPLEMENTATION-GUIDE.txt for detailed docs
+2. Review Temporal docs: https://docs.temporal.io
+3. Check worker and server logs
+4. Consult DBA for database issues
+
+After Successful Deployment:
+1. Monitor for 1 week
+2. Collect performance metrics
+3. Document edge cases
+4. Train team on Temporal UI
+5. Plan Phase 4 (Data Normalization)
+
+
+═══════════════════════════════════════════════════════════════════
+Document Version: 1.0
+Last Updated: 2025-10-29
+Deployment Time: ~30-45 minutes
+Status: ✅ Ready for Deployment
+═══════════════════════════════════════════════════════════════════

@@ -108,12 +108,12 @@ export class AssignRoleDto {
   @ApiPropertyOptional({ description: 'Valid from date' })
   @IsOptional()
   @Type(() => Date)
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({ description: 'Valid until date' })
   @IsOptional()
   @Type(() => Date)
-  validUntil?: Date;
+  effectiveUntil?: Date;
 }
 
 export class AssignRolePermissionDto {
@@ -133,12 +133,12 @@ export class AssignRolePermissionDto {
   @ApiPropertyOptional({ description: 'Valid from date' })
   @IsOptional()
   @Type(() => Date)
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({ description: 'Valid until date' })
   @IsOptional()
   @Type(() => Date)
-  validUntil?: Date;
+  effectiveUntil?: Date;
 
   @ApiPropertyOptional({ description: 'Grant reason' })
   @IsString()

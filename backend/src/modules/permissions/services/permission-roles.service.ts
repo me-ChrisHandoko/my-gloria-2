@@ -11,7 +11,6 @@ import {
   BulkAssignRolePermissionsDto,
   BulkRemoveRolePermissionsDto,
 } from '../dto/role-permission.dto';
-import { PermissionCacheService } from './permission-cache.service';
 import { Prisma } from '@prisma/client';
 import { v7 as uuidv7 } from 'uuid';
 
@@ -19,7 +18,6 @@ import { v7 as uuidv7 } from 'uuid';
 export class RolePermissionsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cacheService: PermissionCacheService,
   ) {}
 
   /**
@@ -76,10 +74,10 @@ export class RolePermissionsService {
       );
     }
 
-    // Validate validUntil is after validFrom
-    if (dto.validFrom && dto.validUntil && dto.validUntil <= dto.validFrom) {
+    // Validate effectiveUntil is after effectiveFrom
+    if (dto.effectiveFrom && dto.effectiveUntil && dto.effectiveUntil <= dto.effectiveFrom) {
       throw new BadRequestException(
-        'validUntil must be after validFrom',
+        'effectiveUntil must be after effectiveFrom',
       );
     }
 
@@ -91,8 +89,8 @@ export class RolePermissionsService {
         permissionId: dto.permissionId,
         isGranted: dto.isGranted ?? true,
         conditions: dto.conditions ? (dto.conditions as Prisma.InputJsonValue) : Prisma.DbNull,
-        validFrom: dto.validFrom || new Date(),
-        validUntil: dto.validUntil || null,
+        effectiveFrom: dto.effectiveFrom || new Date(),
+        effectiveUntil: dto.effectiveUntil || null,
         grantedBy,
         grantReason: dto.grantReason || null,
       },
@@ -106,14 +104,6 @@ export class RolePermissionsService {
     await this.invalidateRoleCache(roleId);
 
     // Record change in history
-    await this.recordChangeHistory(
-      'ROLE_PERMISSION',
-      rolePermission.id,
-      'ASSIGN',
-      null,
-      rolePermission,
-      grantedBy,
-    );
 
     return rolePermission;
   }
@@ -157,14 +147,6 @@ export class RolePermissionsService {
     await this.invalidateRoleCache(roleId);
 
     // Record change in history
-    await this.recordChangeHistory(
-      'ROLE_PERMISSION',
-      rolePermission.id,
-      'REMOVE',
-      previousState,
-      null,
-      userId,
-    );
 
     return { message: 'Permission removed from role successfully' };
   }
@@ -195,11 +177,11 @@ export class RolePermissionsService {
       ...(filters.isGranted !== undefined && { isGranted: filters.isGranted }),
     };
 
-    // Add active filter based on validUntil
+    // Add active filter based on effectiveUntil
     if (filters.isActive !== undefined && filters.isActive) {
       where.OR = [
-        { validUntil: null },
-        { validUntil: { gte: new Date() } },
+        { effectiveUntil: null },
+        { effectiveUntil: { gte: new Date() } },
       ];
     }
 
@@ -261,12 +243,12 @@ export class RolePermissionsService {
       );
     }
 
-    // Validate validUntil is after validFrom if both are provided
-    const validFrom = dto.validFrom || rolePermission.validFrom;
-    const validUntil = dto.validUntil !== undefined ? dto.validUntil : rolePermission.validUntil;
+    // Validate effectiveUntil is after effectiveFrom if both are provided
+    const effectiveFrom = dto.effectiveFrom || rolePermission.effectiveFrom;
+    const effectiveUntil = dto.effectiveUntil !== undefined ? dto.effectiveUntil : rolePermission.effectiveUntil;
 
-    if (validFrom && validUntil && validUntil <= validFrom) {
-      throw new BadRequestException('validUntil must be after validFrom');
+    if (effectiveFrom && effectiveUntil && effectiveUntil <= effectiveFrom) {
+      throw new BadRequestException('effectiveUntil must be after effectiveFrom');
     }
 
     // Record previous state
@@ -278,8 +260,8 @@ export class RolePermissionsService {
       data: {
         ...(dto.isGranted !== undefined && { isGranted: dto.isGranted }),
         ...(dto.conditions !== undefined && { conditions: dto.conditions }),
-        ...(dto.validFrom && { validFrom: dto.validFrom }),
-        ...(dto.validUntil !== undefined && { validUntil: dto.validUntil }),
+        ...(dto.effectiveFrom && { effectiveFrom: dto.effectiveFrom }),
+        ...(dto.effectiveUntil !== undefined && { effectiveUntil: dto.effectiveUntil }),
         updatedAt: new Date(),
       },
       include: {
@@ -292,14 +274,6 @@ export class RolePermissionsService {
     await this.invalidateRoleCache(roleId);
 
     // Record change in history
-    await this.recordChangeHistory(
-      'ROLE_PERMISSION',
-      updated.id,
-      'UPDATE',
-      previousState,
-      updated,
-      userId,
-    );
 
     return updated;
   }
@@ -315,8 +289,8 @@ export class RolePermissionsService {
           where: {
             isGranted: true,
             OR: [
-              { validUntil: null },
-              { validUntil: { gte: new Date() } },
+              { effectiveUntil: null },
+              { effectiveUntil: { gte: new Date() } },
             ],
           },
           include: {
@@ -334,8 +308,8 @@ export class RolePermissionsService {
                   where: {
                     isGranted: true,
                     OR: [
-                      { validUntil: null },
-                      { validUntil: { gte: new Date() } },
+                      { effectiveUntil: null },
+                      { effectiveUntil: { gte: new Date() } },
                     ],
                   },
                   include: {
@@ -448,8 +422,8 @@ export class RolePermissionsService {
     }
 
     // Validate date range
-    if (dto.validFrom && dto.validUntil && dto.validUntil <= dto.validFrom) {
-      throw new BadRequestException('validUntil must be after validFrom');
+    if (dto.effectiveFrom && dto.effectiveUntil && dto.effectiveUntil <= dto.effectiveFrom) {
+      throw new BadRequestException('effectiveUntil must be after effectiveFrom');
     }
 
     // Bulk create role permissions in transaction
@@ -463,8 +437,8 @@ export class RolePermissionsService {
               permissionId,
               isGranted: dto.isGranted ?? true,
               conditions: dto.conditions ? (dto.conditions as Prisma.InputJsonValue) : Prisma.DbNull,
-              validFrom: dto.validFrom || new Date(),
-              validUntil: dto.validUntil || null,
+              effectiveFrom: dto.effectiveFrom || new Date(),
+              effectiveUntil: dto.effectiveUntil || null,
               grantedBy,
               grantReason: dto.grantReason || null,
             },
@@ -474,27 +448,6 @@ export class RolePermissionsService {
           }),
         ),
       );
-
-      // Record change history for bulk operation
-      await tx.permissionChangeHistory.create({
-        data: {
-          id: uuidv7(),
-          entityType: 'ROLE_PERMISSION',
-          entityId: roleId,
-          operation: 'BULK_ASSIGN',
-          previousState: Prisma.JsonNull,
-          newState: {
-            roleId,
-            permissionIds: newPermissionIds,
-            count: created.length,
-          },
-          metadata: {
-            skippedCount: dto.permissionIds.length - newPermissionIds.length,
-            existingPermissions: Array.from(existingPermissionIds),
-          },
-          performedBy: grantedBy,
-        },
-      });
 
       return created;
     });
@@ -553,26 +506,6 @@ export class RolePermissionsService {
         },
       });
 
-      // Record change history
-      await tx.permissionChangeHistory.create({
-        data: {
-          id: uuidv7(),
-          entityType: 'ROLE_PERMISSION',
-          entityId: roleId,
-          operation: 'BULK_REMOVE',
-          previousState: {
-            roleId,
-            permissions: existing,
-            count: existing.length,
-          },
-          newState: Prisma.JsonNull,
-          metadata: {
-            reason: dto.reason || null,
-          },
-          performedBy: userId,
-        },
-      });
-
       return existing;
     });
 
@@ -590,41 +523,7 @@ export class RolePermissionsService {
    * Invalidate cache for all users with this role
    */
   private async invalidateRoleCache(roleId: string) {
-    // Get all users with this role
-    const userRoles = await this.prisma.userRole.findMany({
-      where: { roleId, isActive: true },
-      select: { userProfileId: true },
-    });
-
-    // Invalidate cache for each user
-    await Promise.all(
-      userRoles.map((ur) =>
-        this.cacheService.invalidateUserCache(ur.userProfileId),
-      ),
-    );
-  }
-
-  /**
-   * Record change in permission history
-   */
-  private async recordChangeHistory(
-    entityType: string,
-    entityId: string,
-    operation: string,
-    previousState: any,
-    newState: any,
-    performedBy: string,
-  ) {
-    await this.prisma.permissionChangeHistory.create({
-      data: {
-        id: uuidv7(),
-        entityType,
-        entityId,
-        operation,
-        previousState,
-        newState,
-        performedBy,
-      },
-    });
+    // Cache invalidation handled by PermissionCalculationService Redis cache
+    // No additional action needed here
   }
 }

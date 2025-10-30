@@ -147,17 +147,19 @@ export class AuditService {
     granted: boolean,
     context: AuditContext,
   ): Promise<void> {
-    await this.prisma.permissionCheckLog.create({
-      data: {
-        id: this.generateId(),
-        userProfileId: context.actorProfileId || actorId,
-        resource,
-        action: permission,
-        isAllowed: granted,
-        checkDuration: 0,
-        createdAt: new Date(),
-      },
-    });
+    // TODO: PermissionCheckLog model was removed in Phase 3 schema simplification
+    // Consider implementing permission logging via WorkflowHistory or AuditLog
+    // await this.prisma.permissionCheckLog.create({
+    //   data: {
+    //     id: this.generateId(),
+    //     userProfileId: context.actorProfileId || actorId,
+    //     resource,
+    //     action: permission,
+    //     isAllowed: granted,
+    //     checkDuration: 0,
+    //     createdAt: new Date(),
+    //   },
+    // });
 
     // Also create an audit log for critical permission checks
     if (!granted || this.isCriticalPermission(permission)) {

@@ -9,7 +9,6 @@ import { LoggingService } from '@/core/logging/logging.service';
 import { CacheService } from '@/core/cache/cache.service';
 import {
   Permission,
-  PermissionGroup,
   Prisma,
   PermissionAction,
 } from '@prisma/client';
@@ -17,8 +16,6 @@ import { v7 as uuidv7 } from 'uuid';
 import {
   CreatePermissionDto,
   UpdatePermissionDto,
-  CreatePermissionGroupDto,
-  UpdatePermissionGroupDto,
 } from '../dto/permission.dto';
 import { IPermissionFilter } from '../interfaces/permission.interface';
 
@@ -70,14 +67,14 @@ export class PermissionsService {
           resource: dto.resource,
           action: dto.action,
           scope: dto.scope,
-          groupId: dto.groupId,
+          category: dto.category,
+          groupName: dto.groupName,
+          groupIcon: dto.groupIcon,
+          groupSortOrder: dto.groupSortOrder,
           conditions: dto.conditions,
           metadata: dto.metadata,
           isSystemPermission: dto.isSystemPermission || false,
           createdBy,
-        },
-        include: {
-          group: true,
         },
       });
 
@@ -120,14 +117,14 @@ export class PermissionsService {
           name: dto.name,
           description: dto.description,
           scope: dto.scope,
-          groupId: dto.groupId,
+          category: dto.category,
+          groupName: dto.groupName,
+          groupIcon: dto.groupIcon,
+          groupSortOrder: dto.groupSortOrder,
           conditions: dto.conditions,
           metadata: dto.metadata,
           isActive: dto.isActive,
           updatedAt: new Date(),
-        },
-        include: {
-          group: true,
         },
       });
 
@@ -164,11 +161,6 @@ export class PermissionsService {
 
     const permission = await this.prisma.permission.findUnique({
       where: { id },
-      include: {
-        group: true,
-        // Removed: dependencies relation no longer exists
-        // Removed: dependentOn relation no longer exists
-      },
     });
 
     if (!permission) {
@@ -192,9 +184,6 @@ export class PermissionsService {
 
     const permission = await this.prisma.permission.findUnique({
       where: { code },
-      include: {
-        group: true,
-      },
     });
 
     if (!permission) {
@@ -203,6 +192,21 @@ export class PermissionsService {
 
     await this.cache.set(cacheKey, permission, this.cacheTTL);
     return permission;
+  }
+
+  /**
+   * Find all permissions (for groups endpoint)
+   */
+  async findAll(options: { includeInactive?: boolean } = {}): Promise<Permission[]> {
+    return this.prisma.permission.findMany({
+      where: options.includeInactive ? {} : { isActive: true },
+      orderBy: [
+        { groupSortOrder: 'asc' },
+        { groupName: 'asc' },
+        { resource: 'asc' },
+        { action: 'asc' },
+      ],
+    });
   }
 
   /**
@@ -230,11 +234,8 @@ export class PermissionsService {
 
     return this.prisma.permission.findMany({
       where,
-      include: {
-        group: true,
-      },
       orderBy: [
-        { group: { sortOrder: 'asc' } },
+        { groupSortOrder: 'asc' },
         { resource: 'asc' },
         { action: 'asc' },
       ],
@@ -348,194 +349,6 @@ export class PermissionsService {
     }
   }
 
-  /**
-   * Create a permission group
-   */
-  async createPermissionGroup(
-    dto: CreatePermissionGroupDto,
-    createdBy: string,
-  ): Promise<PermissionGroup> {
-    try {
-      const existing = await this.prisma.permissionGroup.findUnique({
-        where: { code: dto.code },
-      });
-
-      if (existing) {
-        throw new ConflictException(
-          `Permission group with code ${dto.code} already exists`,
-        );
-      }
-
-      const group = await this.prisma.permissionGroup.create({
-        data: {
-          id: uuidv7(),
-          code: dto.code,
-          name: dto.name,
-          description: dto.description,
-          category: dto.category,
-          icon: dto.icon,
-          sortOrder: dto.sortOrder || 0,
-          createdBy,
-        },
-      });
-
-      this.logger.log(
-        `Permission group created: ${group.code}`,
-        'PermissionsService',
-      );
-      return group;
-    } catch (error) {
-      this.logger.error(
-        'Error creating permission group',
-        error.stack,
-        'PermissionsService',
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Update a permission group
-   */
-  async updatePermissionGroup(
-    id: string,
-    dto: UpdatePermissionGroupDto,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _modifiedBy: string,
-  ): Promise<PermissionGroup> {
-    try {
-      const existing = await this.prisma.permissionGroup.findUnique({
-        where: { id },
-      });
-
-      if (!existing) {
-        throw new NotFoundException(`Permission group with ID ${id} not found`);
-      }
-
-      const group = await this.prisma.permissionGroup.update({
-        where: { id },
-        data: {
-          name: dto.name,
-          description: dto.description,
-          category: dto.category,
-          icon: dto.icon,
-          sortOrder: dto.sortOrder,
-          isActive: dto.isActive,
-          updatedAt: new Date(),
-        },
-      });
-
-      this.logger.log(
-        `Permission group updated: ${group.code}`,
-        'PermissionsService',
-      );
-      return group;
-    } catch (error) {
-      this.logger.error(
-        'Error updating permission group',
-        error.stack,
-        'PermissionsService',
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Get permission group by ID
-   */
-  async getPermissionGroupById(id: string): Promise<PermissionGroup> {
-    const group = await this.prisma.permissionGroup.findUnique({
-      where: { id },
-      include: {
-        permissions: {
-          where: { isActive: true },
-          select: {
-            id: true,
-            code: true,
-            name: true,
-            description: true,
-            resource: true,
-            action: true,
-          },
-        },
-      },
-    });
-
-    if (!group) {
-      throw new NotFoundException(`Permission group with ID ${id} not found`);
-    }
-
-    return group;
-  }
-
-  /**
-   * Delete permission group (soft delete or restrict if has permissions)
-   */
-  async deletePermissionGroup(
-    id: string,
-    deletedBy: string,
-  ): Promise<{ message: string }> {
-    try {
-      const group = await this.prisma.permissionGroup.findUnique({
-        where: { id },
-        include: {
-          permissions: { where: { isActive: true } },
-        },
-      });
-
-      if (!group) {
-        throw new NotFoundException(`Permission group with ID ${id} not found`);
-      }
-
-      // Check if group has associated permissions
-      if (group.permissions && group.permissions.length > 0) {
-        throw new BadRequestException(
-          `Cannot delete permission group "${group.name}" because it has ${group.permissions.length} associated permission(s). Please reassign or delete the permissions first.`,
-        );
-      }
-
-      // Soft delete by setting isActive to false
-      await this.prisma.permissionGroup.update({
-        where: { id },
-        data: {
-          isActive: false,
-          updatedAt: new Date(),
-        },
-      });
-
-      this.logger.log(
-        `Permission group deleted by ${deletedBy}: ${group.code}`,
-        'PermissionsService',
-      );
-
-      return {
-        message: `Permission group "${group.name}" deleted successfully`,
-      };
-    } catch (error) {
-      this.logger.error(
-        'Error deleting permission group',
-        error.stack,
-        'PermissionsService',
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Find all permission groups
-   */
-  async findAllGroups(includeInactive = false): Promise<PermissionGroup[]> {
-    return this.prisma.permissionGroup.findMany({
-      where: includeInactive ? {} : { isActive: true },
-      include: {
-        permissions: {
-          where: includeInactive ? {} : { isActive: true },
-          orderBy: { name: 'asc' },
-        },
-      },
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-    });
-  }
 
   // Removed: addDependency method - permissionDependency model no longer exists
   // /**
@@ -753,8 +566,8 @@ export class PermissionsService {
         name: ur.role.name,
         isActive: ur.role.isActive,
         assignedAt: ur.assignedAt,
-        validFrom: ur.validFrom,
-        validUntil: ur.validUntil,
+        effectiveFrom: ur.effectiveFrom,
+        effectiveUntil: ur.effectiveUntil,
       })),
       directPermissionsCount: userPermissions.length,
       rolePermissionsCount: rolePermissions.length,
@@ -780,7 +593,7 @@ export class PermissionsService {
       this.prisma.permission.count(),
       this.prisma.permission.count({ where: { isActive: true } }),
       this.prisma.permission.count({ where: { isSystemPermission: true } }),
-      this.prisma.permissionGroup.count({ where: { isActive: true } }),
+      this.prisma.permission.groupBy({ by: ['groupName'], _count: true }).then(g => g.length),
       this.prisma.permission.groupBy({
         by: ['action'],
         _count: true,

@@ -24,11 +24,14 @@ import { LoggingModule } from './core/logging/logging.module';
 import { UsersModule } from './modules/users/users.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { PermissionModule } from './modules/permissions/permission.module';
-import { WorkflowsModule } from './modules/workflows/workflows.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AuditModule as AuditFeatureModule } from './modules/audit/audit.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { SystemConfigModule } from './modules/system-config/system-config.module';
+
+// Temporal Workflow Integration
+import { TemporalModule } from './temporal/temporal.module';
+import { ApprovalsModule } from './modules/approvals/approvals.module';
 
 // Core Performance & Security
 import { PerformanceModule } from './core/performance/performance.module';
@@ -75,6 +78,9 @@ import { CryptoUtil } from './core/utils/crypto.util';
     // Performance & Security Core Modules
     PerformanceModule,
     SecurityModule,
+
+    // Temporal Workflow Engine
+    TemporalModule,
 
     // Caching Module with Redis
     CacheModule.registerAsync({
@@ -306,10 +312,6 @@ function getFeatureModules(): any[] {
     modules.push(PermissionModule);
   }
 
-  // Workflows Module
-  if (process.env.ENABLE_WORKFLOWS_MODULE !== 'false') {
-    modules.push(WorkflowsModule);
-  }
 
   // Notifications Module
   if (process.env.ENABLE_NOTIFICATIONS_MODULE !== 'false') {
@@ -329,6 +331,11 @@ function getFeatureModules(): any[] {
   // System Configuration Module
   if (process.env.ENABLE_SYSTEM_CONFIG_MODULE !== 'false') {
     modules.push(SystemConfigModule);
+  }
+
+  // Approvals Module (Temporal Example)
+  if (process.env.ENABLE_APPROVALS_MODULE !== 'false') {
+    modules.push(ApprovalsModule);
   }
 
   return modules;

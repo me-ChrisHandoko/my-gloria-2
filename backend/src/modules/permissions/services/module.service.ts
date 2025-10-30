@@ -29,7 +29,7 @@ export class ModuleService {
     canDelete: boolean,
     canShare: boolean,
     grantedBy: string,
-    validUntil?: Date,
+    effectiveUntil?: Date,
   ): Promise<UserModuleAccess> {
     try {
       const permissions = {
@@ -57,7 +57,7 @@ export class ModuleService {
           data: {
             permissions,
             grantedBy,
-            validUntil,
+            effectiveUntil,
             updatedAt: new Date(),
           },
         });
@@ -75,7 +75,7 @@ export class ModuleService {
             moduleId,
             permissions,
             grantedBy,
-            validUntil,
+            effectiveUntil,
           },
         });
 
@@ -106,7 +106,7 @@ export class ModuleService {
       where: {
         userProfileId,
         isActive: true,
-        OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+        OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: new Date() } }],
       },
       include: {
         module: true,
@@ -127,7 +127,7 @@ export class ModuleService {
         userProfileId,
         moduleId,
         isActive: true,
-        OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+        OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: new Date() } }],
       },
     });
 
@@ -165,7 +165,7 @@ export class ModuleService {
     canDelete: boolean,
     canShare: boolean,
     createdBy: string,
-    validUntil?: Date,
+    effectiveUntil?: Date,
   ): Promise<RoleModuleAccess> {
     try {
       const permissions = {

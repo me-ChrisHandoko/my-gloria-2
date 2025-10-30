@@ -189,14 +189,6 @@ export class SystemConfigService {
       this.validateConfigValue(dto.value || existing.value, rules as any);
     }
 
-    // Create history record
-    await this.createHistory(
-      existing,
-      dto.value || existing.value,
-      userId,
-      dto.reason,
-    );
-
     // Encrypt if needed
     let value = dto.value;
     if (dto.isEncrypted || existing.isEncrypted) {
@@ -287,17 +279,6 @@ export class SystemConfigService {
     return results;
   }
 
-  async getHistory(
-    configId: string,
-    limit = 10,
-  ): Promise<SystemConfigHistory[]> {
-    return this.prisma.systemConfigHistory.findMany({
-      where: { configId },
-      orderBy: { changedAt: 'desc' },
-      take: limit,
-    });
-  }
-
   async exportConfigs(category?: string): Promise<Record<string, any>> {
     const where = category ? { category } : {};
     const configs = await this.prisma.systemConfiguration.findMany({
@@ -377,24 +358,6 @@ export class SystemConfigService {
 
     this.logger.info('System configuration cache refreshed', {
       count: configs.length,
-    });
-  }
-
-  private async createHistory(
-    config: SystemConfiguration,
-    newValue: any,
-    userId: string,
-    reason?: string,
-  ): Promise<void> {
-    await this.prisma.systemConfigHistory.create({
-      data: {
-        id: uuidv7(),
-        configId: config.id,
-        previousValue: config.value as any, // Cast to any to handle JsonValue -> InputJsonValue conversion
-        newValue,
-        changedBy: userId,
-        reason,
-      },
     });
   }
 

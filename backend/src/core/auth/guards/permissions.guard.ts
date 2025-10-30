@@ -126,18 +126,7 @@ export class PermissionsGuard implements CanActivate {
     permission: RequiredPermissionData,
     request: any,
   ): Promise<PermissionCheckResult> {
-    // 1. Check user override permissions (highest priority)
-    const userOverride = await this.checkUserOverride(user.id, permission);
-    if (userOverride !== null) {
-      return {
-        allowed: userOverride,
-        reason: userOverride
-          ? 'Allowed by user override'
-          : `Denied by user override for ${permission.resource}:${permission.action}`,
-      };
-    }
-
-    // 2. Check direct user permissions
+    // 1. Check direct user permissions
     const directPermission = await this.checkDirectUserPermission(
       user.id,
       permission,
@@ -191,22 +180,6 @@ export class PermissionsGuard implements CanActivate {
     };
   }
 
-  private async checkUserOverride(
-    userId: string,
-    permission: RequiredPermissionData,
-  ): Promise<boolean | null> {
-    const override = await this.prisma.userOverride.findFirst({
-      where: {
-        userProfileId: userId,
-        moduleId: permission.resource,
-        permissionType: permission.action as any,
-        OR: [{ validUntil: null }, { validUntil: { gt: new Date() } }],
-      },
-    });
-
-    if (!override) return null;
-    return override.isGranted;
-  }
 
   private async checkDirectUserPermission(
     userId: string,
@@ -482,28 +455,30 @@ export class PermissionsGuard implements CanActivate {
     allowed: boolean,
   ): Promise<void> {
     try {
-      await this.prisma.permissionCheckLog.create({
-        data: {
-          id: uuidv7(),
-          userProfileId: user.id,
-          resource: requiredPermissions[0]?.resource || 'unknown',
-          action: requiredPermissions[0]?.action || 'unknown',
-          isAllowed: allowed,
-          checkDuration: 0,
-          metadata: {
-            checkedPermissions: requiredPermissions.map((p, i) => ({
-              resource: p.resource,
-              action: p.action,
-              scope: p.scope || 'none',
-              allowed: results[i]?.allowed || false,
-              reason: results[i]?.reason || '',
-            })),
-            schoolId: user.schoolId,
-            departmentId: user.departmentId,
-            positionId: user.positionId,
-          },
-        },
-      });
+      // TODO: PermissionCheckLog model was removed in Phase 3 schema simplification
+      // Consider implementing permission logging via WorkflowHistory or AuditLog
+      // await this.prisma.permissionCheckLog.create({
+      //   data: {
+      //     id: uuidv7(),
+      //     userProfileId: user.id,
+      //     resource: requiredPermissions[0]?.resource || 'unknown',
+      //     action: requiredPermissions[0]?.action || 'unknown',
+      //     isAllowed: allowed,
+      //     checkDuration: 0,
+      //     metadata: {
+      //       checkedPermissions: requiredPermissions.map((p, i) => ({
+      //         resource: p.resource,
+      //         action: p.action,
+      //         scope: p.scope || 'none',
+      //         allowed: results[i]?.allowed || false,
+      //         reason: results[i]?.reason || '',
+      //       })),
+      //       schoolId: user.schoolId,
+      //       departmentId: user.departmentId,
+      //       positionId: user.positionId,
+      //     },
+      //   },
+      // });
 
       if (!allowed) {
         this.loggingService.logSecurity(

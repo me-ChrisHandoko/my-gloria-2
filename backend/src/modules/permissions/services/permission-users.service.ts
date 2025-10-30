@@ -12,7 +12,6 @@ import {
   BulkRemoveUserPermissionsDto,
   UpdateUserPermissionPriorityDto,
 } from '../dto/user-permission.dto';
-import { PermissionCacheService } from './permission-cache.service';
 import { Prisma } from '@prisma/client';
 import { v7 as uuidv7 } from 'uuid';
 
@@ -20,7 +19,6 @@ import { v7 as uuidv7 } from 'uuid';
 export class UserPermissionsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cacheService: PermissionCacheService,
   ) {}
 
   /**
@@ -62,12 +60,12 @@ export class UserPermissionsService {
     }
 
     // Check if assignment already exists
-    const existing = await this.prisma.userPermission.findUnique({
+    const existing = await this.prisma.userPermission.findFirst({
       where: {
-        userProfileId_permissionId: {
-          userProfileId: userId,
-          permissionId: dto.permissionId,
-        },
+        userProfileId: userId,
+        permissionId: dto.permissionId,
+        resourceType: dto.resourceType || null,
+        resourceId: dto.resourceId || null,
       },
     });
 
@@ -77,16 +75,16 @@ export class UserPermissionsService {
       );
     }
 
-    // Validate temporary permissions require validUntil
-    if (dto.isTemporary && !dto.validUntil) {
+    // Validate temporary permissions require effectiveUntil
+    if (dto.isTemporary && !dto.effectiveUntil) {
       throw new BadRequestException(
-        'Temporary permissions must have validUntil date',
+        'Temporary permissions must have effectiveUntil date',
       );
     }
 
-    // Validate validUntil is after validFrom
-    if (dto.validFrom && dto.validUntil && dto.validUntil <= dto.validFrom) {
-      throw new BadRequestException('validUntil must be after validFrom');
+    // Validate effectiveUntil is after effectiveFrom
+    if (dto.effectiveFrom && dto.effectiveUntil && dto.effectiveUntil <= dto.effectiveFrom) {
+      throw new BadRequestException('effectiveUntil must be after effectiveFrom');
     }
 
     // Create user permission assignment
@@ -97,8 +95,8 @@ export class UserPermissionsService {
         permissionId: dto.permissionId,
         isGranted: dto.isGranted ?? true,
         conditions: dto.conditions ? (dto.conditions as Prisma.InputJsonValue) : Prisma.DbNull,
-        validFrom: dto.validFrom || new Date(),
-        validUntil: dto.validUntil || null,
+        effectiveFrom: dto.effectiveFrom || new Date(),
+        effectiveUntil: dto.effectiveUntil || null,
         grantedBy,
         grantReason: dto.grantReason,
         priority: dto.priority ?? 100,
@@ -122,17 +120,9 @@ export class UserPermissionsService {
     });
 
     // Invalidate user cache
-    await this.cacheService.invalidateUserCache(userId);
+    // Cache invalidation handled by PermissionCalculationService Redis cache
 
     // Record change in history
-    await this.recordChangeHistory(
-      'USER_PERMISSION',
-      userPermission.id,
-      'ASSIGN',
-      null,
-      userPermission,
-      grantedBy,
-    );
 
     return userPermission;
   }
@@ -145,12 +135,10 @@ export class UserPermissionsService {
     permissionId: string,
     performedBy: string,
   ) {
-    const userPermission = await this.prisma.userPermission.findUnique({
+    const userPermission = await this.prisma.userPermission.findFirst({
       where: {
-        userProfileId_permissionId: {
-          userProfileId: userId,
-          permissionId,
-        },
+        userProfileId: userId,
+        permissionId,
       },
       include: {
         permission: true,
@@ -178,17 +166,9 @@ export class UserPermissionsService {
     });
 
     // Invalidate cache
-    await this.cacheService.invalidateUserCache(userId);
+    // Cache invalidation handled by PermissionCalculationService Redis cache
 
     // Record change in history
-    await this.recordChangeHistory(
-      'USER_PERMISSION',
-      userPermission.id,
-      'REVOKE',
-      previousState,
-      null,
-      performedBy,
-    );
 
     return { message: 'Permission revoked from user successfully' };
   }
@@ -223,9 +203,9 @@ export class UserPermissionsService {
       }),
     };
 
-    // Add active filter based on validUntil
+    // Add active filter based on effectiveUntil
     if (filters.isActive !== undefined && filters.isActive) {
-      where.OR = [{ validUntil: null }, { validUntil: { gte: new Date() } }];
+      where.OR = [{ effectiveUntil: null }, { effectiveUntil: { gte: new Date() } }];
     }
 
     const [data, total] = await Promise.all([
@@ -271,12 +251,10 @@ export class UserPermissionsService {
     dto: UpdateUserPermissionDto,
     performedBy: string,
   ) {
-    const userPermission = await this.prisma.userPermission.findUnique({
+    const userPermission = await this.prisma.userPermission.findFirst({
       where: {
-        userProfileId_permissionId: {
-          userProfileId: userId,
-          permissionId,
-        },
+        userProfileId: userId,
+        permissionId,
       },
     });
 
@@ -286,13 +264,13 @@ export class UserPermissionsService {
       );
     }
 
-    // Validate validUntil is after validFrom if both are provided
-    const validFrom = dto.validFrom || userPermission.validFrom;
-    const validUntil =
-      dto.validUntil !== undefined ? dto.validUntil : userPermission.validUntil;
+    // Validate effectiveUntil is after effectiveFrom if both are provided
+    const effectiveFrom = dto.effectiveFrom || userPermission.effectiveFrom;
+    const effectiveUntil =
+      dto.effectiveUntil !== undefined ? dto.effectiveUntil : userPermission.effectiveUntil;
 
-    if (validFrom && validUntil && validUntil <= validFrom) {
-      throw new BadRequestException('validUntil must be after validFrom');
+    if (effectiveFrom && effectiveUntil && effectiveUntil <= effectiveFrom) {
+      throw new BadRequestException('effectiveUntil must be after effectiveFrom');
     }
 
     // Record previous state
@@ -304,8 +282,8 @@ export class UserPermissionsService {
       data: {
         ...(dto.isGranted !== undefined && { isGranted: dto.isGranted }),
         ...(dto.conditions !== undefined && { conditions: dto.conditions }),
-        ...(dto.validFrom && { validFrom: dto.validFrom }),
-        ...(dto.validUntil !== undefined && { validUntil: dto.validUntil }),
+        ...(dto.effectiveFrom && { effectiveFrom: dto.effectiveFrom }),
+        ...(dto.effectiveUntil !== undefined && { effectiveUntil: dto.effectiveUntil }),
         ...(dto.priority !== undefined && { priority: dto.priority }),
         updatedAt: new Date(),
       },
@@ -321,17 +299,9 @@ export class UserPermissionsService {
     });
 
     // Invalidate cache
-    await this.cacheService.invalidateUserCache(userId);
+    // Cache invalidation handled by PermissionCalculationService Redis cache
 
     // Record change in history
-    await this.recordChangeHistory(
-      'USER_PERMISSION',
-      updated.id,
-      'UPDATE',
-      previousState,
-      updated,
-      performedBy,
-    );
 
     return updated;
   }
@@ -345,7 +315,7 @@ export class UserPermissionsService {
       include: {
         userPermissions: {
           where: {
-            OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+            OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: new Date() } }],
           },
           include: {
             permission: true,
@@ -355,7 +325,7 @@ export class UserPermissionsService {
         roles: {
           where: {
             isActive: true,
-            OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+            OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: new Date() } }],
           },
           include: {
             role: {
@@ -364,8 +334,8 @@ export class UserPermissionsService {
                   where: {
                     isGranted: true,
                     OR: [
-                      { validUntil: null },
-                      { validUntil: { gte: new Date() } },
+                      { effectiveUntil: null },
+                      { effectiveUntil: { gte: new Date() } },
                     ],
                   },
                   include: {
@@ -404,7 +374,7 @@ export class UserPermissionsService {
           priority: up.priority,
           isTemporary: up.isTemporary,
           userPermissionId: up.id,
-          validUntil: up.validUntil,
+          effectiveUntil: up.effectiveUntil,
         });
       } else if (existing.source === 'user') {
         // If both are user permissions, higher priority wins
@@ -416,7 +386,7 @@ export class UserPermissionsService {
             priority: up.priority,
             isTemporary: up.isTemporary,
             userPermissionId: up.id,
-            validUntil: up.validUntil,
+            effectiveUntil: up.effectiveUntil,
           });
         }
       }
@@ -480,12 +450,12 @@ export class UserPermissionsService {
       where: {
         userProfileId: userId,
         isTemporary: true,
-        validUntil: { gte: new Date() }, // Only non-expired
+        effectiveUntil: { gte: new Date() }, // Only non-expired
       },
       include: {
         permission: true,
       },
-      orderBy: { validUntil: 'asc' }, // Soonest to expire first
+      orderBy: { effectiveUntil: 'asc' }, // Soonest to expire first
     });
 
     return {
@@ -534,10 +504,10 @@ export class UserPermissionsService {
       );
     }
 
-    // Validate temporary permissions require validUntil
-    if (dto.isTemporary && !dto.validUntil) {
+    // Validate temporary permissions require effectiveUntil
+    if (dto.isTemporary && !dto.effectiveUntil) {
       throw new BadRequestException(
-        'Temporary permissions must have validUntil date',
+        'Temporary permissions must have effectiveUntil date',
       );
     }
 
@@ -561,8 +531,8 @@ export class UserPermissionsService {
     }
 
     // Validate date range
-    if (dto.validFrom && dto.validUntil && dto.validUntil <= dto.validFrom) {
-      throw new BadRequestException('validUntil must be after validFrom');
+    if (dto.effectiveFrom && dto.effectiveUntil && dto.effectiveUntil <= dto.effectiveFrom) {
+      throw new BadRequestException('effectiveUntil must be after effectiveFrom');
     }
 
     // Bulk create user permissions in transaction
@@ -576,8 +546,8 @@ export class UserPermissionsService {
               permissionId,
               isGranted: dto.isGranted ?? true,
               conditions: dto.conditions ? (dto.conditions as Prisma.InputJsonValue) : Prisma.DbNull,
-              validFrom: dto.validFrom || new Date(),
-              validUntil: dto.validUntil || null,
+              effectiveFrom: dto.effectiveFrom || new Date(),
+              effectiveUntil: dto.effectiveUntil || null,
               grantedBy,
               grantReason: dto.grantReason,
               priority: dto.priority ?? 100,
@@ -590,32 +560,11 @@ export class UserPermissionsService {
         ),
       );
 
-      // Record change history for bulk operation
-      await tx.permissionChangeHistory.create({
-        data: {
-          id: uuidv7(),
-          entityType: 'USER_PERMISSION',
-          entityId: userId,
-          operation: 'BULK_ASSIGN',
-          previousState: Prisma.JsonNull,
-          newState: {
-            userProfileId: userId,
-            permissionIds: newPermissionIds,
-            count: created.length,
-          },
-          metadata: {
-            skippedCount: dto.permissionIds.length - newPermissionIds.length,
-            existingPermissions: Array.from(existingPermissionIds),
-          },
-          performedBy: grantedBy,
-        },
-      });
-
       return created;
     });
 
     // Invalidate cache
-    await this.cacheService.invalidateUserCache(userId);
+    // Cache invalidation handled by PermissionCalculationService Redis cache
 
     return {
       success: true,
@@ -668,31 +617,11 @@ export class UserPermissionsService {
         },
       });
 
-      // Record change history
-      await tx.permissionChangeHistory.create({
-        data: {
-          id: uuidv7(),
-          entityType: 'USER_PERMISSION',
-          entityId: userId,
-          operation: 'BULK_REMOVE',
-          previousState: {
-            userProfileId: userId,
-            permissions: existing,
-            count: existing.length,
-          },
-          newState: Prisma.JsonNull,
-          metadata: {
-            reason: dto.reason || null,
-          },
-          performedBy,
-        },
-      });
-
       return existing;
     });
 
     // Invalidate cache
-    await this.cacheService.invalidateUserCache(userId);
+    // Cache invalidation handled by PermissionCalculationService Redis cache
 
     return {
       success: true,
@@ -710,12 +639,10 @@ export class UserPermissionsService {
     dto: UpdateUserPermissionPriorityDto,
     performedBy: string,
   ) {
-    const userPermission = await this.prisma.userPermission.findUnique({
+    const userPermission = await this.prisma.userPermission.findFirst({
       where: {
-        userProfileId_permissionId: {
-          userProfileId: userId,
-          permissionId,
-        },
+        userProfileId: userId,
+        permissionId,
       },
     });
 
@@ -741,49 +668,11 @@ export class UserPermissionsService {
     });
 
     // Invalidate cache
-    await this.cacheService.invalidateUserCache(userId);
+    // Cache invalidation handled by PermissionCalculationService Redis cache
 
     // Record change in history
-    await this.recordChangeHistory(
-      'USER_PERMISSION',
-      updated.id,
-      'UPDATE_PRIORITY',
-      previousState,
-      updated,
-      performedBy,
-      {
-        oldPriority: previousState.priority,
-        newPriority: dto.priority,
-        reason: dto.reason,
-      },
-    );
 
     return updated;
   }
 
-  /**
-   * Record change in permission history
-   */
-  private async recordChangeHistory(
-    entityType: string,
-    entityId: string,
-    operation: string,
-    previousState: any,
-    newState: any,
-    performedBy: string,
-    metadata?: any,
-  ) {
-    await this.prisma.permissionChangeHistory.create({
-      data: {
-        id: uuidv7(),
-        entityType,
-        entityId,
-        operation,
-        previousState,
-        newState,
-        performedBy,
-        ...(metadata && { metadata }),
-      },
-    });
-  }
 }

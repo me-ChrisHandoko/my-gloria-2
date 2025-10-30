@@ -45,7 +45,7 @@ export interface IPermissionResult {
   permission?: IPermission;
   source?: 'role' | 'position' | 'direct' | 'delegation' | 'resource';
   conditions?: any;
-  validUntil?: Date | null;
+  effectiveUntil?: Date | null;
   reason?: string;
 }
 

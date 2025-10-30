@@ -53,10 +53,27 @@ export class CreatePermissionDto {
   @IsOptional()
   scope?: PermissionScope;
 
-  @ApiPropertyOptional({ description: 'Permission group ID' })
-  @IsUUID()
+  @ApiPropertyOptional({ enum: ModuleCategory, description: 'Module category for grouping' })
+  @IsEnum(ModuleCategory)
   @IsOptional()
-  groupId?: string;
+  category?: ModuleCategory;
+
+  @ApiPropertyOptional({ description: 'Group name for UI display' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  groupName?: string;
+
+  @ApiPropertyOptional({ description: 'Icon for group display' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  groupIcon?: string;
+
+  @ApiPropertyOptional({ description: 'Sort order for group display' })
+  @IsOptional()
+  @Type(() => Number)
+  groupSortOrder?: number;
 
   @ApiPropertyOptional({ description: 'Permission conditions' })
   @IsObject()
@@ -95,10 +112,27 @@ export class UpdatePermissionDto {
   @IsOptional()
   scope?: PermissionScope;
 
-  @ApiPropertyOptional({ description: 'Permission group ID' })
-  @IsUUID()
+  @ApiPropertyOptional({ enum: ModuleCategory, description: 'Module category for grouping' })
+  @IsEnum(ModuleCategory)
   @IsOptional()
-  groupId?: string;
+  category?: ModuleCategory;
+
+  @ApiPropertyOptional({ description: 'Group name for UI display' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  groupName?: string;
+
+  @ApiPropertyOptional({ description: 'Icon for group display' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  groupIcon?: string;
+
+  @ApiPropertyOptional({ description: 'Sort order for group display' })
+  @IsOptional()
+  @Type(() => Number)
+  groupSortOrder?: number;
 
   @ApiPropertyOptional({ description: 'Permission conditions' })
   @IsObject()
@@ -245,5 +279,5 @@ export class BulkAssignPermissionsDto {
   @ApiPropertyOptional({ description: 'Valid until date' })
   @IsOptional()
   @Type(() => Date)
-  validUntil?: Date;
+  effectiveUntil?: Date;
 }

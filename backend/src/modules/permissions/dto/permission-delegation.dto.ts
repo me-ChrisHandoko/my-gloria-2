@@ -46,7 +46,7 @@ export class CreatePermissionDelegationDto {
   })
   @Type(() => Date)
   @IsOptional()
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiProperty({
     description: 'Delegation end date (required)',
@@ -54,7 +54,7 @@ export class CreatePermissionDelegationDto {
   })
   @Type(() => Date)
   @IsNotEmpty()
-  validUntil: Date;
+  effectiveUntil: Date;
 }
 
 export class RevokeDelegationDto {

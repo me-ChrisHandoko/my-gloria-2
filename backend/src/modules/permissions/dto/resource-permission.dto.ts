@@ -69,7 +69,7 @@ export class GrantResourcePermissionDto {
   })
   @Type(() => Date)
   @IsOptional()
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({
     description: 'Permission valid until date',
@@ -77,7 +77,7 @@ export class GrantResourcePermissionDto {
   })
   @Type(() => Date)
   @IsOptional()
-  validUntil?: Date;
+  effectiveUntil?: Date;
 
   @ApiProperty({
     description: 'Reason for granting this resource permission',
@@ -109,14 +109,14 @@ export class UpdateResourcePermissionDto {
   })
   @Type(() => Date)
   @IsOptional()
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({
     description: 'Permission valid until date',
   })
   @Type(() => Date)
   @IsOptional()
-  validUntil?: Date;
+  effectiveUntil?: Date;
 
   @ApiPropertyOptional({
     description: 'Reason for updating',
@@ -224,14 +224,14 @@ export class BulkGrantResourcePermissionDto {
   })
   @Type(() => Date)
   @IsOptional()
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({
     description: 'Valid until date for all permissions',
   })
   @Type(() => Date)
   @IsOptional()
-  validUntil?: Date;
+  effectiveUntil?: Date;
 
   @ApiProperty({
     description: 'Reason for bulk grant',

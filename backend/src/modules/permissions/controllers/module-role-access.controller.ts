@@ -46,7 +46,7 @@ export class ModuleRoleAccessController {
       dto.canDelete,
       dto.canShare,
       user.id,
-      dto.validUntil,
+      dto.effectiveUntil,
     );
   }
 

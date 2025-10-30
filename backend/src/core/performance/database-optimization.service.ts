@@ -287,7 +287,6 @@ export class DatabaseOptimizationService {
       await this.prisma.$executeRaw`ANALYZE gloria_ops.permissions;`;
       await this.prisma.$executeRaw`ANALYZE gloria_ops.roles;`;
       await this.prisma.$executeRaw`ANALYZE gloria_ops.audit_logs;`;
-      await this.prisma.$executeRaw`ANALYZE gloria_ops.notifications;`;
       await this.prisma.$executeRaw`ANALYZE gloria_ops.workflow_instances;`;
       await this.prisma.$executeRaw`ANALYZE gloria_ops.feature_flags;`;
       await this.prisma.$executeRaw`ANALYZE gloria_ops.system_configurations;`;
@@ -317,12 +316,8 @@ export class DatabaseOptimizationService {
          ON gloria_ops.permissions(resource, action, scope);`,
 
         // Audit logs
-        `CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_created 
+        `CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_created
          ON gloria_ops.audit_logs(actor_id, created_at DESC);`,
-
-        // Notifications
-        `CREATE INDEX IF NOT EXISTS idx_notifications_user_read_created 
-         ON gloria_ops.notifications(user_profile_id, is_read, created_at DESC);`,
 
         // Feature flags
         `CREATE INDEX IF NOT EXISTS idx_feature_flags_key_enabled 

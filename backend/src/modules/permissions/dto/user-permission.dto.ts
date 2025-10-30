@@ -36,12 +36,12 @@ export class AssignUserPermissionDto {
   @ApiPropertyOptional({ description: 'Valid from date' })
   @IsOptional()
   @Type(() => Date)
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({ description: 'Valid until date' })
   @IsOptional()
   @Type(() => Date)
-  validUntil?: Date;
+  effectiveUntil?: Date;
 
   @ApiProperty({ description: 'Reason for granting permission' })
   @IsString()
@@ -68,6 +68,16 @@ export class AssignUserPermissionDto {
   @IsBoolean()
   @IsOptional()
   isTemporary?: boolean;
+
+  @ApiPropertyOptional({ description: 'Resource type for resource-specific permissions' })
+  @IsString()
+  @IsOptional()
+  resourceType?: string;
+
+  @ApiPropertyOptional({ description: 'Resource ID for resource-specific permissions' })
+  @IsString()
+  @IsOptional()
+  resourceId?: string;
 }
 
 export class UpdateUserPermissionDto {
@@ -86,12 +96,12 @@ export class UpdateUserPermissionDto {
   @ApiPropertyOptional({ description: 'Valid from date' })
   @IsOptional()
   @Type(() => Date)
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({ description: 'Valid until date' })
   @IsOptional()
   @Type(() => Date)
-  validUntil?: Date;
+  effectiveUntil?: Date;
 
   @ApiPropertyOptional({
     description: 'Permission priority (higher = higher priority)',
@@ -132,12 +142,12 @@ export class BulkAssignUserPermissionsDto {
   @ApiPropertyOptional({ description: 'Valid from date' })
   @IsOptional()
   @Type(() => Date)
-  validFrom?: Date;
+  effectiveFrom?: Date;
 
   @ApiPropertyOptional({ description: 'Valid until date' })
   @IsOptional()
   @Type(() => Date)
-  validUntil?: Date;
+  effectiveUntil?: Date;
 
   @ApiProperty({ description: 'Reason for bulk assignment' })
   @IsString()

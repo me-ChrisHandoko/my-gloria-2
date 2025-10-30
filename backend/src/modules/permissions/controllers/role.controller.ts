@@ -334,15 +334,15 @@ export class RolesController {
   async updateUserRoleTemporal(
     @Param('userProfileId') userProfileId: string,
     @Param('roleId') roleId: string,
-    @Body() dto: { validFrom?: string; validUntil?: string },
+    @Body() dto: { effectiveFrom?: string; effectiveUntil?: string },
   ) {
-    const validFrom = dto.validFrom ? new Date(dto.validFrom) : undefined;
-    const validUntil = dto.validUntil ? new Date(dto.validUntil) : undefined;
+    const effectiveFrom = dto.effectiveFrom ? new Date(dto.effectiveFrom) : undefined;
+    const effectiveUntil = dto.effectiveUntil ? new Date(dto.effectiveUntil) : undefined;
     return this.rolesService.updateUserRoleTemporal(
       userProfileId,
       roleId,
-      validFrom,
-      validUntil,
+      effectiveFrom,
+      effectiveUntil,
     );
   }
 
