@@ -92,7 +92,6 @@ model audit_logs {
   @@schema("gloria_ops")
 }
 
-
 model bulk_operation_progress {
   id               String    @id
   operation_type   String
@@ -112,7 +111,6 @@ model bulk_operation_progress {
   @@index([status, started_at])
   @@schema("gloria_ops")
 }
-
 
 model delegations {
   id                                                    String         @id
@@ -215,30 +213,30 @@ model module_permissions {
 }
 
 model modules {
-  id                    String                  @id
-  code                  String                  @unique
-  name                  String
-  category              ModuleCategory
-  description           String?
-  icon                  String?
-  path                  String?
-  parent_id             String?
-  sort_order            Int                     @default(0)
-  is_active             Boolean                 @default(true)
-  is_visible            Boolean                 @default(true)
-  version               Int                     @default(0)
-  deleted_at            DateTime?
-  deleted_by            String?
-  delete_reason         String?
-  created_at            DateTime                @default(now())
-  updated_at            DateTime
-  created_by            String?
-  updated_by            String?
-  module_permissions    module_permissions[]
-  modules               modules?                @relation("modulesTomodules", fields: [parent_id], references: [id])
-  other_modules         modules[]               @relation("modulesTomodules")
-  role_module_access    role_module_access[]
-  user_module_access    user_module_access[]
+  id                 String               @id
+  code               String               @unique
+  name               String
+  category           ModuleCategory
+  description        String?
+  icon               String?
+  path               String?
+  parent_id          String?
+  sort_order         Int                  @default(0)
+  is_active          Boolean              @default(true)
+  is_visible         Boolean              @default(true)
+  version            Int                  @default(0)
+  deleted_at         DateTime?
+  deleted_by         String?
+  delete_reason      String?
+  created_at         DateTime             @default(now())
+  updated_at         DateTime
+  created_by         String?
+  updated_by         String?
+  module_permissions module_permissions[]
+  modules            modules?             @relation("modulesTomodules", fields: [parent_id], references: [id])
+  other_modules      modules[]            @relation("modulesTomodules")
+  role_module_access role_module_access[]
+  user_module_access user_module_access[]
 
   @@index([code], map: "idx_modules_code")
   @@index([is_active], map: "idx_modules_is_active")
@@ -320,7 +318,6 @@ model positions {
   @@index([school_id, department_id, hierarchy_level, is_active])
   @@schema("gloria_ops")
 }
-
 
 model role_hierarchy {
   id                                         String   @id
@@ -426,19 +423,19 @@ model schools {
 }
 
 model system_configurations {
-  id                    String                  @id
-  key                   String                  @unique
-  value                 Json
-  type                  String
-  category              String
-  description           String?
-  is_encrypted          Boolean                 @default(false)
-  is_public             Boolean                 @default(false)
-  metadata              Json?
-  validation_rules      Json?
-  created_at            DateTime                @default(now())
-  updated_at            DateTime
-  updated_by            String?
+  id               String   @id
+  key              String   @unique
+  value            Json
+  type             String
+  category         String
+  description      String?
+  is_encrypted     Boolean  @default(false)
+  is_public        Boolean  @default(false)
+  metadata         Json?
+  validation_rules Json?
+  created_at       DateTime @default(now())
+  updated_at       DateTime
+  updated_by       String?
 
   @@index([category])
   @@index([is_public])
@@ -521,25 +518,25 @@ model user_positions {
 }
 
 model user_profiles {
-  id                                                    String                    @id
-  clerk_user_id                                         String                    @unique
-  nip                                                   String                    @unique @db.VarChar(15)
-  is_superadmin                                         Boolean                   @default(false)
-  is_active                                             Boolean                   @default(true)
+  id                                                    String               @id
+  clerk_user_id                                         String               @unique
+  nip                                                   String               @unique @db.VarChar(15)
+  is_superadmin                                         Boolean              @default(false)
+  is_active                                             Boolean              @default(true)
   last_active                                           DateTime?
   preferences                                           Json?
-  created_at                                            DateTime                  @default(now())
+  created_at                                            DateTime             @default(now())
   updated_at                                            DateTime
   created_by                                            String?
   api_keys                                              api_keys[]
-  audit_logs_audit_logs_actor_profile_idTouser_profiles audit_logs[]              @relation("audit_logs_actor_profile_idTouser_profiles")
-  audit_logs_audit_logs_target_user_idTouser_profiles   audit_logs[]              @relation("audit_logs_target_user_idTouser_profiles")
-  delegations_delegations_delegate_idTouser_profiles    delegations[]             @relation("delegations_delegate_idTouser_profiles")
-  delegations_delegations_delegator_idTouser_profiles   delegations[]             @relation("delegations_delegator_idTouser_profiles")
+  audit_logs_audit_logs_actor_profile_idTouser_profiles audit_logs[]         @relation("audit_logs_actor_profile_idTouser_profiles")
+  audit_logs_audit_logs_target_user_idTouser_profiles   audit_logs[]         @relation("audit_logs_target_user_idTouser_profiles")
+  delegations_delegations_delegate_idTouser_profiles    delegations[]        @relation("delegations_delegate_idTouser_profiles")
+  delegations_delegations_delegator_idTouser_profiles   delegations[]        @relation("delegations_delegator_idTouser_profiles")
   user_module_access                                    user_module_access[]
   user_permissions                                      user_permissions[]
   user_positions                                        user_positions[]
-  data_karyawan                                         data_karyawan             @relation(fields: [nip], references: [nip])
+  data_karyawan                                         data_karyawan        @relation(fields: [nip], references: [nip])
   user_roles                                            user_roles[]
 
   @@index([clerk_user_id, is_active])
@@ -697,4 +694,3 @@ enum Priority {
 
   @@schema("gloria_ops")
 }
-
