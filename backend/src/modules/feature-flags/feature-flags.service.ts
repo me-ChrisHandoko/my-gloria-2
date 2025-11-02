@@ -42,6 +42,7 @@ export class FeatureFlagsService {
         startDate: dto.startDate,
         endDate: dto.endDate,
         metadata: dto.metadata ?? {},
+        updatedAt: new Date(),
       },
     });
 
@@ -85,12 +86,13 @@ export class FeatureFlagsService {
   async findOne(id: string): Promise<FeatureFlag> {
     const featureFlag = await this.prisma.featureFlag.findUnique({
       where: { id },
-      include: {
-        evaluations: {
-          take: 10,
-          orderBy: { evaluatedAt: 'desc' },
-        },
-      },
+      // TODO: Add evaluations back when model is created
+      // include: {
+      //   evaluations: {
+      //     take: 10,
+      //     orderBy: { evaluatedAt: 'desc' },
+      //   },
+      // },
     });
 
     if (!featureFlag) {

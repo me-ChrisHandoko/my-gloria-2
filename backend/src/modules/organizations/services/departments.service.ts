@@ -75,8 +75,17 @@ export class DepartmentsService {
       const department = await this.prisma.department.create({
         data: {
           id: uuidv7(),
-          ...createDepartmentDto,
+          name: createDepartmentDto.name,
+          code: createDepartmentDto.code,
+          description: createDepartmentDto.description,
           isActive: createDepartmentDto.isActive ?? true,
+          ...(createDepartmentDto.schoolId && {
+            school: { connect: { id: createDepartmentDto.schoolId } },
+          }),
+          ...(createDepartmentDto.parentId && {
+            parent: { connect: { id: createDepartmentDto.parentId } },
+          }),
+          updatedAt: new Date(),
         },
         include: {
           school: {

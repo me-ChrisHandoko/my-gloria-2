@@ -7,7 +7,7 @@ import { EmailModule } from '@/core/email/email.module';
 import { NotificationTemplatesController } from './controllers/notification-templates.controller';
 // import { NotificationsService } from './services/notifications.service';
 import { NotificationChannelsService } from './services/notification-channels.service';
-import { NotificationPreferenceService } from './services/preference-simplified.service';
+// import { NotificationPreferenceService } from './services/preference-simplified.service';
 import { NotificationTemplatesService } from './services/notification-templates.service';
 import { NotificationQueueService } from './services/notification-queue.service';
 // import { NotificationDeliveryService } from './services/notification-delivery.service';
@@ -27,13 +27,11 @@ import { SmsChannelService } from './services/channels/sms-channel.service';
       name: 'notifications',
     }),
   ],
-  controllers: [
-    NotificationTemplatesController,
-  ],
+  controllers: [NotificationTemplatesController],
   providers: [
     // NotificationsService,
     NotificationChannelsService,
-    NotificationPreferenceService,
+    // NotificationPreferenceService,
     NotificationTemplatesService,
     NotificationQueueService,
     // NotificationDeliveryService,

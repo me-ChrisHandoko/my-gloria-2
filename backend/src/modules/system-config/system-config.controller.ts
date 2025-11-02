@@ -78,14 +78,15 @@ export class SystemConfigController {
     return this.systemConfigService.getValue(key, defaultValue);
   }
 
-  @Get(':id/history')
-  @RequirePermission('VIEW_SYSTEM_CONFIG')
-  getHistory(@Param('id') id: string, @Query('limit') limit?: string) {
-    return this.systemConfigService.getHistory(
-      id,
-      limit ? parseInt(limit, 10) : 10,
-    );
-  }
+  // TODO: Implement when SystemConfigHistory model is added back
+  // @Get(':id/history')
+  // @RequirePermission('VIEW_SYSTEM_CONFIG')
+  // getHistory(@Param('id') id: string, @Query('limit') limit?: string) {
+  //   return this.systemConfigService.getHistory(
+  //     id,
+  //     limit ? parseInt(limit, 10) : 10,
+  //   );
+  // }
 
   @Patch(':id')
   @RequirePermission('MANAGE_SYSTEM_CONFIG')

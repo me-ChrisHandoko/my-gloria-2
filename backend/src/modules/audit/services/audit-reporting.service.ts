@@ -152,7 +152,8 @@ export class AuditReportingService {
     // Analyze login patterns
     const loginAttempts = logs.filter((l) => l.action === AuditAction.LOGIN);
     const failedLogins = loginAttempts.filter(
-      (l) => (l.metadata as any)?.success === false,
+      (l) => typeof l.metadata === 'object' && l.metadata !== null &&
+            'success' in l.metadata && l.metadata.success === false,
     );
 
     // Analyze permission changes
@@ -202,13 +203,13 @@ export class AuditReportingService {
 
     // Identify data access patterns
     const dataAccess = logs.filter((l) =>
-      [AuditAction.READ, AuditAction.EXPORT].includes(l.action as any),
+      [AuditAction.READ as string, AuditAction.EXPORT as string].includes(l.action as string),
     );
 
     // Identify data modifications
     const dataModifications = logs.filter((l) =>
-      [AuditAction.CREATE, AuditAction.UPDATE, AuditAction.DELETE].includes(
-        l.action as any,
+      [AuditAction.CREATE as string, AuditAction.UPDATE as string, AuditAction.DELETE as string].includes(
+        l.action as string,
       ),
     );
 

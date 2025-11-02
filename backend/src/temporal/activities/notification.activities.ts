@@ -10,7 +10,10 @@ export async function sendNotification(
   try {
     // TODO: Integrate with existing notification service
     // This is a placeholder implementation
-    console.log(`[Temporal Activity] Sending notification to user ${payload.userId}`, payload);
+    console.log(
+      `[Temporal Activity] Sending notification to user ${payload.userId}`,
+      payload,
+    );
 
     // Simulate notification sending
     const notificationId = `notif_${Date.now()}_${payload.userId}`;
@@ -54,20 +57,26 @@ export async function sendBulkNotifications(
   success: boolean;
   successCount: number;
   failedCount: number;
-  errors?: string[]
+  errors?: string[];
 }> {
   try {
     const results = await Promise.allSettled(
-      userIds.map(userId =>
-        sendNotification({ ...payload, userId })
-      )
+      userIds.map((userId) => sendNotification({ ...payload, userId })),
     );
 
-    const successCount = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    const successCount = results.filter(
+      (r) => r.status === 'fulfilled' && r.value.success,
+    ).length;
     const failedCount = results.length - successCount;
     const errors = results
-      .filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success))
-      .map(r => r.status === 'rejected' ? r.reason : (r as any).value.error);
+      .filter(
+        (r) =>
+          r.status === 'rejected' ||
+          (r.status === 'fulfilled' && !r.value.success),
+      )
+      .map((r) =>
+        r.status === 'rejected' ? r.reason : (r as any).value.error,
+      );
 
     return {
       success: failedCount === 0,

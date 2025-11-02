@@ -262,6 +262,7 @@ export class ClerkAuthService {
                   nip: dataKaryawan.nip,
                   isActive: true,
                   lastActive: new Date(),
+                  updatedAt: new Date(),
                 },
               });
 

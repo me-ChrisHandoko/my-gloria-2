@@ -13,6 +13,7 @@ export const testFixtures = {
       clerkUserId: 'clerk_admin',
       isActive: true,
       isSuperadmin: false,
+      updatedAt: new Date(),
     },
     teacher: {
       id: 'user-teacher',
@@ -20,6 +21,7 @@ export const testFixtures = {
       clerkUserId: 'clerk_teacher',
       isActive: true,
       isSuperadmin: false,
+      updatedAt: new Date(),
     },
     student: {
       id: 'user-student',
@@ -27,6 +29,7 @@ export const testFixtures = {
       clerkUserId: 'clerk_student',
       isActive: true,
       isSuperadmin: false,
+      updatedAt: new Date(),
     },
     inactive: {
       id: 'user-inactive',
@@ -34,6 +37,7 @@ export const testFixtures = {
       clerkUserId: 'clerk_inactive',
       isActive: false,
       isSuperadmin: false,
+      updatedAt: new Date(),
     },
   },
 
@@ -105,6 +109,7 @@ export const testFixtures = {
       name: 'Super Admin',
       description: 'Full system access',
       hierarchyLevel: 1,
+      updatedAt: new Date(),
       isSystemRole: true,
       isActive: true,
     },
@@ -114,6 +119,7 @@ export const testFixtures = {
       name: 'Admin',
       description: 'School administration',
       hierarchyLevel: 2,
+      updatedAt: new Date(),
       isSystemRole: true,
       isActive: true,
     },
@@ -123,6 +129,7 @@ export const testFixtures = {
       name: 'Teacher',
       description: 'Teaching staff',
       hierarchyLevel: 3,
+      updatedAt: new Date(),
       isSystemRole: false,
       isActive: true,
     },
@@ -132,6 +139,7 @@ export const testFixtures = {
       name: 'Student',
       description: 'Student access',
       hierarchyLevel: 4,
+      updatedAt: new Date(),
       isSystemRole: false,
       isActive: true,
     },
@@ -156,6 +164,7 @@ export const testFixtures = {
       scope: 'ALL',
 
       description: 'Read all users',
+      updatedAt: new Date(),
     },
     usersWriteAll: {
       id: 'perm-users-write-all',
@@ -171,6 +180,7 @@ export const testFixtures = {
       scope: 'ALL',
 
       description: 'Write all users',
+      updatedAt: new Date(),
     },
     usersDeleteAll: {
       id: 'perm-users-delete-all',
@@ -186,6 +196,7 @@ export const testFixtures = {
       scope: 'ALL',
 
       description: 'Delete all users',
+      updatedAt: new Date(),
     },
     usersReadDepartment: {
       id: 'perm-users-read-dept',
@@ -201,6 +212,7 @@ export const testFixtures = {
       scope: 'DEPARTMENT',
 
       description: 'Read department users',
+      updatedAt: new Date(),
     },
     usersReadOwn: {
       id: 'perm-users-read-own',
@@ -216,6 +228,7 @@ export const testFixtures = {
       scope: 'OWN',
 
       description: 'Read own user profile',
+      updatedAt: new Date(),
     },
     usersWriteOwn: {
       id: 'perm-users-write-own',
@@ -231,6 +244,7 @@ export const testFixtures = {
       scope: 'OWN',
 
       description: 'Update own user profile',
+      updatedAt: new Date(),
     },
 
     // School permissions
@@ -248,6 +262,7 @@ export const testFixtures = {
       scope: 'ALL',
 
       description: 'Read all schools',
+      updatedAt: new Date(),
     },
     schoolsWriteAll: {
       id: 'perm-schools-write-all',
@@ -263,6 +278,7 @@ export const testFixtures = {
       scope: 'ALL',
 
       description: 'Write all schools',
+      updatedAt: new Date(),
     },
     schoolsReadSchool: {
       id: 'perm-schools-read-school',
@@ -278,6 +294,7 @@ export const testFixtures = {
       scope: 'SCHOOL',
 
       description: 'Read own school',
+      updatedAt: new Date(),
     },
 
     // Department permissions
@@ -295,6 +312,7 @@ export const testFixtures = {
       scope: 'ALL',
 
       description: 'Read all departments',
+      updatedAt: new Date(),
     },
     departmentsWriteAll: {
       id: 'perm-depts-write-all',
@@ -310,6 +328,7 @@ export const testFixtures = {
       scope: 'ALL',
 
       description: 'Write all departments',
+      updatedAt: new Date(),
     },
     departmentsReadDepartment: {
       id: 'perm-depts-read-dept',
@@ -325,6 +344,7 @@ export const testFixtures = {
       scope: 'DEPARTMENT',
 
       description: 'Read own department',
+      updatedAt: new Date(),
     },
 
     // Workflow permissions
@@ -342,6 +362,7 @@ export const testFixtures = {
       scope: 'ALL',
 
       description: 'Approve all workflows',
+      updatedAt: new Date(),
     },
     workflowsApproveDepartment: {
       id: 'perm-workflows-approve-dept',
@@ -357,6 +378,7 @@ export const testFixtures = {
       scope: 'DEPARTMENT',
 
       description: 'Approve department workflows',
+      updatedAt: new Date(),
     },
     workflowsCreateOwn: {
       id: 'perm-workflows-create-own',
@@ -372,6 +394,7 @@ export const testFixtures = {
       scope: 'OWN',
 
       description: 'Create own workflows',
+      updatedAt: new Date(),
     },
   },
 
@@ -388,6 +411,7 @@ export const testFixtures = {
       phone: '+622112345678',
       email: 'main@gloria.org',
       principal: 'NIP001',
+      updatedAt: new Date(),
       isActive: true,
     },
     branch: {
@@ -399,6 +423,7 @@ export const testFixtures = {
       phone: '+622212345678',
       email: 'branch@gloria.org',
       principal: 'NIP005',
+      updatedAt: new Date(),
       isActive: true,
     },
   },
@@ -414,6 +439,7 @@ export const testFixtures = {
       name: 'Academic Department',
       description: 'Handles academic affairs',
       headNip: 'NIP002',
+      updatedAt: new Date(),
       isActive: true,
     },
     administration: {
@@ -423,6 +449,7 @@ export const testFixtures = {
       name: 'Administration Department',
       description: 'Handles administrative tasks',
       headNip: 'NIP006',
+      updatedAt: new Date(),
       isActive: true,
     },
     finance: {
@@ -432,6 +459,7 @@ export const testFixtures = {
       name: 'Finance Department',
       description: 'Handles financial matters',
       headNip: 'NIP007',
+      updatedAt: new Date(),
       isActive: true,
     },
   },
@@ -447,6 +475,7 @@ export const testFixtures = {
       level: 1,
       departmentId: null,
       schoolId: 'school-main',
+      updatedAt: new Date(),
       isActive: true,
     },
     vicePrincipal: {
@@ -457,6 +486,7 @@ export const testFixtures = {
       departmentId: null,
       schoolId: 'school-main',
       parentPositionId: 'pos-principal',
+      updatedAt: new Date(),
       isActive: true,
     },
     headOfDepartment: {
@@ -467,6 +497,7 @@ export const testFixtures = {
       departmentId: 'dept-academic',
       schoolId: 'school-main',
       parentPositionId: 'pos-vice-principal',
+      updatedAt: new Date(),
       isActive: true,
     },
     teacher: {
@@ -477,6 +508,7 @@ export const testFixtures = {
       departmentId: 'dept-academic',
       schoolId: 'school-main',
       parentPositionId: 'pos-head-dept',
+      updatedAt: new Date(),
       isActive: true,
     },
   },
@@ -525,6 +557,7 @@ export const testFixtures = {
       name: 'User Management',
       description: 'User management module',
       icon: 'users',
+      updatedAt: new Date(),
       path: '/users',
       order: 1,
       isActive: true,
@@ -535,6 +568,7 @@ export const testFixtures = {
       name: 'School Management',
       description: 'School management module',
       icon: 'school',
+      updatedAt: new Date(),
       path: '/schools',
       order: 2,
       isActive: true,
@@ -545,6 +579,7 @@ export const testFixtures = {
       name: 'Workflow Management',
       description: 'Workflow management module',
       icon: 'workflow',
+      updatedAt: new Date(),
       path: '/workflows',
       order: 3,
       isActive: true,
@@ -555,6 +590,7 @@ export const testFixtures = {
       name: 'Reports',
       description: 'Reporting module',
       icon: 'report',
+      updatedAt: new Date(),
       path: '/reports',
       order: 10,
       isActive: true,
@@ -571,6 +607,7 @@ export const testFixtures = {
       name: 'Welcome Email',
       description: 'Welcome email for new users',
       type: 'EMAIL',
+      updatedAt: new Date(),
       subject: 'Welcome to Gloria System',
       body: 'Welcome {{firstName}} {{lastName}} to Gloria System!',
       variables: ['firstName', 'lastName'],
@@ -582,6 +619,7 @@ export const testFixtures = {
       name: 'Password Reset',
       description: 'Password reset email',
       type: 'EMAIL',
+      updatedAt: new Date(),
       subject: 'Reset Your Password',
       body: 'Click here to reset your password: {{resetLink}}',
       variables: ['resetLink', 'firstName'],
@@ -593,6 +631,7 @@ export const testFixtures = {
       name: 'Workflow Approval',
       description: 'Workflow approval notification',
       type: 'PUSH',
+      updatedAt: new Date(),
       subject: 'Approval Required',
       body: '{{workflowName}} requires your approval',
       variables: ['workflowName', 'submitterName'],

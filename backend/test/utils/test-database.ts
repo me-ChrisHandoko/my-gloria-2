@@ -184,6 +184,7 @@ export class TestDatabase {
           address: 'Test Address 1',
           principal: 'NIP001',
           isActive: true,
+        updatedAt: new Date(),
         },
       }),
       this.prisma.school.create({
@@ -194,6 +195,7 @@ export class TestDatabase {
           address: 'Test Address 2',
           principal: 'NIP002',
           isActive: true,
+        updatedAt: new Date(),
         },
       }),
     ]);
@@ -207,6 +209,7 @@ export class TestDatabase {
           code: 'DEPT001',
           name: 'Test Department 1',
           isActive: true,
+        updatedAt: new Date(),
         },
       }),
       this.prisma.department.create({
@@ -216,6 +219,7 @@ export class TestDatabase {
           code: 'DEPT002',
           name: 'Test Department 2',
           isActive: true,
+        updatedAt: new Date(),
         },
       }),
     ]);
@@ -231,6 +235,7 @@ export class TestDatabase {
           hierarchyLevel: 1,
           isSystemRole: true,
           isActive: true,
+        updatedAt: new Date(),
         },
       }),
       this.prisma.role.create({
@@ -242,6 +247,7 @@ export class TestDatabase {
           hierarchyLevel: 10,
           isSystemRole: false,
           isActive: true,
+        updatedAt: new Date(),
         },
       }),
     ]);
@@ -257,7 +263,7 @@ export class TestDatabase {
           action: 'READ',
           scope: 'ALL',
           description: 'Read all users',
-        },
+          updatedAt: new Date(),        },
       }),
       this.prisma.permission.create({
         data: {
@@ -268,7 +274,7 @@ export class TestDatabase {
           action: 'UPDATE',
           scope: 'ALL',
           description: 'Update all users',
-        },
+          updatedAt: new Date(),        },
       }),
     ]);
   }

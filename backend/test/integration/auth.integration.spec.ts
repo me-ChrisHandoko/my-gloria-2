@@ -85,7 +85,7 @@ describe('Authentication Integration Tests', () => {
           id: 'user-1',
           clerkUserId: mockClerkUser.id,
           nip: '123456',
-        },
+          updatedAt: new Date(),        },
       });
 
       const response = await app.inject({
@@ -209,6 +209,7 @@ describe('Authentication Integration Tests', () => {
           id: 'user-2',
           clerkUserId: mockClerkUser.id,
           nip: '123456',
+          updatedAt: new Date(),
         },
       });
 
@@ -218,7 +219,7 @@ describe('Authentication Integration Tests', () => {
           code: 'TEST_ROLE',
           name: 'Test Role',
           hierarchyLevel: 1,
-        },
+          updatedAt: new Date(),        },
       });
 
       await prismaService.userRole.create({
@@ -315,6 +316,7 @@ describe('Authentication Integration Tests', () => {
           id: 'user-3',
           clerkUserId: mockClerkUser.id,
           nip: '123456',
+          updatedAt: new Date(),
         },
       });
 

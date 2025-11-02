@@ -21,6 +21,7 @@ export class UserRepository {
         isSuperadmin: data.isSuperadmin || false,
         isActive: data.isActive ?? true,
         preferences: data.preferences ? JSON.parse(data.preferences) : null,
+        updatedAt: new Date(),
       },
       include: this.getDefaultIncludes(),
     });
@@ -146,7 +147,7 @@ export class UserRepository {
   async findUsersWithRoles(roleIds: string[]) {
     return this.prisma.userProfile.findMany({
       where: {
-        roles: {
+        userRoles: {
           some: {
             roleId: {
               in: roleIds,
@@ -210,7 +211,7 @@ export class UserRepository {
   private getDefaultIncludes() {
     return {
       dataKaryawan: true,
-      roles: {
+      userRoles: {
         include: {
           role: {
             select: {
@@ -222,7 +223,7 @@ export class UserRepository {
           },
         },
       },
-      positions: {
+      userPositions: {
         include: {
           position: {
             select: {

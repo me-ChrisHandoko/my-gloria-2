@@ -123,9 +123,7 @@ export class RedisCacheService implements OnModuleInit, OnModuleDestroy {
    * Invalidate permission cache for multiple users
    * @param userProfileIds - Array of user profile IDs
    */
-  async invalidatePermissionCacheBulk(
-    userProfileIds: string[],
-  ): Promise<void> {
+  async invalidatePermissionCacheBulk(userProfileIds: string[]): Promise<void> {
     try {
       const pipeline = this.redis.pipeline();
       for (const userId of userProfileIds) {

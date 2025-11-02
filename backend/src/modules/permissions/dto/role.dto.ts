@@ -2,220 +2,283 @@ import {
   IsString,
   IsOptional,
   IsBoolean,
-  IsNumber,
+  IsInt,
   IsNotEmpty,
   MaxLength,
-  IsUUID,
-  IsArray,
+  MinLength,
   Min,
   Max,
+  IsIn,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class CreateRoleDto {
-  @ApiProperty({ description: 'Unique role code' })
+  @ApiProperty({
+    description: 'Unique role code',
+    example: 'ADMIN',
+    minLength: 2,
+    maxLength: 50,
+  })
   @IsString()
   @IsNotEmpty()
+  @MinLength(2)
   @MaxLength(50)
   code: string;
 
-  @ApiProperty({ description: 'Role name' })
+  @ApiProperty({
+    description: 'Role name',
+    example: 'Administrator',
+    minLength: 3,
+    maxLength: 200,
+  })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(100)
+  @MinLength(3)
+  @MaxLength(200)
   name: string;
 
-  @ApiPropertyOptional({ description: 'Role description' })
-  @IsString()
+  @ApiPropertyOptional({
+    description: 'Role description',
+    example: 'Full system access with all permissions',
+    maxLength: 500,
+  })
   @IsOptional()
+  @IsString()
   @MaxLength(500)
   description?: string;
 
   @ApiProperty({
-    description: 'Hierarchy level (1-10)',
-    minimum: 1,
-    maximum: 10,
+    description: 'Hierarchy level (higher = more permissions)',
+    example: 10,
+    minimum: 0,
+    maximum: 100,
   })
-  @IsNumber()
-  @Min(1)
-  @Max(10)
-  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
   hierarchyLevel: number;
 
-  @ApiPropertyOptional({ description: 'Is active', default: true })
-  @IsBoolean()
-  @IsOptional()
-  isActive?: boolean;
-
-  @ApiPropertyOptional({ description: 'Is system role', default: false })
-  @IsBoolean()
-  @IsOptional()
-  isSystemRole?: boolean;
-}
-
-export class UpdateRoleDto {
-  @ApiPropertyOptional({ description: 'Unique role code' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(50)
-  code?: string;
-
-  @ApiPropertyOptional({ description: 'Role name' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(100)
-  name?: string;
-
-  @ApiPropertyOptional({ description: 'Role description' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  description?: string;
-
   @ApiPropertyOptional({
-    description: 'Hierarchy level (0-10, 0 = superadmin)',
-    minimum: 0,
-    maximum: 10,
-  })
-  @IsNumber()
-  @IsOptional()
-  @Min(0)
-  @Max(10)
-  @Type(() => Number)
-  hierarchyLevel?: number;
-
-  @ApiPropertyOptional({ description: 'Is active', default: true })
-  @IsBoolean()
-  @IsOptional()
-  isActive?: boolean;
-
-  @ApiPropertyOptional({ description: 'Is system role', default: false })
-  @IsBoolean()
-  @IsOptional()
-  isSystemRole?: boolean;
-}
-
-export class AssignRoleDto {
-  @ApiProperty({ description: 'User profile ID' })
-  @IsUUID()
-  userProfileId: string;
-
-  @ApiProperty({ description: 'Role ID' })
-  @IsUUID()
-  roleId: string;
-
-  @ApiPropertyOptional({ description: 'Valid from date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveFrom?: Date;
-
-  @ApiPropertyOptional({ description: 'Valid until date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveUntil?: Date;
-}
-
-export class AssignRolePermissionDto {
-  @ApiProperty({ description: 'Permission ID' })
-  @IsUUID()
-  permissionId: string;
-
-  @ApiPropertyOptional({ description: 'Is granted', default: true })
-  @IsBoolean()
-  @IsOptional()
-  isGranted?: boolean;
-
-  @ApiPropertyOptional({ description: 'Permission conditions' })
-  @IsOptional()
-  conditions?: Record<string, any>;
-
-  @ApiPropertyOptional({ description: 'Valid from date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveFrom?: Date;
-
-  @ApiPropertyOptional({ description: 'Valid until date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveUntil?: Date;
-
-  @ApiPropertyOptional({ description: 'Grant reason' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  grantReason?: string;
-}
-
-export class BulkAssignRolePermissionsDto {
-  @ApiProperty({
-    description: 'Permission assignments',
-    type: [AssignRolePermissionDto],
-  })
-  @IsArray()
-  @Type(() => AssignRolePermissionDto)
-  permissions: AssignRolePermissionDto[];
-}
-
-export class CreateRoleHierarchyDto {
-  @ApiProperty({ description: 'Parent role ID' })
-  @IsUUID()
-  parentRoleId: string;
-
-  @ApiPropertyOptional({
-    description: 'Inherit permissions from parent',
-    default: true,
-  })
-  @IsBoolean()
-  @IsOptional()
-  inheritPermissions?: boolean;
-}
-
-export class CreateRoleTemplateDto {
-  @ApiProperty({ description: 'Unique template code' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  code: string;
-
-  @ApiProperty({ description: 'Template name' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  name: string;
-
-  @ApiPropertyOptional({ description: 'Template description' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  description?: string;
-
-  @ApiProperty({ description: 'Template category' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  category: string;
-
-  @ApiProperty({ description: 'Permission IDs', type: [String] })
-  @IsArray()
-  @IsUUID('all', { each: true })
-  permissionIds: string[];
-}
-
-export class ApplyRoleTemplateDto {
-  @ApiProperty({ description: 'Template ID' })
-  @IsUUID()
-  templateId: string;
-
-  @ApiProperty({ description: 'Target role ID' })
-  @IsUUID()
-  roleId: string;
-
-  @ApiPropertyOptional({
-    description: 'Override existing permissions',
+    description: 'Whether this is a system role',
     default: false,
   })
-  @IsBoolean()
   @IsOptional()
-  overrideExisting?: boolean;
+  @IsBoolean()
+  isSystemRole?: boolean;
+}
+
+export class UpdateRoleDto extends PartialType(CreateRoleDto) {}
+
+export class RoleResponseDto {
+  @ApiProperty({
+    description: 'Unique identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'Role code',
+    example: 'ADMIN',
+  })
+  code: string;
+
+  @ApiProperty({
+    description: 'Role name',
+    example: 'Administrator',
+  })
+  name: string;
+
+  @ApiPropertyOptional({
+    description: 'Role description',
+  })
+  description?: string;
+
+  @ApiProperty({
+    description: 'Hierarchy level',
+  })
+  hierarchyLevel: number;
+
+  @ApiProperty({
+    description: 'Is system role',
+  })
+  isSystemRole: boolean;
+
+  @ApiProperty({
+    description: 'Is active',
+  })
+  isActive: boolean;
+
+  @ApiProperty({
+    description: 'Creation timestamp',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Last update timestamp',
+  })
+  updatedAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'Created by user ID',
+  })
+  createdBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'Number of permissions assigned to this role',
+  })
+  permissionCount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Number of users with this role',
+  })
+  userCount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Number of parent roles',
+  })
+  parentRoleCount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Number of child roles',
+  })
+  childRoleCount?: number;
+}
+
+export class QueryRoleDto {
+  @ApiPropertyOptional({
+    description: 'Search across name, code, and description',
+    example: 'admin',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by name',
+    example: 'Administrator',
+  })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by code',
+    example: 'ADMIN',
+  })
+  @IsOptional()
+  @IsString()
+  code?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by active status',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  isActive?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter system roles',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  isSystemRole?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter by minimum hierarchy level',
+    example: 5,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  minHierarchyLevel?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filter by maximum hierarchy level',
+    example: 50,
+  })
+  @IsOptional()
+  @IsInt()
+  @Max(100)
+  @Type(() => Number)
+  maxHierarchyLevel?: number;
+
+  @ApiPropertyOptional({
+    description: 'Page number',
+    example: 1,
+    minimum: 1,
+    default: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  page?: number = 1;
+
+  @ApiPropertyOptional({
+    description: 'Items per page',
+    example: 10,
+    minimum: 1,
+    maximum: 100,
+    default: 10,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @Type(() => Number)
+  limit?: number = 10;
+
+  @ApiPropertyOptional({
+    description: 'Sort field',
+    enum: ['name', 'code', 'hierarchyLevel', 'createdAt', 'updatedAt'],
+    default: 'name',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['name', 'code', 'hierarchyLevel', 'createdAt', 'updatedAt'])
+  sortBy?: string = 'name';
+
+  @ApiPropertyOptional({
+    description: 'Sort order',
+    enum: ['asc', 'desc'],
+    default: 'asc',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc' = 'asc';
+}
+
+export class PaginatedRoleResponseDto {
+  @ApiProperty({
+    description: 'List of roles',
+    type: [RoleResponseDto],
+  })
+  data: RoleResponseDto[];
+
+  @ApiProperty({
+    description: 'Pagination metadata',
+    example: {
+      total: 100,
+      page: 1,
+      limit: 10,
+      totalPages: 10,
+      hasNext: true,
+      hasPrevious: false,
+    },
+  })
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
 }

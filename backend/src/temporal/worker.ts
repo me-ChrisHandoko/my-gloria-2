@@ -20,7 +20,9 @@ async function runWorker() {
     const address = configService.get('TEMPORAL_ADDRESS') || 'localhost:7233';
     const namespace = configService.get('TEMPORAL_NAMESPACE') || 'default';
 
-    logger.log(`Starting Temporal worker, connecting to ${address}, namespace: ${namespace}`);
+    logger.log(
+      `Starting Temporal worker, connecting to ${address}, namespace: ${namespace}`,
+    );
 
     const worker = await Worker.create({
       workflowsPath: require.resolve('./workflows'),

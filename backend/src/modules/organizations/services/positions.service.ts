@@ -81,10 +81,13 @@ export class PositionsService {
           id: uuidv7(),
           name: createPositionDto.name,
           code: createPositionDto.code,
-          departmentId: createPositionDto.departmentId,
-          hierarchyLevel: createPositionDto.hierarchyLevel, // Use hierarchyLevel from DTO
+          ...(createPositionDto.departmentId && {
+            department: { connect: { id: createPositionDto.departmentId } },
+          }),
+          hierarchyLevel: createPositionDto.hierarchyLevel,
           maxHolders: createPositionDto.maxOccupants || 1,
           isActive: createPositionDto.isActive ?? true,
+          updatedAt: new Date(),
         },
         include: {
           department: {
@@ -562,6 +565,7 @@ export class PositionsService {
         positionId,
         startDate: startDate || new Date(),
         isActive: true,
+        updatedAt: new Date(),
       },
     });
 

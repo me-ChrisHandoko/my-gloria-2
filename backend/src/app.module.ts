@@ -312,7 +312,6 @@ function getFeatureModules(): any[] {
     modules.push(PermissionModule);
   }
 
-
   // Notifications Module
   if (process.env.ENABLE_NOTIFICATIONS_MODULE !== 'false') {
     modules.push(NotificationsModule);

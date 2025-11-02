@@ -59,8 +59,8 @@ export class ApprovalsController {
     };
 
     // Start Temporal workflow
-    const { workflowId, runId } = await this.temporalService
-      .startApprovalWorkflow(request);
+    const { workflowId, runId } =
+      await this.temporalService.startApprovalWorkflow(request);
 
     return {
       statusCode: HttpStatus.CREATED,
@@ -95,8 +95,8 @@ export class ApprovalsController {
       metadata: dto.metadata,
     };
 
-    const { workflowId, runId } = await this.temporalService
-      .startSimpleApprovalWorkflow(request);
+    const { workflowId, runId } =
+      await this.temporalService.startSimpleApprovalWorkflow(request);
 
     return {
       statusCode: HttpStatus.CREATED,
@@ -180,14 +180,15 @@ export class ApprovalsController {
   @Get()
   async listApprovals() {
     // Query for approval workflows
-    const query = 'WorkflowType="approvalWorkflow" OR WorkflowType="simpleApprovalWorkflow"';
+    const query =
+      'WorkflowType="approvalWorkflow" OR WorkflowType="simpleApprovalWorkflow"';
     const workflows = await this.temporalService.listWorkflows(query);
 
     return {
       statusCode: HttpStatus.OK,
       data: {
         total: workflows.length,
-        workflows: workflows.map(w => ({
+        workflows: workflows.map((w) => ({
           workflowId: w.workflowId,
           runId: w.runId,
           type: w.type.name,

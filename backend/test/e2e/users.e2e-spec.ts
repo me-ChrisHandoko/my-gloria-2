@@ -285,6 +285,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
             clerkUserId: 'clerk_delete',
             nip: 'NIP777777',
             isActive: true,
+        updatedAt: new Date(),
           },
         });
 
@@ -324,7 +325,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
             action: 'READ',
             scope: 'ALL',
             description: 'Test permission',
-          },
+            updatedAt: new Date(),          },
         });
 
         // Create user permission
@@ -336,7 +337,7 @@ createE2ETestSuite('Users E2E', ({ app, prisma, testSetup }) => {
             isGranted: true,
             grantedBy: 'system',
             grantReason: 'E2E Test',
-          },
+            updatedAt: new Date(),          },
         });
 
         const response = await testSetup.makeAuthenticatedRequest(

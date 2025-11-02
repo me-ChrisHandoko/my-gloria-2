@@ -318,7 +318,7 @@ export class AuditLogService {
               },
             },
           },
-          targetProfile: {
+          targetUserProfile: {
             select: {
               id: true,
               nip: true,

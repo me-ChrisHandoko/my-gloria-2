@@ -46,6 +46,7 @@ export class SchoolsService {
           id: uuidv7(),
           ...createSchoolDto,
           isActive: createSchoolDto.isActive ?? true,
+          updatedAt: new Date(),
         },
       });
 
@@ -410,7 +411,7 @@ export class SchoolsService {
         this.prisma.userProfile.count({
           where: schoolId
             ? {
-                positions: {
+                userPositions: {
                   some: {
                     position: {
                       schoolId,

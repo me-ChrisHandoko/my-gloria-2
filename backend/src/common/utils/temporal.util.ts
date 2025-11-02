@@ -42,7 +42,11 @@ export interface TemporalOptions {
  * const whereClause = buildTemporalWhereClause({ includeFuture: true });
  */
 export function buildTemporalWhereClause(options: TemporalOptions = {}) {
-  const { referenceDate = new Date(), includeFuture = false, includeExpired = false } = options;
+  const {
+    referenceDate = new Date(),
+    includeFuture = false,
+    includeExpired = false,
+  } = options;
 
   // Include all records (no temporal filtering)
   if (includeFuture && includeExpired) {
@@ -103,8 +107,10 @@ export function isTemporallyActive(
   record: { effectiveFrom?: Date | null; effectiveUntil?: Date | null },
   referenceDate: Date = new Date(),
 ): boolean {
-  const effectiveFromValid = !record.effectiveFrom || record.effectiveFrom <= referenceDate;
-  const effectiveUntilValid = !record.effectiveUntil || record.effectiveUntil >= referenceDate;
+  const effectiveFromValid =
+    !record.effectiveFrom || record.effectiveFrom <= referenceDate;
+  const effectiveUntilValid =
+    !record.effectiveUntil || record.effectiveUntil >= referenceDate;
 
   return effectiveFromValid && effectiveUntilValid;
 }

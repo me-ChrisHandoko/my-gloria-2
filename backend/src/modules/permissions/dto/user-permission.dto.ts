@@ -1,218 +1,292 @@
 import {
   IsString,
-  IsBoolean,
   IsOptional,
-  IsObject,
+  IsBoolean,
+  IsJSON,
   IsNotEmpty,
   IsUUID,
-  IsArray,
+  IsDateString,
   IsInt,
   Min,
   Max,
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 
-export class AssignUserPermissionDto {
-  @ApiProperty({ description: 'Permission ID to assign' })
+export class GrantUserPermissionDto {
+  @ApiProperty({
+    description: 'User profile ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  userProfileId: string;
+
+  @ApiProperty({
+    description: 'Permission ID',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
   @IsUUID()
   @IsNotEmpty()
   permissionId: string;
 
   @ApiPropertyOptional({
-    description: 'Grant or deny permission',
+    description: 'Whether permission is granted or revoked',
     default: true,
   })
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   isGranted?: boolean;
 
-  @ApiPropertyOptional({ description: 'Permission conditions (JSON)' })
-  @IsObject()
+  @ApiPropertyOptional({
+    description: 'Additional conditions in JSON format',
+    example: { department: 'IT' },
+  })
   @IsOptional()
-  conditions?: Record<string, any>;
+  @IsJSON()
+  conditions?: string;
 
-  @ApiPropertyOptional({ description: 'Valid from date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveFrom?: Date;
-
-  @ApiPropertyOptional({ description: 'Valid until date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveUntil?: Date;
-
-  @ApiProperty({ description: 'Reason for granting permission' })
+  @ApiProperty({
+    description: 'Reason for granting permission',
+    example: 'Special approval for project management',
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(500)
   grantReason: string;
 
   @ApiPropertyOptional({
-    description: 'Permission priority (higher = higher priority)',
+    description: 'Priority level (higher = takes precedence)',
+    example: 100,
     default: 100,
-    minimum: 1,
-    maximum: 1000,
   })
-  @IsInt()
   @IsOptional()
-  @Min(1)
-  @Max(1000)
+  @IsInt()
+  @Min(0)
+  @Max(999)
   priority?: number;
 
   @ApiPropertyOptional({
-    description: 'Is this a temporary permission',
+    description: 'Whether this is a temporary permission',
     default: false,
   })
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   isTemporary?: boolean;
 
-  @ApiPropertyOptional({ description: 'Resource type for resource-specific permissions' })
-  @IsString()
+  @ApiPropertyOptional({
+    description: 'Resource ID for resource-specific permissions',
+    example: '123e4567-e89b-12d3-a456-426614174002',
+  })
   @IsOptional()
+  @IsString()
+  resourceId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Resource type for resource-specific permissions',
+    example: 'school',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
   resourceType?: string;
 
-  @ApiPropertyOptional({ description: 'Resource ID for resource-specific permissions' })
-  @IsString()
-  @IsOptional()
-  resourceId?: string;
-}
-
-export class UpdateUserPermissionDto {
   @ApiPropertyOptional({
-    description: 'Grant or deny permission',
+    description: 'Effective from date',
+    example: '2024-01-01T00:00:00.000Z',
   })
-  @IsBoolean()
   @IsOptional()
-  isGranted?: boolean;
-
-  @ApiPropertyOptional({ description: 'Permission conditions (JSON)' })
-  @IsObject()
-  @IsOptional()
-  conditions?: Record<string, any>;
-
-  @ApiPropertyOptional({ description: 'Valid from date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveFrom?: Date;
-
-  @ApiPropertyOptional({ description: 'Valid until date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveUntil?: Date;
+  @IsDateString()
+  effectiveFrom?: string;
 
   @ApiPropertyOptional({
-    description: 'Permission priority (higher = higher priority)',
-    minimum: 1,
-    maximum: 1000,
+    description: 'Effective until date',
+    example: '2024-12-31T23:59:59.999Z',
   })
-  @IsInt()
   @IsOptional()
-  @Min(1)
-  @Max(1000)
-  priority?: number;
-
-  @ApiPropertyOptional({ description: 'Reason for update' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  updateReason?: string;
+  @IsDateString()
+  effectiveUntil?: string;
 }
 
-export class BulkAssignUserPermissionsDto {
+export class BulkGrantUserPermissionsDto {
   @ApiProperty({
-    description: 'Permission IDs to assign',
+    description: 'User profile ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  userProfileId: string;
+
+  @ApiProperty({
+    description: 'Array of permission IDs to grant',
+    example: [
+      '123e4567-e89b-12d3-a456-426614174001',
+      '123e4567-e89b-12d3-a456-426614174002',
+    ],
     type: [String],
   })
-  @IsArray()
-  @IsUUID('all', { each: true })
+  @IsUUID('4', { each: true })
   @IsNotEmpty()
   permissionIds: string[];
 
-  @ApiPropertyOptional({
-    description: 'Grant or deny permissions',
-    default: true,
+  @ApiProperty({
+    description: 'Reason for granting permissions',
   })
-  @IsBoolean()
-  @IsOptional()
-  isGranted?: boolean;
-
-  @ApiPropertyOptional({ description: 'Valid from date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveFrom?: Date;
-
-  @ApiPropertyOptional({ description: 'Valid until date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveUntil?: Date;
-
-  @ApiProperty({ description: 'Reason for bulk assignment' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(500)
   grantReason: string;
 
-  @ApiPropertyOptional({ description: 'Permission conditions (JSON)' })
-  @IsObject()
-  @IsOptional()
-  conditions?: Record<string, any>;
-
   @ApiPropertyOptional({
-    description: 'Permission priority',
-    default: 100,
-    minimum: 1,
-    maximum: 1000,
+    description: 'Whether permissions are granted or revoked',
+    default: true,
   })
-  @IsInt()
   @IsOptional()
-  @Min(1)
-  @Max(1000)
-  priority?: number;
+  @IsBoolean()
+  isGranted?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Are these temporary permissions',
+    description: 'Whether permissions are temporary',
     default: false,
   })
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   isTemporary?: boolean;
 }
 
-export class BulkRemoveUserPermissionsDto {
-  @ApiProperty({
-    description: 'Permission IDs to remove',
-    type: [String],
+export class QueryUserPermissionDto {
+  @ApiPropertyOptional({
+    description: 'Filter by granted/denied status',
   })
-  @IsArray()
-  @IsUUID('all', { each: true })
-  @IsNotEmpty()
-  permissionIds: string[];
-
-  @ApiPropertyOptional({ description: 'Reason for removal' })
-  @IsString()
   @IsOptional()
-  @MaxLength(500)
-  reason?: string;
+  @IsBoolean()
+  isGranted?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter by resource type',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  resourceType?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by resource ID',
+  })
+  @IsOptional()
+  @IsString()
+  resourceId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Include expired permissions',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  includeExpired?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Include denied permissions',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  includeDenied?: boolean;
 }
 
-export class UpdateUserPermissionPriorityDto {
+export class UserPermissionResponseDto {
   @ApiProperty({
-    description: 'New priority value (higher = higher priority)',
-    minimum: 1,
-    maximum: 1000,
+    description: 'Unique identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsInt()
-  @IsNotEmpty()
-  @Min(1)
-  @Max(1000)
+  id: string;
+
+  @ApiProperty({
+    description: 'User profile ID',
+  })
+  userProfileId: string;
+
+  @ApiProperty({
+    description: 'Permission ID',
+  })
+  permissionId: string;
+
+  @ApiProperty({
+    description: 'Is granted',
+  })
+  isGranted: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Conditions',
+  })
+  conditions?: any;
+
+  @ApiProperty({
+    description: 'Granted by user ID',
+  })
+  grantedBy: string;
+
+  @ApiProperty({
+    description: 'Grant reason',
+  })
+  grantReason: string;
+
+  @ApiProperty({
+    description: 'Priority',
+  })
   priority: number;
 
-  @ApiPropertyOptional({ description: 'Reason for priority change' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  reason?: string;
+  @ApiProperty({
+    description: 'Is temporary',
+  })
+  isTemporary: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Resource ID',
+  })
+  resourceId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Resource type',
+  })
+  resourceType?: string;
+
+  @ApiProperty({
+    description: 'Effective from date',
+  })
+  effectiveFrom: Date;
+
+  @ApiPropertyOptional({
+    description: 'Effective until date',
+  })
+  effectiveUntil?: Date;
+
+  @ApiProperty({
+    description: 'Creation timestamp',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Last update timestamp',
+  })
+  updatedAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'User profile details',
+  })
+  userProfile?: {
+    id: string;
+    nip: string;
+  };
+
+  @ApiPropertyOptional({
+    description: 'Permission details',
+  })
+  permission?: {
+    id: string;
+    code: string;
+    name: string;
+    resource: string;
+    action: string;
+  };
 }

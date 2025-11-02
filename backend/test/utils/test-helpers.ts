@@ -118,14 +118,17 @@ export async function createTestUser(
   };
 
   return prisma.userProfile.create({
-    data: defaultData,
+    data: {
+      ...defaultData,
+      updatedAt: new Date(),
+    },
     include: {
-      roles: {
+      userRoles: {
         include: {
           role: true,
         },
       },
-      positions: {
+      userPositions: {
         include: {
           position: true,
         },
@@ -157,7 +160,10 @@ export async function createTestRole(
   };
 
   const role = await prisma.role.create({
-    data: roleData,
+    data: {
+      ...roleData,
+      updatedAt: new Date(),
+    },
   });
 
   // Add permissions if provided
@@ -167,6 +173,7 @@ export async function createTestRole(
         id: `role-perm-${Date.now()}-${permId}`,
         roleId: role.id,
         permissionId: permId,
+        updatedAt: new Date(),
       })),
     });
   }

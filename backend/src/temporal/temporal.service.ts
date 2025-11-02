@@ -3,9 +3,19 @@
  * Provides integration between NestJS and Temporal workflows
  */
 
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Connection, Client, WorkflowHandle, WorkflowIdReusePolicy } from '@temporalio/client';
+import {
+  Connection,
+  Client,
+  WorkflowHandle,
+  WorkflowIdReusePolicy,
+} from '@temporalio/client';
 import { ApprovalRequest, ApprovalResult } from './types/workflow.types';
 
 @Injectable()
@@ -19,10 +29,18 @@ export class TemporalService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     try {
       // Connect to Temporal server
-      const address = this.configService.get<string>('TEMPORAL_ADDRESS', 'localhost:7233');
-      const namespace = this.configService.get<string>('TEMPORAL_NAMESPACE', 'default');
+      const address = this.configService.get<string>(
+        'TEMPORAL_ADDRESS',
+        'localhost:7233',
+      );
+      const namespace = this.configService.get<string>(
+        'TEMPORAL_NAMESPACE',
+        'default',
+      );
 
-      this.logger.log(`Connecting to Temporal at ${address}, namespace: ${namespace}`);
+      this.logger.log(
+        `Connecting to Temporal at ${address}, namespace: ${namespace}`,
+      );
 
       this.connection = await Connection.connect({
         address,
@@ -64,10 +82,13 @@ export class TemporalService implements OnModuleInit, OnModuleDestroy {
         taskQueue: 'gloria-workflows',
         workflowId,
         args: [request],
-        workflowIdReusePolicy: WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
+        workflowIdReusePolicy:
+          WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
       });
 
-      this.logger.log(`Started approval workflow: ${workflowId}, runId: ${handle.firstExecutionRunId}`);
+      this.logger.log(
+        `Started approval workflow: ${workflowId}, runId: ${handle.firstExecutionRunId}`,
+      );
 
       return {
         workflowId: handle.workflowId,
@@ -88,12 +109,16 @@ export class TemporalService implements OnModuleInit, OnModuleDestroy {
     try {
       const workflowId = `simple-approval-${request.requestId}`;
 
-      const handle = await this.client.workflow.start('simpleApprovalWorkflow', {
-        taskQueue: 'gloria-workflows',
-        workflowId,
-        args: [request],
-        workflowIdReusePolicy: WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
-      });
+      const handle = await this.client.workflow.start(
+        'simpleApprovalWorkflow',
+        {
+          taskQueue: 'gloria-workflows',
+          workflowId,
+          args: [request],
+          workflowIdReusePolicy:
+            WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
+        },
+      );
 
       this.logger.log(`Started simple approval workflow: ${workflowId}`);
 
@@ -118,7 +143,13 @@ export class TemporalService implements OnModuleInit, OnModuleDestroy {
    * Query workflow status
    */
   async getWorkflowStatus(workflowId: string): Promise<{
-    status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'TERMINATED' | 'TIMED_OUT';
+    status:
+      | 'RUNNING'
+      | 'COMPLETED'
+      | 'FAILED'
+      | 'CANCELLED'
+      | 'TERMINATED'
+      | 'TIMED_OUT';
     result?: any;
   }> {
     try {
@@ -135,7 +166,10 @@ export class TemporalService implements OnModuleInit, OnModuleDestroy {
         result,
       };
     } catch (error) {
-      this.logger.error(`Failed to get workflow status for ${workflowId}`, error);
+      this.logger.error(
+        `Failed to get workflow status for ${workflowId}`,
+        error,
+      );
       throw error;
     }
   }
@@ -147,7 +181,9 @@ export class TemporalService implements OnModuleInit, OnModuleDestroy {
     try {
       const handle = this.getWorkflowHandle(workflowId);
       await handle.cancel();
-      this.logger.log(`Cancelled workflow: ${workflowId}${reason ? `, reason: ${reason}` : ''}`);
+      this.logger.log(
+        `Cancelled workflow: ${workflowId}${reason ? `, reason: ${reason}` : ''}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to cancel workflow ${workflowId}`, error);
       throw error;
@@ -161,7 +197,9 @@ export class TemporalService implements OnModuleInit, OnModuleDestroy {
     try {
       const handle = this.getWorkflowHandle(workflowId);
       await handle.terminate(reason);
-      this.logger.log(`Terminated workflow: ${workflowId}${reason ? `, reason: ${reason}` : ''}`);
+      this.logger.log(
+        `Terminated workflow: ${workflowId}${reason ? `, reason: ${reason}` : ''}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to terminate workflow ${workflowId}`, error);
       throw error;
@@ -176,7 +214,10 @@ export class TemporalService implements OnModuleInit, OnModuleDestroy {
       const handle = this.getWorkflowHandle(workflowId);
       return await handle.result();
     } catch (error) {
-      this.logger.error(`Failed to get workflow result for ${workflowId}`, error);
+      this.logger.error(
+        `Failed to get workflow result for ${workflowId}`,
+        error,
+      );
       throw error;
     }
   }

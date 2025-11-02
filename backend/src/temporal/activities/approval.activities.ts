@@ -4,13 +4,17 @@
 
 import { ApprovalRequest, ApprovalResult } from '../types/workflow.types';
 
-export async function checkApprovalStatus(
-  requestId: string,
-): Promise<{ status: 'PENDING' | 'APPROVED' | 'REJECTED'; approvedBy?: string; comment?: string }> {
+export async function checkApprovalStatus(requestId: string): Promise<{
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  approvedBy?: string;
+  comment?: string;
+}> {
   try {
     // TODO: Integrate with database to check approval status
     // This is a placeholder that would query the database
-    console.log(`[Temporal Activity] Checking approval status for request ${requestId}`);
+    console.log(
+      `[Temporal Activity] Checking approval status for request ${requestId}`,
+    );
 
     // Placeholder: return pending status
     return {
@@ -57,10 +61,13 @@ export async function escalateApproval(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // TODO: Implement escalation logic
-    console.log(`[Temporal Activity] Escalating approval to level ${escalationLevel}`, {
-      requestId: request.requestId,
-      escalateToUserId,
-    });
+    console.log(
+      `[Temporal Activity] Escalating approval to level ${escalationLevel}`,
+      {
+        requestId: request.requestId,
+        escalateToUserId,
+      },
+    );
 
     // Send notification to escalation user
     // Update database with escalation record

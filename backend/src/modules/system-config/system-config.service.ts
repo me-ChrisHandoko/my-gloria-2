@@ -8,7 +8,7 @@ import { CacheService } from '../../core/cache/cache.service';
 import { LoggingService } from '../../core/logging/logging.service';
 import { CreateSystemConfigDto } from './dto/create-system-config.dto';
 import { UpdateSystemConfigDto } from './dto/update-system-config.dto';
-import { SystemConfiguration, SystemConfigHistory } from '@prisma/client';
+import { SystemConfiguration } from '@prisma/client';
 import * as crypto from 'crypto';
 import { v7 as uuidv7 } from 'uuid';
 
@@ -60,6 +60,7 @@ export class SystemConfigService {
         metadata: dto.metadata ?? {},
         validationRules: dto.validationRules ?? {},
         updatedBy: userId,
+        updatedAt: new Date(),
       },
     });
 

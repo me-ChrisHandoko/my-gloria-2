@@ -1,135 +1,186 @@
 import {
   IsString,
-  IsBoolean,
   IsOptional,
-  IsObject,
+  IsBoolean,
+  IsJSON,
   IsNotEmpty,
   IsUUID,
-  IsArray,
+  IsDateString,
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 
 export class AssignRolePermissionDto {
-  @ApiProperty({ description: 'Permission ID to assign' })
+  @ApiProperty({
+    description: 'Role ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  roleId: string;
+
+  @ApiProperty({
+    description: 'Permission ID',
+    example: '123e4567-e89b-12d3-a456-426614174001',
+  })
   @IsUUID()
   @IsNotEmpty()
   permissionId: string;
 
   @ApiPropertyOptional({
-    description: 'Grant or deny permission',
+    description: 'Whether permission is granted or revoked',
     default: true,
   })
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   isGranted?: boolean;
 
-  @ApiPropertyOptional({ description: 'Permission conditions (JSON)' })
-  @IsObject()
+  @ApiPropertyOptional({
+    description: 'Additional conditions in JSON format',
+    example: { department: 'IT' },
+  })
   @IsOptional()
-  conditions?: Record<string, any>;
+  @IsJSON()
+  conditions?: string;
 
-  @ApiPropertyOptional({ description: 'Valid from date' })
+  @ApiPropertyOptional({
+    description: 'Reason for granting permission',
+    example: 'Required for administrative tasks',
+  })
   @IsOptional()
-  @Type(() => Date)
-  effectiveFrom?: Date;
-
-  @ApiPropertyOptional({ description: 'Valid until date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveUntil?: Date;
-
-  @ApiPropertyOptional({ description: 'Reason for granting permission' })
   @IsString()
-  @IsOptional()
   @MaxLength(500)
   grantReason?: string;
-}
 
-export class UpdateRolePermissionDto {
   @ApiPropertyOptional({
-    description: 'Grant or deny permission',
+    description: 'Effective from date',
+    example: '2024-01-01T00:00:00.000Z',
   })
-  @IsBoolean()
   @IsOptional()
-  isGranted?: boolean;
+  @IsDateString()
+  effectiveFrom?: string;
 
-  @ApiPropertyOptional({ description: 'Permission conditions (JSON)' })
-  @IsObject()
+  @ApiPropertyOptional({
+    description: 'Effective until date',
+    example: '2024-12-31T23:59:59.999Z',
+  })
   @IsOptional()
-  conditions?: Record<string, any>;
-
-  @ApiPropertyOptional({ description: 'Valid from date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveFrom?: Date;
-
-  @ApiPropertyOptional({ description: 'Valid until date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveUntil?: Date;
-
-  @ApiPropertyOptional({ description: 'Reason for update' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  updateReason?: string;
+  @IsDateString()
+  effectiveUntil?: string;
 }
 
 export class BulkAssignRolePermissionsDto {
   @ApiProperty({
-    description: 'Permission IDs to assign',
+    description: 'Role ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsUUID()
+  @IsNotEmpty()
+  roleId: string;
+
+  @ApiProperty({
+    description: 'Array of permission IDs to assign',
+    example: [
+      '123e4567-e89b-12d3-a456-426614174001',
+      '123e4567-e89b-12d3-a456-426614174002',
+    ],
     type: [String],
   })
-  @IsArray()
-  @IsUUID('all', { each: true })
+  @IsUUID('4', { each: true })
   @IsNotEmpty()
   permissionIds: string[];
 
   @ApiPropertyOptional({
-    description: 'Grant or deny permissions',
+    description: 'Whether permissions are granted or revoked',
     default: true,
   })
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   isGranted?: boolean;
 
-  @ApiPropertyOptional({ description: 'Valid from date' })
+  @ApiPropertyOptional({
+    description: 'Reason for granting permissions',
+  })
   @IsOptional()
-  @Type(() => Date)
-  effectiveFrom?: Date;
-
-  @ApiPropertyOptional({ description: 'Valid until date' })
-  @IsOptional()
-  @Type(() => Date)
-  effectiveUntil?: Date;
-
-  @ApiPropertyOptional({ description: 'Reason for bulk assignment' })
   @IsString()
-  @IsOptional()
   @MaxLength(500)
   grantReason?: string;
-
-  @ApiPropertyOptional({ description: 'Permission conditions (JSON)' })
-  @IsObject()
-  @IsOptional()
-  conditions?: Record<string, any>;
 }
 
-export class BulkRemoveRolePermissionsDto {
+export class RolePermissionResponseDto {
   @ApiProperty({
-    description: 'Permission IDs to remove',
-    type: [String],
+    description: 'Unique identifier',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsArray()
-  @IsUUID('all', { each: true })
-  @IsNotEmpty()
-  permissionIds: string[];
+  id: string;
 
-  @ApiPropertyOptional({ description: 'Reason for removal' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  reason?: string;
+  @ApiProperty({
+    description: 'Role ID',
+  })
+  roleId: string;
+
+  @ApiProperty({
+    description: 'Permission ID',
+  })
+  permissionId: string;
+
+  @ApiProperty({
+    description: 'Is granted',
+  })
+  isGranted: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Conditions',
+  })
+  conditions?: any;
+
+  @ApiPropertyOptional({
+    description: 'Granted by user ID',
+  })
+  grantedBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'Grant reason',
+  })
+  grantReason?: string;
+
+  @ApiProperty({
+    description: 'Effective from date',
+  })
+  effectiveFrom: Date;
+
+  @ApiPropertyOptional({
+    description: 'Effective until date',
+  })
+  effectiveUntil?: Date;
+
+  @ApiProperty({
+    description: 'Creation timestamp',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Last update timestamp',
+  })
+  updatedAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'Role details',
+  })
+  role?: {
+    id: string;
+    code: string;
+    name: string;
+  };
+
+  @ApiPropertyOptional({
+    description: 'Permission details',
+  })
+  permission?: {
+    id: string;
+    code: string;
+    name: string;
+    resource: string;
+    action: string;
+  };
 }

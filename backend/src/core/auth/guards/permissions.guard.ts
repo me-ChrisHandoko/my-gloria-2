@@ -180,7 +180,6 @@ export class PermissionsGuard implements CanActivate {
     };
   }
 
-
   private async checkDirectUserPermission(
     userId: string,
     permission: RequiredPermissionData,
@@ -341,7 +340,7 @@ export class PermissionsGuard implements CanActivate {
         const user = await this.prisma.userProfile.findUnique({
           where: { id: resourceId },
           include: {
-            positions: {
+            userPositions: {
               include: {
                 position: true,
               },
@@ -349,7 +348,7 @@ export class PermissionsGuard implements CanActivate {
           },
         });
         return (
-          user?.positions.some(
+          user?.userPositions.some(
             (p) => p.position.departmentId === userDepartmentId,
           ) || false
         );
@@ -373,7 +372,7 @@ export class PermissionsGuard implements CanActivate {
         const user = await this.prisma.userProfile.findUnique({
           where: { id: resourceId },
           include: {
-            positions: {
+            userPositions: {
               include: {
                 position: {
                   include: {
@@ -385,7 +384,7 @@ export class PermissionsGuard implements CanActivate {
           },
         });
         return (
-          user?.positions.some(
+          user?.userPositions.some(
             (p) => p.position.department?.schoolId === userSchoolId,
           ) || false
         );

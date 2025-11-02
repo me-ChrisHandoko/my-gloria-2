@@ -28,7 +28,7 @@ const {
  * Implements approval with timeout and escalation
  */
 export async function approvalWorkflow(
-  request: ApprovalRequest
+  request: ApprovalRequest,
 ): Promise<ApprovalResult> {
   const maxAttempts = 3;
   const attemptInterval = 60 * 60 * 1000; // 1 hour in milliseconds
@@ -40,12 +40,17 @@ export async function approvalWorkflow(
   let escalationLevel = 0;
 
   // Create audit log for workflow start
-  await createAuditLog(request.requestId, 'WORKFLOW_STARTED', request.initiatorId, {
-    approverId: request.approverId,
-    module: request.module,
-    entityType: request.entityType,
-    entityId: request.entityId,
-  });
+  await createAuditLog(
+    request.requestId,
+    'WORKFLOW_STARTED',
+    request.initiatorId,
+    {
+      approverId: request.approverId,
+      module: request.module,
+      entityType: request.entityType,
+      entityId: request.entityId,
+    },
+  );
 
   // Step 1: Send initial notification to approver
   await sendNotification({
@@ -201,7 +206,7 @@ export async function approvalWorkflow(
  * For use cases that don't require escalation logic
  */
 export async function simpleApprovalWorkflow(
-  request: ApprovalRequest
+  request: ApprovalRequest,
 ): Promise<ApprovalResult> {
   // Send notification
   await sendNotification({
@@ -231,10 +236,20 @@ export async function simpleApprovalWorkflow(
 
     if (status.status === 'APPROVED') {
       approved = true;
-      await recordApprovalDecision(request.requestId, 'APPROVED', status.approvedBy!, status.comment);
+      await recordApprovalDecision(
+        request.requestId,
+        'APPROVED',
+        status.approvedBy!,
+        status.comment,
+      );
     } else if (status.status === 'REJECTED') {
       rejected = true;
-      await recordApprovalDecision(request.requestId, 'REJECTED', status.approvedBy!, status.comment);
+      await recordApprovalDecision(
+        request.requestId,
+        'REJECTED',
+        status.approvedBy!,
+        status.comment,
+      );
     }
 
     elapsedMinutes += checkIntervalMinutes;
