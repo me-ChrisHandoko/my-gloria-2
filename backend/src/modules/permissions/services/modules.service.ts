@@ -474,11 +474,7 @@ export class ModulesService {
           where: { id: module.parentId },
         });
 
-        if (
-          !parentModule ||
-          !parentModule.isActive ||
-          parentModule.deletedAt
-        ) {
+        if (!parentModule || !parentModule.isActive || parentModule.deletedAt) {
           throw new BadRequestException(
             'Cannot restore module: parent module is not active',
           );

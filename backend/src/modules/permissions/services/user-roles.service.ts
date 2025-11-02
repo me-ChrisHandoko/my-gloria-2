@@ -31,12 +31,18 @@ export class UserRolesService {
   ): Promise<UserRoleResponseDto> {
     try {
       const [user, role] = await Promise.all([
-        this.prisma.userProfile.findUnique({ where: { id: dto.userProfileId } }),
+        this.prisma.userProfile.findUnique({
+          where: { id: dto.userProfileId },
+        }),
         this.prisma.role.findUnique({ where: { id: dto.roleId } }),
       ]);
 
-      if (!user) throw new NotFoundException(`User profile with ID ${dto.userProfileId} not found`);
-      if (!role) throw new NotFoundException(`Role with ID ${dto.roleId} not found`);
+      if (!user)
+        throw new NotFoundException(
+          `User profile with ID ${dto.userProfileId} not found`,
+        );
+      if (!role)
+        throw new NotFoundException(`Role with ID ${dto.roleId} not found`);
 
       const existing = await this.prisma.userRole.findUnique({
         where: {
@@ -54,12 +60,23 @@ export class UserRolesService {
           data: {
             isActive: dto.isActive ?? true,
             assignedBy: assignedBy,
-            effectiveFrom: dto.effectiveFrom ? new Date(dto.effectiveFrom) : undefined,
-            effectiveUntil: dto.effectiveUntil ? new Date(dto.effectiveUntil) : undefined,
+            effectiveFrom: dto.effectiveFrom
+              ? new Date(dto.effectiveFrom)
+              : undefined,
+            effectiveUntil: dto.effectiveUntil
+              ? new Date(dto.effectiveUntil)
+              : undefined,
           },
           include: {
             userProfile: { select: { id: true, nip: true } },
-            role: { select: { id: true, code: true, name: true, hierarchyLevel: true } },
+            role: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+                hierarchyLevel: true,
+              },
+            },
           },
         });
       } else {
@@ -70,12 +87,23 @@ export class UserRolesService {
             roleId: dto.roleId,
             assignedBy: assignedBy,
             isActive: dto.isActive ?? true,
-            effectiveFrom: dto.effectiveFrom ? new Date(dto.effectiveFrom) : new Date(),
-            effectiveUntil: dto.effectiveUntil ? new Date(dto.effectiveUntil) : undefined,
+            effectiveFrom: dto.effectiveFrom
+              ? new Date(dto.effectiveFrom)
+              : new Date(),
+            effectiveUntil: dto.effectiveUntil
+              ? new Date(dto.effectiveUntil)
+              : undefined,
           },
           include: {
             userProfile: { select: { id: true, nip: true } },
-            role: { select: { id: true, code: true, name: true, hierarchyLevel: true } },
+            role: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+                hierarchyLevel: true,
+              },
+            },
           },
         });
       }
@@ -84,13 +112,23 @@ export class UserRolesService {
       this.logger.log(`Assigned role ${role.name} to user ${user.nip}`);
       return this.formatUserRoleResponse(userRole);
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ConflictException) throw error;
-      this.logger.error(`Failed to assign user role: ${error.message}`, error.stack);
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ConflictException
+      )
+        throw error;
+      this.logger.error(
+        `Failed to assign user role: ${error.message}`,
+        error.stack,
+      );
       throw new BadRequestException('Failed to assign user role');
     }
   }
 
-  async bulkAssign(dto: BulkAssignUserRolesDto, assignedBy?: string): Promise<UserRoleResponseDto[]> {
+  async bulkAssign(
+    dto: BulkAssignUserRolesDto,
+    assignedBy?: string,
+  ): Promise<UserRoleResponseDto[]> {
     const results: UserRoleResponseDto[] = [];
     for (const roleId of dto.roleIds) {
       const assignment = await this.assign(
@@ -104,7 +142,9 @@ export class UserRolesService {
 
   async revoke(userProfileId: string, roleId: string): Promise<void> {
     const userRole = await this.prisma.userRole.findUnique({
-      where: { userProfileId_roleId: { userProfileId: userProfileId, roleId: roleId } },
+      where: {
+        userProfileId_roleId: { userProfileId: userProfileId, roleId: roleId },
+      },
     });
 
     if (!userRole) {
@@ -125,7 +165,9 @@ export class UserRolesService {
       where: { userProfileId: userProfileId, isActive: true },
       include: {
         userProfile: { select: { id: true, nip: true } },
-        role: { select: { id: true, code: true, name: true, hierarchyLevel: true } },
+        role: {
+          select: { id: true, code: true, name: true, hierarchyLevel: true },
+        },
       },
       orderBy: { role: { hierarchyLevel: 'desc' } },
     });
@@ -151,12 +193,14 @@ export class UserRolesService {
       effectiveFrom: userRole.effective_from,
       effectiveUntil: userRole.effective_until,
       userProfile: userRole.user_profiles,
-      role: userRole.roles ? {
-        id: userRole.role.id,
-        code: userRole.role.code,
-        name: userRole.role.name,
-        hierarchyLevel: userRole.role.hierarchyLevel,
-      } : undefined,
+      role: userRole.roles
+        ? {
+            id: userRole.role.id,
+            code: userRole.role.code,
+            name: userRole.role.name,
+            hierarchyLevel: userRole.role.hierarchyLevel,
+          }
+        : undefined,
     };
   }
 }

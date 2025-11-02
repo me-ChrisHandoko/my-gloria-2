@@ -107,14 +107,14 @@ export class RolesService {
 
     if (query.minHierarchyLevel !== undefined) {
       where.hierarchyLevel = {
-        ...(where.hierarchyLevel as any || {}),
+        ...((where.hierarchyLevel as any) || {}),
         gte: query.minHierarchyLevel,
       };
     }
 
     if (query.maxHierarchyLevel !== undefined) {
       where.hierarchyLevel = {
-        ...(where.hierarchyLevel as any || {}),
+        ...((where.hierarchyLevel as any) || {}),
         lte: query.maxHierarchyLevel,
       };
     }
@@ -404,8 +404,7 @@ export class RolesService {
       createdBy: role.created_by,
       permissionCount: role._count?.role_permissions,
       userCount: role._count?.user_roles,
-      parentRoleCount:
-        role._count?.roleHierarchy_roleHierarchy_role_idToroles,
+      parentRoleCount: role._count?.roleHierarchy_roleHierarchy_role_idToroles,
       childRoleCount:
         role._count?.roleHierarchy_roleHierarchy_parent_role_idToroles,
     };

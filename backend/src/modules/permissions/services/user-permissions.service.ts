@@ -74,9 +74,7 @@ export class UserPermissionsService {
           where: { id: existing.id },
           data: {
             isGranted: dto.isGranted ?? true,
-            conditions: dto.conditions
-              ? JSON.parse(dto.conditions)
-              : undefined,
+            conditions: dto.conditions ? JSON.parse(dto.conditions) : undefined,
             grantedBy: grantedBy,
             grantReason: dto.grantReason,
             priority: dto.priority ?? 200,
@@ -113,9 +111,7 @@ export class UserPermissionsService {
             userProfileId: dto.userProfileId,
             permissionId: dto.permissionId,
             isGranted: dto.isGranted ?? true,
-            conditions: dto.conditions
-              ? JSON.parse(dto.conditions)
-              : undefined,
+            conditions: dto.conditions ? JSON.parse(dto.conditions) : undefined,
             grantedBy: grantedBy,
             grantReason: dto.grantReason,
             priority: dto.priority ?? 200,

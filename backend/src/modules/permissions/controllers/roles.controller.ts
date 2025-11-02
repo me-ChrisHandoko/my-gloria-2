@@ -22,6 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { RolesService } from '../services/roles.service';
 import { RolePermissionsService } from '../services/role-permissions.service';
+import { RoleModuleAccessService } from '../services/role-module-access.service';
+import { RoleHierarchyService } from '../services/role-hierarchy.service';
 import {
   CreateRoleDto,
   UpdateRoleDto,
@@ -35,10 +37,16 @@ import {
   RolePermissionResponseDto,
 } from '../dto/role-permission.dto';
 import {
+  GrantRoleModuleAccessDto,
+  BulkGrantRoleModuleAccessDto,
+  RoleModuleAccessResponseDto,
+} from '../dto/role-module-access.dto';
+import {
   RequiredPermission,
   PermissionAction,
 } from '../../../core/auth/decorators/permissions.decorator';
 import { AuditLog } from '../../../core/auth/decorators/audit-log.decorator';
+import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
 
 @ApiTags('Permissions - Roles')
 @ApiBearerAuth()
@@ -51,6 +59,8 @@ export class RolesController {
   constructor(
     private readonly rolesService: RolesService,
     private readonly rolePermissionsService: RolePermissionsService,
+    private readonly roleModuleAccessService: RoleModuleAccessService,
+    private readonly roleHierarchyService: RoleHierarchyService,
   ) {}
 
   @Post()
@@ -232,7 +242,8 @@ export class RolesController {
   @AuditLog({ action: 'ASSIGN_ROLE_PERMISSION' })
   @ApiOperation({
     summary: 'Assign permission to role',
-    description: 'Assigns a permission to a role with optional conditions and effective dates.',
+    description:
+      'Assigns a permission to a role with optional conditions and effective dates.',
   })
   @ApiParam({
     name: 'id',
@@ -348,5 +359,254 @@ export class RolesController {
     @Param('permissionId', ParseUUIDPipe) permissionId: string,
   ): Promise<void> {
     return this.rolePermissionsService.revoke(roleId, permissionId);
+  }
+
+  // Role Module Access Management
+
+  @Post(':id/modules')
+  @HttpCode(HttpStatus.CREATED)
+  @RequiredPermission('roles', PermissionAction.UPDATE)
+  @AuditLog({ action: 'GRANT_ROLE_MODULE_ACCESS' })
+  @ApiOperation({
+    summary: 'Grant module access to role',
+    description:
+      'Grants access to a module for a role with specific permissions.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Role UUID',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Module access granted successfully',
+    type: RoleModuleAccessResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Role or module not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Module access already exists',
+  })
+  async grantModuleAccess(
+    @Param('id', ParseUUIDPipe) roleId: string,
+    @Body() dto: Omit<GrantRoleModuleAccessDto, 'roleId'>,
+    @CurrentUser() currentUser: any,
+  ): Promise<RoleModuleAccessResponseDto> {
+    return this.roleModuleAccessService.grant(
+      {
+        ...dto,
+        roleId,
+      },
+      currentUser.userProfileId || currentUser.id,
+    );
+  }
+
+  @Post(':id/modules/bulk')
+  @HttpCode(HttpStatus.CREATED)
+  @RequiredPermission('roles', PermissionAction.UPDATE)
+  @AuditLog({ action: 'BULK_GRANT_ROLE_MODULE_ACCESS' })
+  @ApiOperation({
+    summary: 'Bulk grant module access to role',
+    description: 'Grants access to multiple modules for a role at once.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Role UUID',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Module accesses granted successfully',
+    type: [RoleModuleAccessResponseDto],
+  })
+  async bulkGrantModuleAccess(
+    @Param('id', ParseUUIDPipe) roleId: string,
+    @Body() dto: Omit<BulkGrantRoleModuleAccessDto, 'roleId'>,
+    @CurrentUser() currentUser: any,
+  ): Promise<RoleModuleAccessResponseDto[]> {
+    return this.roleModuleAccessService.bulkGrant(
+      {
+        ...dto,
+        roleId,
+      },
+      currentUser.userProfileId || currentUser.id,
+    );
+  }
+
+  @Get(':id/modules')
+  @HttpCode(HttpStatus.OK)
+  @RequiredPermission('roles', PermissionAction.READ)
+  @ApiOperation({
+    summary: 'Get role module accesses',
+    description: 'Retrieves all module accesses for a role.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Role UUID',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role module accesses retrieved successfully',
+    type: [RoleModuleAccessResponseDto],
+  })
+  async getRoleModuleAccesses(
+    @Param('id', ParseUUIDPipe) roleId: string,
+  ): Promise<RoleModuleAccessResponseDto[]> {
+    return this.roleModuleAccessService.findByRole(roleId);
+  }
+
+  @Delete(':id/modules/:moduleAccessId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequiredPermission('roles', PermissionAction.UPDATE)
+  @AuditLog({ action: 'REVOKE_ROLE_MODULE_ACCESS' })
+  @ApiOperation({
+    summary: 'Revoke module access from role',
+    description: 'Removes module access from a role.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Role UUID',
+    type: String,
+  })
+  @ApiParam({
+    name: 'moduleAccessId',
+    description: 'Module Access UUID',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'Module access revoked successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Module access not found',
+  })
+  async revokeModuleAccess(
+    @Param('moduleAccessId', ParseUUIDPipe) moduleAccessId: string,
+  ): Promise<void> {
+    return this.roleModuleAccessService.revoke(moduleAccessId);
+  }
+
+  // Role Hierarchy Management
+
+  @Post(':id/hierarchy')
+  @HttpCode(HttpStatus.CREATED)
+  @RequiredPermission('roles', PermissionAction.UPDATE)
+  @AuditLog({ action: 'CREATE_ROLE_HIERARCHY' })
+  @ApiOperation({
+    summary: 'Create role hierarchy',
+    description:
+      'Creates parent-child relationship between roles with circular dependency prevention.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Child Role UUID',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Role hierarchy created successfully',
+    type: RoleResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Role not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Would create circular dependency or invalid hierarchy level',
+  })
+  async createHierarchy(
+    @Param('id', ParseUUIDPipe) childId: string,
+    @Body('parentId') parentId: string,
+  ): Promise<RoleResponseDto> {
+    return this.roleHierarchyService.createHierarchy(childId, parentId);
+  }
+
+  @Get(':id/hierarchy/tree')
+  @HttpCode(HttpStatus.OK)
+  @RequiredPermission('roles', PermissionAction.READ)
+  @ApiOperation({
+    summary: 'Get role hierarchy tree',
+    description: 'Retrieves hierarchical tree structure for a role.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Role UUID',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role hierarchy tree retrieved successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Role not found',
+  })
+  async getHierarchyTree(@Param('id', ParseUUIDPipe) roleId: string) {
+    return this.roleHierarchyService.getHierarchyTree(roleId);
+  }
+
+  @Get(':id/hierarchy/inherited-permissions')
+  @HttpCode(HttpStatus.OK)
+  @RequiredPermission('roles', PermissionAction.READ)
+  @ApiOperation({
+    summary: 'Get inherited permissions',
+    description: 'Retrieves all permissions inherited from parent roles.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Role UUID',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Inherited permissions retrieved successfully',
+    type: [RolePermissionResponseDto],
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Role not found',
+  })
+  async getInheritedPermissions(
+    @Param('id', ParseUUIDPipe) roleId: string,
+  ): Promise<RolePermissionResponseDto[]> {
+    return this.roleHierarchyService.getInheritedPermissions(roleId);
+  }
+
+  @Delete(':id/hierarchy')
+  @HttpCode(HttpStatus.OK)
+  @RequiredPermission('roles', PermissionAction.UPDATE)
+  @AuditLog({ action: 'REMOVE_ROLE_HIERARCHY' })
+  @ApiOperation({
+    summary: 'Remove role hierarchy',
+    description: 'Removes parent-child relationship from a role.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Role UUID',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role hierarchy removed successfully',
+    type: RoleResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Role not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Role does not have a parent',
+  })
+  async removeHierarchy(
+    @Param('id', ParseUUIDPipe) roleId: string,
+  ): Promise<RoleResponseDto> {
+    return this.roleHierarchyService.removeHierarchy(roleId);
   }
 }

@@ -308,7 +308,8 @@ export class PermissionsController {
   @RequiredPermission('permissions', PermissionAction.READ)
   @ApiOperation({
     summary: 'Check user permission',
-    description: 'Checks if a user has a specific permission with optional scope and resource context.',
+    description:
+      'Checks if a user has a specific permission with optional scope and resource context.',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -344,7 +345,8 @@ export class PermissionsController {
   @RequiredPermission('permissions', PermissionAction.READ)
   @ApiOperation({
     summary: 'Get user permissions',
-    description: 'Retrieves all effective permissions for a user from all sources (direct, roles, positions).',
+    description:
+      'Retrieves all effective permissions for a user from all sources (direct, roles, positions).',
   })
   @ApiParam({
     name: 'userId',
@@ -355,8 +357,11 @@ export class PermissionsController {
     status: HttpStatus.OK,
     description: 'User permissions retrieved successfully',
   })
-  async getUserPermissions(@Param('userId', ParseUUIDPipe) userProfileId: string) {
-    const permissions = await this.permissionCheckerService.getUserPermissions(userProfileId);
+  async getUserPermissions(
+    @Param('userId', ParseUUIDPipe) userProfileId: string,
+  ) {
+    const permissions =
+      await this.permissionCheckerService.getUserPermissions(userProfileId);
 
     return {
       userProfileId,

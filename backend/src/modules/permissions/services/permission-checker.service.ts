@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { CacheService } from '../../../core/cache/cache.service';
 import { PermissionAction, PermissionScope } from '@prisma/client';
@@ -41,7 +38,9 @@ export class PermissionCheckerService {
     private readonly cache: CacheService,
   ) {}
 
-  async checkPermission(dto: CheckPermissionDto): Promise<CheckPermissionResponseDto> {
+  async checkPermission(
+    dto: CheckPermissionDto,
+  ): Promise<CheckPermissionResponseDto> {
     const startTime = Date.now();
 
     try {
@@ -154,10 +153,7 @@ export class PermissionCheckerService {
         userProfileId: userProfileId,
         isGranted: true,
         effectiveFrom: { lte: new Date() },
-        OR: [
-          { effectiveUntil: null },
-          { effectiveUntil: { gte: new Date() } },
-        ],
+        OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: new Date() } }],
       },
       include: {
         permission: true,
@@ -182,10 +178,7 @@ export class PermissionCheckerService {
         userProfileId: userProfileId,
         isActive: true,
         effectiveFrom: { lte: new Date() },
-        OR: [
-          { effectiveUntil: null },
-          { effectiveUntil: { gte: new Date() } },
-        ],
+        OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: new Date() } }],
       },
       include: {
         role: {

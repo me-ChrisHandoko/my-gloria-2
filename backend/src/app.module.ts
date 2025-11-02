@@ -29,9 +29,7 @@ import { AuditModule as AuditFeatureModule } from './modules/audit/audit.module'
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { SystemConfigModule } from './modules/system-config/system-config.module';
 
-// Temporal Workflow Integration
-import { TemporalModule } from './temporal/temporal.module';
-import { ApprovalsModule } from './modules/approvals/approvals.module';
+// Removed Temporal Workflow Integration - no longer needed
 
 // Core Performance & Security
 import { PerformanceModule } from './core/performance/performance.module';
@@ -78,9 +76,6 @@ import { CryptoUtil } from './core/utils/crypto.util';
     // Performance & Security Core Modules
     PerformanceModule,
     SecurityModule,
-
-    // Temporal Workflow Engine
-    TemporalModule,
 
     // Caching Module with Redis
     CacheModule.registerAsync({
@@ -332,10 +327,7 @@ function getFeatureModules(): any[] {
     modules.push(SystemConfigModule);
   }
 
-  // Approvals Module (Temporal Example)
-  if (process.env.ENABLE_APPROVALS_MODULE !== 'false') {
-    modules.push(ApprovalsModule);
-  }
+  // Approvals Module removed - was dependent on Temporal
 
   return modules;
 }

@@ -51,15 +51,14 @@ export class RolePermissionsService {
       }
 
       // Check for existing assignment
-      const existingAssignment =
-        await this.prisma.rolePermission.findUnique({
-          where: {
-            roleId_permissionId: {
-              roleId: dto.roleId,
-              permissionId: dto.permissionId,
-            },
+      const existingAssignment = await this.prisma.rolePermission.findUnique({
+        where: {
+          roleId_permissionId: {
+            roleId: dto.roleId,
+            permissionId: dto.permissionId,
           },
-        });
+        },
+      });
 
       let rolePermission;
 
@@ -223,7 +222,9 @@ export class RolePermissionsService {
         `Failed to bulk assign role permission: ${error.message}`,
         error.stack,
       );
-      throw new BadRequestException('Failed to bulk assign role userPermissions');
+      throw new BadRequestException(
+        'Failed to bulk assign role userPermissions',
+      );
     }
   }
 
@@ -251,9 +252,7 @@ export class RolePermissionsService {
       // Invalidate cache
       await this.invalidateRoleCache(roleId);
 
-      this.logger.log(
-        `Revoked permission ${permissionId} from role ${roleId}`,
-      );
+      this.logger.log(`Revoked permission ${permissionId} from role ${roleId}`);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -266,7 +265,9 @@ export class RolePermissionsService {
     }
   }
 
-  async getRolePermissions(roleId: string): Promise<RolePermissionResponseDto[]> {
+  async getRolePermissions(
+    roleId: string,
+  ): Promise<RolePermissionResponseDto[]> {
     const cacheKey = `${this.cachePrefix}role:${roleId}`;
     const cached = await this.cache.get<RolePermissionResponseDto[]>(cacheKey);
 
@@ -356,9 +357,7 @@ export class RolePermissionsService {
       ],
     });
 
-    return rolePermissions.map((rp) =>
-      this.formatRolePermissionResponse(rp),
-    );
+    return rolePermissions.map((rp) => this.formatRolePermissionResponse(rp));
   }
 
   private async invalidateRoleCache(roleId: string): Promise<void> {

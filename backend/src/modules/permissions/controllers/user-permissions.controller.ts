@@ -176,10 +176,7 @@ export class UserPermissionsController {
     @Param('userId', ParseUUIDPipe) userProfileId: string,
     @Query() query: QueryUserPermissionDto,
   ): Promise<UserPermissionResponseDto[]> {
-    return this.userPermissionsService.getUserPermissions(
-      userProfileId,
-      query,
-    );
+    return this.userPermissionsService.getUserPermissions(userProfileId, query);
   }
 
   @Get(':userId/permissions/:permissionId')

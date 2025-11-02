@@ -21,6 +21,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { ModulesService } from '../services/modules.service';
+import { ModulePermissionsService } from '../services/module-permissions.service';
 import {
   CreateModuleDto,
   UpdateModuleDto,
@@ -28,11 +29,13 @@ import {
   ModuleResponseDto,
   PaginatedModuleResponseDto,
 } from '../dto/module.dto';
+import { ModulePermissionResponseDto } from '../dto/module-permission.dto';
 import {
   RequiredPermission,
   PermissionAction,
 } from '../../../core/auth/decorators/permissions.decorator';
 import { AuditLog } from '../../../core/auth/decorators/audit-log.decorator';
+import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
 
 @ApiTags('Permissions - Modules')
 @ApiBearerAuth()
@@ -42,7 +45,10 @@ import { AuditLog } from '../../../core/auth/decorators/audit-log.decorator';
 })
 @UseInterceptors(ClassSerializerInterceptor)
 export class ModulesController {
-  constructor(private readonly modulesService: ModulesService) {}
+  constructor(
+    private readonly modulesService: ModulesService,
+    private readonly modulePermissionsService: ModulePermissionsService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -233,5 +239,35 @@ export class ModulesController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ModuleResponseDto> {
     return this.modulesService.restore(id);
+  }
+
+  // Module Navigation API
+
+  @Get(':id/permissions')
+  @HttpCode(HttpStatus.OK)
+  @RequiredPermission('modules', PermissionAction.READ)
+  @ApiOperation({
+    summary: 'Get module permissions',
+    description:
+      'Retrieves all permissions available for a specific module.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Module UUID',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Module permissions retrieved successfully',
+    type: [ModulePermissionResponseDto],
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Module not found',
+  })
+  async getModulePermissions(
+    @Param('id', ParseUUIDPipe) moduleId: string,
+  ): Promise<ModulePermissionResponseDto[]> {
+    return this.modulePermissionsService.findByModule(moduleId);
   }
 }

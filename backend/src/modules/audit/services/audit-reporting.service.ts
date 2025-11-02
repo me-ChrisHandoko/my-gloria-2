@@ -152,8 +152,11 @@ export class AuditReportingService {
     // Analyze login patterns
     const loginAttempts = logs.filter((l) => l.action === AuditAction.LOGIN);
     const failedLogins = loginAttempts.filter(
-      (l) => typeof l.metadata === 'object' && l.metadata !== null &&
-            'success' in l.metadata && l.metadata.success === false,
+      (l) =>
+        typeof l.metadata === 'object' &&
+        l.metadata !== null &&
+        'success' in l.metadata &&
+        l.metadata.success === false,
     );
 
     // Analyze permission changes
@@ -203,14 +206,18 @@ export class AuditReportingService {
 
     // Identify data access patterns
     const dataAccess = logs.filter((l) =>
-      [AuditAction.READ as string, AuditAction.EXPORT as string].includes(l.action as string),
+      [AuditAction.READ as string, AuditAction.EXPORT as string].includes(
+        l.action as string,
+      ),
     );
 
     // Identify data modifications
     const dataModifications = logs.filter((l) =>
-      [AuditAction.CREATE as string, AuditAction.UPDATE as string, AuditAction.DELETE as string].includes(
-        l.action as string,
-      ),
+      [
+        AuditAction.CREATE as string,
+        AuditAction.UPDATE as string,
+        AuditAction.DELETE as string,
+      ].includes(l.action as string),
     );
 
     // Check for required audit trails

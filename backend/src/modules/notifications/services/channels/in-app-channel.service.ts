@@ -51,7 +51,10 @@ export class InAppChannelService {
       //     readAt: new Date(),
       //   },
       // });
-      this.logger.log(`Notification ${notificationId} marked as delivered`, 'InAppChannelService');
+      this.logger.log(
+        `Notification ${notificationId} marked as delivered`,
+        'InAppChannelService',
+      );
     } catch (error) {
       this.logger.error('Failed to mark notification as delivered', error);
     }
