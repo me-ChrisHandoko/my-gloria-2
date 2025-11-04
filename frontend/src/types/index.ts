@@ -208,6 +208,9 @@ export interface Permission {
   updatedAt: Date;
 }
 
+// Re-export permission system types
+export * from './permissions/role.types';
+
 // Workflow types
 export interface Workflow {
   id: string;

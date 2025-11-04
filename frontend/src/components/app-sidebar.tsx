@@ -148,25 +148,39 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       {
         title: "Permissions",
         url: "/permissions",
-        icon: Lock,
+        icon: Shield,
         isActive: isPathActive("/permissions"),
         items: [
           {
-            title: "All Permissions",
+            title: "Dashboard",
             url: "/permissions",
             isActive: pathname === "/permissions",
           },
           {
             title: "Roles",
             url: "/permissions/roles",
-            isActive: pathname === "/permissions/roles",
+            isActive: pathname.startsWith("/permissions/roles"),
+          },
+          {
+            title: "Permissions",
+            url: "/permissions/permissions",
+            isActive: pathname.startsWith("/permissions/permissions"),
           },
           {
             title: "Modules",
             url: "/permissions/modules",
             isActive: pathname.startsWith("/permissions/modules") ||
-                      pathname.startsWith("/permissions/module") ||
-                      pathname === "/permissions/role-access",
+                      pathname.startsWith("/permissions/module"),
+          },
+          {
+            title: "User Assignments",
+            url: "/permissions/users",
+            isActive: pathname.startsWith("/permissions/users"),
+          },
+          {
+            title: "Analytics",
+            url: "/permissions/analytics",
+            isActive: pathname.startsWith("/permissions/analytics"),
           },
         ],
       },

@@ -51,14 +51,17 @@ const baseQuery = fetchBaseQuery({
       // Get token from Clerk
       const token = await getClerkToken();
 
-      console.log('[API] Preparing headers - Token exists:', !!token);
-      console.log('[API] Token (first 20 chars):', token ? token.slice(0, 20) + '...' : 'No token');
+      console.log("[API] Preparing headers - Token exists:", !!token);
+      console.log(
+        "[API] Token (first 20 chars):",
+        token ? token.slice(0, 20) + "..." : "No token"
+      );
 
       if (token) {
         headers.set("authorization", `Bearer ${token}`);
-        console.log('[API] Authorization header set');
+        console.log("[API] Authorization header set");
       } else {
-        console.warn('[API] No authentication token available');
+        console.warn("[API] No authentication token available");
       }
 
       // Add request ID for tracing
@@ -93,17 +96,17 @@ const baseQueryWithReauth: BaseQueryFn<
   // Wait until the mutex is available without locking it
   await mutex.waitForUnlock();
 
-  console.log('[API] Making request to:', args);
+  console.log("[API] Making request to:", args);
   let result = await baseQuery(args, api, extraOptions);
 
-  console.log('[API] Response received:', {
+  console.log("[API] Response received:", {
     data: result.data,
     error: result.error,
-    meta: result.meta
+    meta: result.meta,
   });
 
   // Transform paginated responses globally to prevent double wrapping
-  if (result.data && typeof result.data === 'object' && !result.error) {
+  if (result.data && typeof result.data === "object" && !result.error) {
     const responseData = result.data as any;
 
     // Check if it's a backend standard response with success wrapper
@@ -112,12 +115,14 @@ const baseQueryWithReauth: BaseQueryFn<
       if (
         responseData.data &&
         Array.isArray(responseData.data) &&
-        typeof responseData.total === 'number' &&
-        typeof responseData.page === 'number' &&
-        typeof responseData.limit === 'number'
+        typeof responseData.total === "number" &&
+        typeof responseData.page === "number" &&
+        typeof responseData.limit === "number"
       ) {
         // Transform paginated response: extract pagination data from wrapper
-        console.log('[API] Transforming paginated response - removing double wrap');
+        console.log(
+          "[API] Transforming paginated response - removing double wrap"
+        );
         result.data = {
           data: responseData.data,
           total: responseData.total,
@@ -129,7 +134,9 @@ const baseQueryWithReauth: BaseQueryFn<
         } as any;
       } else if (Array.isArray(responseData.data)) {
         // Non-paginated array response: wrap with pagination metadata
-        console.log('[API] Transforming non-paginated array response - adding pagination wrapper');
+        console.log(
+          "[API] Transforming non-paginated array response - adding pagination wrapper"
+        );
         result.data = {
           data: responseData.data,
           total: responseData.data.length,
@@ -141,7 +148,9 @@ const baseQueryWithReauth: BaseQueryFn<
         } as any;
       } else {
         // Non-paginated non-array response: extract data from success wrapper
-        console.log('[API] Transforming non-paginated response - extracting data');
+        console.log(
+          "[API] Transforming non-paginated response - extracting data"
+        );
         result.data = responseData.data as any;
       }
     }
@@ -187,22 +196,32 @@ const baseQueryWithReauth: BaseQueryFn<
       console.warn("Rate limit exceeded - implementing backoff strategy");
 
       // Extract retry-after header from response if available
-      const retryAfterHeader = result.meta?.response?.headers?.get('retry-after');
+      const retryAfterHeader =
+        result.meta?.response?.headers?.get("retry-after");
       const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader) : null;
 
       // Calculate wait time: use retry-after header or default to 5 seconds
       const waitTime = retryAfter ? retryAfter * 1000 : 5000;
 
-      console.log(`[Rate Limit] Waiting ${waitTime/1000}s before allowing retry...`);
+      console.log(
+        `[Rate Limit] Waiting ${waitTime / 1000}s before allowing retry...`
+      );
 
       // Wait before allowing the next request
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
 
       // Optionally show user notification
       if (typeof window !== "undefined") {
-        console.warn(`Rate limit reached. Please wait ${waitTime/1000} seconds before retrying.`);
+        console.warn(
+          `Rate limit reached. Please wait ${
+            waitTime / 1000
+          } seconds before retrying.`
+        );
       }
-    } else if (typeof result.error.status === 'number' && result.error.status >= 500) {
+    } else if (
+      typeof result.error.status === "number" &&
+      result.error.status >= 500
+    ) {
       console.error("Server error:", result.error);
     }
   }
@@ -221,23 +240,17 @@ export const apiSlice = createApi({
     "Department",
     "Position",
     "Permission",
-    "PermissionGroup",
-    "PermissionTemplate",
-    "PermissionDelegation",
     "Role",
+    "RolePermission",
+    "UserRole",
+    "UserPermission",
     "Workflow",
-    "WorkflowTemplate",
-    "WorkflowInstance",
     "Notification",
     "NotificationTemplate",
     "Audit",
     "FeatureFlag",
     "SystemConfig",
     "Module",
-    "ModuleAccess",
-    "ModulePermission",
-    "RoleModuleAccess",
-    "ResourcePermission",
   ],
   endpoints: () => ({}),
   // Refetch on reconnect for network recovery (disabled on focus to prevent rate limiting)

@@ -1,91 +1,94 @@
+/**
+ * Roles API - RTK Query Endpoints
+ * Phase 1: Core Role Management
+ * Phase 2: Role Permissions Assignment
+ * Phase 5: Role Module Access & Hierarchy
+ *
+ * This file implements RTK Query endpoints for role management and permissions.
+ * Uses comprehensive type definitions from @/types/permissions/role.types
+ *
+ * @see docs/PERMISSION_IMPLEMENTATION_PLAN.md - Phase 1, 2 & 5
+ */
+
 import { apiSlice } from './apiSliceWithHook';
 import type {
   Role,
   CreateRoleDto,
   UpdateRoleDto,
-  QueryRoleParams,
-  AssignRoleDto,
-  UserRole,
+  GetRolesQueryParams,
+  PaginatedRolesResponse,
+  RolePermission,
+  RolePermissionsResponse,
   AssignRolePermissionDto,
   BulkAssignRolePermissionsDto,
+  BulkRolePermissionsResult,
+  RoleModuleAccess,
+  RoleModuleAccessResponse,
+  GrantRoleModuleAccessDto,
+  BulkGrantRoleModuleAccessDto,
+  BulkRoleModuleAccessResult,
+  RoleHierarchyNode,
+  RoleHierarchyTreeResponse,
   CreateRoleHierarchyDto,
-  RoleHierarchy,
-  CreateRoleTemplateDto,
-  ApplyRoleTemplateDto,
-  UpdateUserRoleTemporalDto,
-  RoleTemplate,
-  RoleUser,
-} from '@/lib/api/services/roles.service';
-import type { PaginatedResponse, QueryParams } from '@/lib/api/types';
+  InheritedPermissions,
+  InheritedPermissionsResponse,
+} from '@/types/permissions/role.types';
 
 export const rolesApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     // ===== ROLE QUERIES =====
 
-    // Get all roles with pagination and filters
+    /**
+     * Get paginated list of roles with filtering and sorting
+     *
+     * Backend: GET /api/v1/permissions/roles (baseUrl already includes /api/v1)
+     *
+     * @example
+     * ```tsx
+     * const { data, isLoading } = useGetRolesQuery({
+     *   page: 1,
+     *   limit: 10,
+     *   search: 'admin',
+     *   isActive: true
+     * });
+     * ```
+     */
     getRoles: builder.query<
-      PaginatedResponse<Role>,
-      QueryRoleParams | void
+      PaginatedRolesResponse,
+      GetRolesQueryParams | void
     >({
-      query: (params = {}) => {
+      query: (params) => {
         const queryParams: Record<string, any> = {
-          page: params.page || 1,
-          limit: params.limit || 10,
+          page: params?.page || 1,
+          limit: params?.limit || 10,
         };
 
         // Only add optional parameters if they have values
-        if (params.search) queryParams.search = params.search;
-        if (params.sortBy) queryParams.sortBy = params.sortBy;
-        if (params.sortOrder) queryParams.sortOrder = params.sortOrder;
-        if (params.includeInactive !== undefined) queryParams.includeInactive = params.includeInactive;
-        if (params.isActive !== undefined) queryParams.isActive = params.isActive;
-        if (params.hierarchyLevel !== undefined) queryParams.hierarchyLevel = params.hierarchyLevel;
-        if (params.isSystemRole !== undefined) queryParams.isSystemRole = params.isSystemRole;
+        if (params?.search) queryParams.search = params.search;
+        if (params?.sortBy) queryParams.sortBy = params.sortBy;
+        if (params?.sortOrder) queryParams.sortOrder = params.sortOrder;
+        if (params?.isActive !== undefined) queryParams.isActive = params.isActive;
+        if (params?.hierarchyLevel !== undefined) queryParams.hierarchyLevel = params.hierarchyLevel;
+        if (params?.parentId) queryParams.parentId = params.parentId;
+        if (params?.organizationId) queryParams.organizationId = params.organizationId;
+        if (params?.includeDeleted) queryParams.includeDeleted = params.includeDeleted;
 
         return {
-          url: '/roles',
+          url: '/permissions/roles',
           params: queryParams,
         };
       },
-      // Transform response to handle wrapped response from backend TransformInterceptor
-      // This follows PermissionList pattern for consistency
-      transformResponse: (response: any) => {
-        // Handle wrapped response from backend TransformInterceptor
-        let actualResponse: PaginatedResponse<Role>;
-
-        if (response && response.success && response.data) {
-          // Unwrap the response from TransformInterceptor
-          actualResponse = response.data;
-
-          // Check if it's double-wrapped
-          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
-            actualResponse = (actualResponse as any).data;
-          }
-        } else {
-          // Use response directly if not wrapped
-          actualResponse = response;
-        }
-
-        // Ensure we have valid data
-        if (!actualResponse || !Array.isArray(actualResponse.data)) {
-          return {
-            data: [],
-            total: 0,
-            page: 1,
-            limit: 10,
-            totalPages: 0,
-          };
-        }
-
-        return {
-          ...actualResponse,
-          data: actualResponse.data.map(role => ({
-            ...role,
-            createdAt: new Date(role.createdAt),
-            updatedAt: new Date(role.updatedAt),
-          })),
-        };
-      },
+      /**
+       * Transform response is handled automatically by baseQueryWithReauth
+       * in apiSliceWithHook.ts (lines 108-158)
+       *
+       * The base query already:
+       * - Unwraps { success: true, data: {...} } responses
+       * - Handles paginated responses
+       * - Extracts data from wrapper
+       *
+       * No additional transformation needed here.
+       */
       providesTags: (result) =>
         result && Array.isArray(result.data)
           ? [
@@ -97,107 +100,71 @@ export const rolesApi = apiSlice.injectEndpoints({
       keepUnusedDataFor: 60,
     }),
 
-    // Get single role by ID
+    /**
+     * Get single role by ID
+     *
+     * Backend: GET /api/v1/permissions/roles/:id
+     *
+     * @example
+     * ```tsx
+     * const { data: role, isLoading } = useGetRoleByIdQuery('role-id-123');
+     * ```
+     */
     getRoleById: builder.query<Role, string>({
-      query: (id) => `/roles/${id}`,
+      query: (id) => `/permissions/roles/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Role', id }],
     }),
 
-    // Get role by code
-    getRoleByCode: builder.query<Role, string>({
-      query: (code) => `/roles/code/${code}`,
-      providesTags: (_result, _error, code) => [
-        { type: 'Role', id: `code-${code}` },
-      ],
-    }),
+    // ========================================================================
+    // Phase 1: MUTATIONS - Core CRUD Operations
+    // ========================================================================
 
-    // Get user roles
-    getUserRoles: builder.query<Role[], string>({
-      query: (userProfileId) => `/roles/user/${userProfileId}`,
-      providesTags: (_result, _error, userProfileId) => [
-        { type: 'Role', id: `user-${userProfileId}` },
-      ],
-    }),
-
-    // Get role statistics
-    getRoleStatistics: builder.query<any, void>({
-      query: () => '/roles/statistics',
-      providesTags: [{ type: 'Role', id: 'STATISTICS' }],
-    }),
-
-    // Get role hierarchy
-    getRoleHierarchy: builder.query<any, string>({
-      query: (roleId) => `/roles/${roleId}/hierarchy`,
-      providesTags: (_result, _error, roleId) => [
-        { type: 'Role', id: `hierarchy-${roleId}` },
-      ],
-    }),
-
-    // Get role templates
-    getRoleTemplates: builder.query<
-      PaginatedResponse<RoleTemplate>,
-      QueryParams | void
-    >({
-      query: (params) => ({
-        url: '/roles/templates',
-        params: params || {},
-      }),
-      providesTags: (result) =>
-        result && Array.isArray(result.data)
-          ? [
-              ...result.data.map(({ id }) => ({ type: 'Role' as const, id: `template-${id}` })),
-              { type: 'Role', id: 'TEMPLATE-LIST' },
-            ]
-          : [{ type: 'Role', id: 'TEMPLATE-LIST' }],
-    }),
-
-    // Get role template by ID
-    getRoleTemplateById: builder.query<RoleTemplate, string>({
-      query: (id) => `/roles/templates/${id}`,
-      providesTags: (_result, _error, id) => [
-        { type: 'Role', id: `template-${id}` },
-      ],
-    }),
-
-    // Get users assigned to a role
-    getRoleUsers: builder.query<
-      PaginatedResponse<RoleUser>,
-      { roleId: string; params?: QueryParams }
-    >({
-      query: ({ roleId, params = {} }) => ({
-        url: `/roles/${roleId}/users`,
-        params,
-      }),
-      providesTags: (_result, _error, { roleId }) => [
-        { type: 'Role', id: `users-${roleId}` },
-      ],
-    }),
-
-    // Get modules accessible by a role
-    getRoleModules: builder.query<any, string>({
-      query: (roleId) => `/roles/${roleId}/modules`,
-      providesTags: (_result, _error, roleId) => [
-        { type: 'Role', id: `modules-${roleId}` },
-      ],
-    }),
-
-    // ===== ROLE MUTATIONS =====
-
-    // Create new role
+    /**
+     * Create new role
+     *
+     * Backend: POST /api/v1/permissions/roles
+     *
+     * @example
+     * ```tsx
+     * const [createRole, { isLoading }] = useCreateRoleMutation();
+     *
+     * const handleCreate = async () => {
+     *   await createRole({
+     *     code: 'MANAGER',
+     *     name: 'Manager',
+     *     hierarchyLevel: 2
+     *   });
+     * };
+     * ```
+     */
     createRole: builder.mutation<Role, CreateRoleDto>({
       query: (data) => ({
-        url: '/roles',
+        url: '/permissions/roles',
         method: 'POST',
         body: data,
       }),
       invalidatesTags: [{ type: 'Role', id: 'LIST' }],
     }),
 
-    // Update role
+    /**
+     * Update existing role
+     *
+     * Backend: PATCH /api/v1/permissions/roles/:id
+     *
+     * @example
+     * ```tsx
+     * const [updateRole] = useUpdateRoleMutation();
+     *
+     * await updateRole({
+     *   id: 'role-id',
+     *   data: { name: 'Updated Name' }
+     * });
+     * ```
+     */
     updateRole: builder.mutation<Role, { id: string; data: UpdateRoleDto }>({
       query: ({ id, data }) => ({
-        url: `/roles/${id}`,
-        method: 'PUT',
+        url: `/permissions/roles/${id}`,
+        method: 'PATCH',
         body: data,
       }),
       invalidatesTags: (_result, _error, { id }) => [
@@ -206,10 +173,21 @@ export const rolesApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Delete role
+    /**
+     * Soft delete role
+     *
+     * Backend: DELETE /api/v1/permissions/roles/:id
+     *
+     * @example
+     * ```tsx
+     * const [deleteRole] = useDeleteRoleMutation();
+     *
+     * await deleteRole('role-id-123');
+     * ```
+     */
     deleteRole: builder.mutation<void, string>({
       query: (id) => ({
-        url: `/roles/${id}`,
+        url: `/permissions/roles/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: (_result, _error, id) => [
@@ -218,197 +196,444 @@ export const rolesApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Assign role to user
-    assignRole: builder.mutation<UserRole, AssignRoleDto>({
-      query: (data) => ({
-        url: '/roles/assign',
+    /**
+     * Restore soft-deleted role
+     *
+     * Backend: POST /api/v1/permissions/roles/:id/restore
+     *
+     * @example
+     * ```tsx
+     * const [restoreRole] = useRestoreRoleMutation();
+     *
+     * await restoreRole('role-id-123');
+     * ```
+     */
+    restoreRole: builder.mutation<Role, string>({
+      query: (id) => ({
+        url: `/permissions/roles/${id}/restore`,
         method: 'POST',
-        body: data,
       }),
-      invalidatesTags: (_result, _error, { userProfileId }) => [
-        { type: 'Role', id: `user-${userProfileId}` },
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Role', id },
         { type: 'Role', id: 'LIST' },
       ],
     }),
 
-    // Remove role from user
-    removeRole: builder.mutation<
-      void,
-      { userProfileId: string; roleId: string }
-    >({
-      query: ({ userProfileId, roleId }) => ({
-        url: `/roles/users/${userProfileId}/roles/${roleId}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: (_result, _error, { userProfileId }) => [
-        { type: 'Role', id: `user-${userProfileId}` },
-        { type: 'Role', id: 'LIST' },
+    // ========================================================================
+    // Phase 2: ROLE PERMISSIONS - Permission Assignment to Roles
+    // ========================================================================
+
+    /**
+     * Get all permissions assigned to a role
+     *
+     * Backend: GET /api/v1/permissions/roles/:id/permissions
+     *
+     * @example
+     * ```tsx
+     * const { data: permissions, isLoading } = useGetRolePermissionsQuery('role-id-123');
+     * ```
+     */
+    getRolePermissions: builder.query<RolePermission[], string>({
+      query: (roleId) => `/permissions/roles/${roleId}/permissions`,
+      providesTags: (_result, _error, roleId) => [
+        { type: 'RolePermission', id: roleId },
       ],
+      keepUnusedDataFor: 60,
     }),
 
-    // Update user role temporal settings
-    updateUserRoleTemporal: builder.mutation<
-      UserRole,
-      { userProfileId: string; roleId: string; data: UpdateUserRoleTemporalDto }
+    /**
+     * Assign a single permission to a role
+     *
+     * Backend: POST /api/v1/permissions/roles/:id/permissions
+     *
+     * @example
+     * ```tsx
+     * const [assignPermission] = useAssignRolePermissionMutation();
+     *
+     * await assignPermission({
+     *   roleId: 'role-id-123',
+     *   permissionId: 'permission-id-456',
+     *   grantedBy: 'user-id'
+     * });
+     * ```
+     */
+    assignRolePermission: builder.mutation<
+      RolePermission,
+      { roleId: string } & AssignRolePermissionDto
     >({
-      query: ({ userProfileId, roleId, data }) => ({
-        url: `/roles/users/${userProfileId}/roles/${roleId}`,
-        method: 'PUT',
-        body: data,
-      }),
-      invalidatesTags: (_result, _error, { userProfileId, roleId }) => [
-        { type: 'Role', id: `user-${userProfileId}` },
-        { type: 'Role', id: `users-${roleId}` },
-      ],
-    }),
-
-    // Assign permission to role
-    assignPermissionToRole: builder.mutation<
-      any,
-      { roleId: string; data: AssignRolePermissionDto }
-    >({
-      query: ({ roleId, data }) => ({
-        url: `/roles/${roleId}/permissions`,
+      query: ({ roleId, ...data }) => ({
+        url: `/permissions/roles/${roleId}/permissions`,
         method: 'POST',
         body: data,
       }),
       invalidatesTags: (_result, _error, { roleId }) => [
+        { type: 'RolePermission', id: roleId },
         { type: 'Role', id: roleId },
+        { type: 'Permission', id: 'LIST' },
       ],
     }),
 
-    // Bulk assign permissions to role
-    bulkAssignPermissionsToRole: builder.mutation<
-      any,
-      { roleId: string; data: BulkAssignRolePermissionsDto }
+    /**
+     * Bulk assign multiple permissions to a role
+     *
+     * Backend: POST /api/v1/permissions/roles/:id/permissions/bulk
+     *
+     * @example
+     * ```tsx
+     * const [bulkAssign] = useBulkAssignRolePermissionsMutation();
+     *
+     * await bulkAssign({
+     *   roleId: 'role-id-123',
+     *   permissionIds: ['perm-1', 'perm-2', 'perm-3'],
+     *   grantedBy: 'user-id'
+     * });
+     * ```
+     */
+    bulkAssignRolePermissions: builder.mutation<
+      BulkRolePermissionsResult,
+      { roleId: string } & BulkAssignRolePermissionsDto
     >({
-      query: ({ roleId, data }) => ({
-        url: `/roles/${roleId}/permissions/bulk`,
+      query: ({ roleId, ...data }) => ({
+        url: `/permissions/roles/${roleId}/permissions/bulk`,
         method: 'POST',
         body: data,
       }),
       invalidatesTags: (_result, _error, { roleId }) => [
+        { type: 'RolePermission', id: roleId },
         { type: 'Role', id: roleId },
+        { type: 'Permission', id: 'LIST' },
       ],
     }),
 
-    // Remove permission from role
-    removePermissionFromRole: builder.mutation<
+    /**
+     * Revoke a permission from a role
+     *
+     * Backend: DELETE /api/v1/permissions/roles/:id/permissions/:permissionId
+     *
+     * @example
+     * ```tsx
+     * const [revokePermission] = useRevokeRolePermissionMutation();
+     *
+     * await revokePermission({
+     *   roleId: 'role-id-123',
+     *   permissionId: 'permission-id-456'
+     * });
+     * ```
+     */
+    revokeRolePermission: builder.mutation<
       void,
       { roleId: string; permissionId: string }
     >({
       query: ({ roleId, permissionId }) => ({
-        url: `/roles/${roleId}/permissions/${permissionId}`,
+        url: `/permissions/roles/${roleId}/permissions/${permissionId}`,
         method: 'DELETE',
       }),
       invalidatesTags: (_result, _error, { roleId }) => [
+        { type: 'RolePermission', id: roleId },
         { type: 'Role', id: roleId },
+        { type: 'Permission', id: 'LIST' },
       ],
     }),
 
-    // Create role hierarchy
-    createRoleHierarchy: builder.mutation<
-      RoleHierarchy,
-      { roleId: string; data: CreateRoleHierarchyDto }
+    // ========================================================================
+    // Phase 5: ROLE MODULE ACCESS - Module Access Management
+    // ========================================================================
+
+    /**
+     * Get all module accesses for a role
+     *
+     * Backend: GET /api/v1/permissions/roles/:id/modules
+     *
+     * @example
+     * ```tsx
+     * const { data: moduleAccesses } = useGetRoleModuleAccessesQuery('role-id-123');
+     * ```
+     */
+    getRoleModuleAccesses: builder.query<RoleModuleAccess[], string>({
+      query: (roleId) => `/permissions/roles/${roleId}/modules`,
+      providesTags: (_result, _error, roleId) => [
+        { type: 'Role', id: roleId },
+        { type: 'Module', id: 'LIST' },
+      ],
+      keepUnusedDataFor: 60,
+    }),
+
+    /**
+     * Grant module access to a role
+     *
+     * Backend: POST /api/v1/permissions/roles/:id/modules
+     *
+     * @example
+     * ```tsx
+     * const [grantModuleAccess] = useGrantRoleModuleAccessMutation();
+     *
+     * await grantModuleAccess({
+     *   roleId: 'role-id-123',
+     *   moduleId: 'module-id-456',
+     *   accessLevel: ModuleAccessLevel.WRITE,
+     *   grantedBy: 'admin-id'
+     * });
+     * ```
+     */
+    grantRoleModuleAccess: builder.mutation<
+      RoleModuleAccess,
+      { roleId: string } & GrantRoleModuleAccessDto
     >({
-      query: ({ roleId, data }) => ({
-        url: `/roles/${roleId}/hierarchy`,
+      query: ({ roleId, ...data }) => ({
+        url: `/permissions/roles/${roleId}/modules`,
         method: 'POST',
         body: data,
       }),
       invalidatesTags: (_result, _error, { roleId }) => [
-        { type: 'Role', id: `hierarchy-${roleId}` },
-        { type: 'Role', id: 'LIST' },
+        { type: 'Role', id: roleId },
+        { type: 'Module', id: 'LIST' },
       ],
     }),
 
-    // Delete role hierarchy
-    deleteRoleHierarchy: builder.mutation<
+    /**
+     * Bulk grant module access to a role
+     *
+     * Backend: POST /api/v1/permissions/roles/:id/modules/bulk
+     *
+     * @example
+     * ```tsx
+     * const [bulkGrantModuleAccess] = useBulkGrantRoleModuleAccessMutation();
+     *
+     * await bulkGrantModuleAccess({
+     *   roleId: 'role-id-123',
+     *   moduleIds: ['module-1', 'module-2', 'module-3'],
+     *   accessLevel: ModuleAccessLevel.READ,
+     *   grantedBy: 'admin-id'
+     * });
+     * ```
+     */
+    bulkGrantRoleModuleAccess: builder.mutation<
+      BulkRoleModuleAccessResult,
+      { roleId: string } & BulkGrantRoleModuleAccessDto
+    >({
+      query: ({ roleId, ...data }) => ({
+        url: `/permissions/roles/${roleId}/modules/bulk`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { roleId }) => [
+        { type: 'Role', id: roleId },
+        { type: 'Module', id: 'LIST' },
+      ],
+    }),
+
+    /**
+     * Revoke module access from a role
+     *
+     * Backend: DELETE /api/v1/permissions/roles/:id/modules/:moduleAccessId
+     *
+     * @example
+     * ```tsx
+     * const [revokeModuleAccess] = useRevokeRoleModuleAccessMutation();
+     *
+     * await revokeModuleAccess({
+     *   roleId: 'role-id-123',
+     *   moduleAccessId: 'module-access-id-456'
+     * });
+     * ```
+     */
+    revokeRoleModuleAccess: builder.mutation<
       void,
-      { roleId: string; parentRoleId: string }
+      { roleId: string; moduleAccessId: string }
     >({
-      query: ({ roleId, parentRoleId }) => ({
-        url: `/roles/${roleId}/hierarchy/${parentRoleId}`,
+      query: ({ roleId, moduleAccessId }) => ({
+        url: `/permissions/roles/${roleId}/modules/${moduleAccessId}`,
         method: 'DELETE',
       }),
       invalidatesTags: (_result, _error, { roleId }) => [
-        { type: 'Role', id: `hierarchy-${roleId}` },
+        { type: 'Role', id: roleId },
+        { type: 'Module', id: 'LIST' },
+      ],
+    }),
+
+    // ========================================================================
+    // Phase 5: ROLE HIERARCHY - Hierarchy Management
+    // ========================================================================
+
+    /**
+     * Get role hierarchy tree
+     *
+     * Backend: GET /api/v1/permissions/roles/:id/hierarchy/tree
+     *
+     * @example
+     * ```tsx
+     * const { data: hierarchyTree } = useGetRoleHierarchyTreeQuery('role-id-123');
+     * ```
+     */
+    getRoleHierarchyTree: builder.query<RoleHierarchyNode[], string>({
+      query: (roleId) => `/permissions/roles/${roleId}/hierarchy/tree`,
+      providesTags: (_result, _error, roleId) => [
+        { type: 'Role', id: roleId },
         { type: 'Role', id: 'LIST' },
       ],
+      keepUnusedDataFor: 300, // Cache for 5 minutes (hierarchy changes less frequently)
     }),
 
-    // Create role template
-    createRoleTemplate: builder.mutation<RoleTemplate, CreateRoleTemplateDto>({
-      query: (data) => ({
-        url: '/roles/templates',
-        method: 'POST',
-        body: data,
-      }),
-      invalidatesTags: [
-        { type: 'Role', id: 'TEMPLATE-LIST' },
-        { type: 'Role', id: 'LIST' },
+    /**
+     * Get inherited permissions from parent roles
+     *
+     * Backend: GET /api/v1/permissions/roles/:id/hierarchy/inherited-permissions
+     *
+     * @example
+     * ```tsx
+     * const { data: inheritedPerms } = useGetRoleInheritedPermissionsQuery('role-id-123');
+     * ```
+     */
+    getRoleInheritedPermissions: builder.query<InheritedPermissions, string>({
+      query: (roleId) => `/permissions/roles/${roleId}/hierarchy/inherited-permissions`,
+      providesTags: (_result, _error, roleId) => [
+        { type: 'Role', id: roleId },
+        { type: 'RolePermission', id: roleId },
       ],
+      keepUnusedDataFor: 60,
     }),
 
-    // Delete role template
-    deleteRoleTemplate: builder.mutation<void, string>({
-      query: (id) => ({
-        url: `/roles/templates/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: (_result, _error, id) => [
-        { type: 'Role', id: `template-${id}` },
-        { type: 'Role', id: 'TEMPLATE-LIST' },
-      ],
-    }),
-
-    // Apply role template
-    applyRoleTemplate: builder.mutation<any, ApplyRoleTemplateDto>({
-      query: (data) => ({
-        url: '/roles/templates/apply',
+    /**
+     * Create role hierarchy (set parent role)
+     *
+     * Backend: POST /api/v1/permissions/roles/:id/hierarchy
+     *
+     * @example
+     * ```tsx
+     * const [createHierarchy] = useCreateRoleHierarchyMutation();
+     *
+     * await createHierarchy({
+     *   roleId: 'child-role-id',
+     *   parentId: 'parent-role-id'
+     * });
+     * ```
+     */
+    createRoleHierarchy: builder.mutation<
+      Role,
+      { roleId: string; parentId: string }
+    >({
+      query: ({ roleId, parentId }) => ({
+        url: `/permissions/roles/${roleId}/hierarchy`,
         method: 'POST',
-        body: data,
+        body: { parentId },
       }),
       invalidatesTags: (_result, _error, { roleId }) => [
         { type: 'Role', id: roleId },
         { type: 'Role', id: 'LIST' },
+        { type: 'RolePermission', id: roleId },
+      ],
+    }),
+
+    /**
+     * Remove role hierarchy (remove parent)
+     *
+     * Backend: DELETE /api/v1/permissions/roles/:id/hierarchy
+     *
+     * @example
+     * ```tsx
+     * const [removeHierarchy] = useRemoveRoleHierarchyMutation();
+     *
+     * await removeHierarchy('role-id-123');
+     * ```
+     */
+    removeRoleHierarchy: builder.mutation<void, string>({
+      query: (roleId) => ({
+        url: `/permissions/roles/${roleId}/hierarchy`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, roleId) => [
+        { type: 'Role', id: roleId },
+        { type: 'Role', id: 'LIST' },
+        { type: 'RolePermission', id: roleId },
       ],
     }),
   }),
   overrideExisting: false,
 });
 
-// Export hooks for use in components
+// ============================================================================
+// Export Auto-Generated RTK Query Hooks
+// ============================================================================
+
+/**
+ * Phase 1: Core Role Management Hooks
+ * Phase 2: Role Permissions Assignment Hooks
+ * Phase 5: Role Module Access & Hierarchy Hooks
+ *
+ * Query Hooks:
+ * - useGetRolesQuery: Fetch paginated list of roles with filtering/sorting
+ * - useGetRoleByIdQuery: Fetch single role by ID
+ * - useGetRolePermissionsQuery: Fetch all permissions assigned to a role
+ * - useGetRoleModuleAccessesQuery: Fetch all module accesses for a role
+ * - useGetRoleHierarchyTreeQuery: Fetch role hierarchy tree
+ * - useGetRoleInheritedPermissionsQuery: Fetch inherited permissions from parent roles
+ * - useLazyGetRolesQuery: Manually trigger roles list fetch
+ * - useLazyGetRoleByIdQuery: Manually trigger single role fetch
+ * - useLazyGetRolePermissionsQuery: Manually trigger role permissions fetch
+ * - useLazyGetRoleModuleAccessesQuery: Manually trigger module accesses fetch
+ * - useLazyGetRoleHierarchyTreeQuery: Manually trigger hierarchy tree fetch
+ * - useLazyGetRoleInheritedPermissionsQuery: Manually trigger inherited permissions fetch
+ *
+ * Mutation Hooks:
+ * - useCreateRoleMutation: Create new role
+ * - useUpdateRoleMutation: Update existing role
+ * - useDeleteRoleMutation: Soft delete role (sets deletedAt)
+ * - useRestoreRoleMutation: Restore soft-deleted role
+ * - useAssignRolePermissionMutation: Assign single permission to role
+ * - useBulkAssignRolePermissionsMutation: Bulk assign permissions to role
+ * - useRevokeRolePermissionMutation: Revoke permission from role
+ * - useGrantRoleModuleAccessMutation: Grant module access to role
+ * - useBulkGrantRoleModuleAccessMutation: Bulk grant module access to role
+ * - useRevokeRoleModuleAccessMutation: Revoke module access from role
+ * - useCreateRoleHierarchyMutation: Create role hierarchy (set parent)
+ * - useRemoveRoleHierarchyMutation: Remove role hierarchy (remove parent)
+ *
+ * All hooks are auto-generated by RTK Query with:
+ * - Automatic caching and cache invalidation
+ * - Loading and error states
+ * - Request deduplication
+ * - Optimistic updates support
+ */
 export const {
-  // Queries
+  // Phase 1: Query hooks
   useGetRolesQuery,
   useLazyGetRolesQuery,
   useGetRoleByIdQuery,
   useLazyGetRoleByIdQuery,
-  useGetRoleByCodeQuery,
-  useGetUserRolesQuery,
-  useGetRoleStatisticsQuery,
-  useGetRoleHierarchyQuery,
-  useGetRoleTemplatesQuery,
-  useLazyGetRoleTemplatesQuery,
-  useGetRoleTemplateByIdQuery,
-  useGetRoleUsersQuery,
-  useGetRoleModulesQuery,
-  // Mutations
+
+  // Phase 1: Mutation hooks
   useCreateRoleMutation,
   useUpdateRoleMutation,
   useDeleteRoleMutation,
-  useAssignRoleMutation,
-  useRemoveRoleMutation,
-  useUpdateUserRoleTemporalMutation,
-  useAssignPermissionToRoleMutation,
-  useBulkAssignPermissionsToRoleMutation,
-  useRemovePermissionFromRoleMutation,
+  useRestoreRoleMutation,
+
+  // Phase 2: Query hooks
+  useGetRolePermissionsQuery,
+  useLazyGetRolePermissionsQuery,
+
+  // Phase 2: Mutation hooks
+  useAssignRolePermissionMutation,
+  useBulkAssignRolePermissionsMutation,
+  useRevokeRolePermissionMutation,
+
+  // Phase 5: Module Access Query hooks
+  useGetRoleModuleAccessesQuery,
+  useLazyGetRoleModuleAccessesQuery,
+
+  // Phase 5: Module Access Mutation hooks
+  useGrantRoleModuleAccessMutation,
+  useBulkGrantRoleModuleAccessMutation,
+  useRevokeRoleModuleAccessMutation,
+
+  // Phase 5: Hierarchy Query hooks
+  useGetRoleHierarchyTreeQuery,
+  useLazyGetRoleHierarchyTreeQuery,
+  useGetRoleInheritedPermissionsQuery,
+  useLazyGetRoleInheritedPermissionsQuery,
+
+  // Phase 5: Hierarchy Mutation hooks
   useCreateRoleHierarchyMutation,
-  useDeleteRoleHierarchyMutation,
-  useCreateRoleTemplateMutation,
-  useDeleteRoleTemplateMutation,
-  useApplyRoleTemplateMutation,
+  useRemoveRoleHierarchyMutation,
 } = rolesApi;
 
 // Export endpoints for programmatic use

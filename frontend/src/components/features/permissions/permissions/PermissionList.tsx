@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,22 +12,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
-import CreatePermissionModal from "./CreatePermissionModal";
-import EditPermissionModal from "./EditPermissionModal";
-import DeletePermissionModal from "./DeletePermissionModal";
-import ViewPermissionModal from "./ViewPermissionModal";
-import { createPermissionColumns } from "./PermissionColumns";
-import { type Permission, type PermissionAction } from "@/lib/api/services/permissions.service";
-import { useGetPermissionsQuery } from "@/store/api/permissionApi";
-import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const PERMISSION_ACTIONS: PermissionAction[] = [
-  'CREATE', 'READ', 'UPDATE', 'DELETE', 'APPROVE',
-  'EXPORT', 'IMPORT', 'PRINT', 'ASSIGN', 'CLOSE'
-];
+import { useDebounce } from "@/hooks/useDebounce";
+import { useGetPermissionsQuery } from "@/store/api/permissionApi";
+import { createPermissionColumns } from "./PermissionColumns";
+import PermissionForm from "./PermissionForm";
+import DeletePermissionDialog from "./DeletePermissionDialog";
+import type { Permission } from "@/lib/api/services/permissions.service";
 
 export default function PermissionList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,33 +35,29 @@ export default function PermissionList() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Modal states
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPermission, setSelectedPermission] = useState<Permission | null>(null);
 
-  // Increased debounce delay to reduce API call frequency and prevent rate limiting
   const debouncedSearchTerm = useDebounce(searchTerm, 800);
   const itemsPerPage = 10;
 
-  // Fetch permissions using RTK Query with Redis caching and rate limiting (20 req/10s)
+  // Fetch permissions using RTK Query
   const {
     data: permissionsData,
-    isLoading: isLoadingPermissions,
+    isLoading,
     isFetching,
-    error: permissionsError,
-    refetch: refetchPermissions,
+    error,
+    refetch,
   } = useGetPermissionsQuery(
     {
       page: currentPage,
       limit: itemsPerPage,
       search: debouncedSearchTerm,
-      action: actionFilter === "all" ? undefined : (actionFilter as PermissionAction),
+      action: actionFilter === "all" ? undefined : (actionFilter as any),
       isActive: isActiveFilter === "all" ? undefined : isActiveFilter === "active",
     },
     {
-      // Skip query if search term is still being debounced
       skip: searchTerm !== debouncedSearchTerm,
     }
   );
@@ -69,71 +65,65 @@ export default function PermissionList() {
   const permissions = permissionsData?.data || [];
   const totalItems = permissionsData?.total || 0;
 
-  // Handle RTK Query errors
+  // Handle errors
   useEffect(() => {
-    if (permissionsError) {
-      console.error("Failed to fetch permissions:", permissionsError);
+    if (error) {
+      console.error("Failed to fetch permissions:", error);
       toast.error("Failed to load permissions");
     }
-  }, [permissionsError]);
+  }, [error]);
 
-  // Handle actions
+  // Action handlers
   const handleCreate = () => {
-    setCreateModalOpen(true);
+    setSelectedPermission(null);
+    setFormOpen(true);
   };
 
   const handleEdit = (permission: Permission) => {
     setSelectedPermission(permission);
-    setEditModalOpen(true);
+    setFormOpen(true);
   };
 
   const handleDelete = (permission: Permission) => {
     setSelectedPermission(permission);
-    setDeleteModalOpen(true);
+    setDeleteDialogOpen(true);
   };
 
-  const handleView = (permission: Permission) => {
-    setSelectedPermission(permission);
-    setViewModalOpen(true);
-  };
-
-  const handleCreateSuccess = () => {
-    setCreateModalOpen(false);
-    refetchPermissions();
-    toast.success("Permission created successfully");
-  };
-
-  const handleEditSuccess = () => {
-    setEditModalOpen(false);
+  const handleFormSuccess = () => {
+    setFormOpen(false);
     setSelectedPermission(null);
-    refetchPermissions();
-    toast.success("Permission updated successfully");
+    refetch();
+    toast.success(
+      selectedPermission ? "Permission updated successfully" : "Permission created successfully"
+    );
   };
 
   const handleDeleteSuccess = () => {
-    setDeleteModalOpen(false);
+    setDeleteDialogOpen(false);
     setSelectedPermission(null);
-    refetchPermissions();
+    refetch();
     toast.success("Permission deleted successfully");
   };
 
   // Reset page when filters change
-  // Use debounced search term to prevent premature page resets during typing
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm, actionFilter, isActiveFilter]);
 
   // Create columns with action handlers
   const columns = createPermissionColumns({
-    onView: handleView,
     onEdit: handleEdit,
     onDelete: handleDelete,
   });
 
-  if (isLoadingPermissions && permissions.length === 0) {
+  if (isLoading && permissions.length === 0) {
     return (
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent>
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
@@ -145,53 +135,54 @@ export default function PermissionList() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Permissions
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Manage system permissions and access control
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={handleCreate}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Permission
-          </button>
-        </div>
-      </div>
-
+    <>
       <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Permissions</CardTitle>
+              <CardDescription>
+                Manage system permissions and access controls
+              </CardDescription>
+            </div>
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Permission
+            </Button>
+          </div>
+        </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="mt-6 mb-6 flex flex-wrap gap-4">
-            <Input
-              placeholder="Search permissions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-xs"
-            />
+          <div className="mb-4 flex flex-col gap-4 sm:flex-row">
+            <div className="flex-1">
+              <Input
+                placeholder="Search permissions..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
             <Select value={actionFilter} onValueChange={setActionFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All Actions" />
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by action" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Actions</SelectItem>
-                {PERMISSION_ACTIONS.map((action) => (
-                  <SelectItem key={action} value={action}>
-                    {action}
-                  </SelectItem>
-                ))}
+                <SelectItem value="CREATE">Create</SelectItem>
+                <SelectItem value="READ">Read</SelectItem>
+                <SelectItem value="UPDATE">Update</SelectItem>
+                <SelectItem value="DELETE">Delete</SelectItem>
+                <SelectItem value="APPROVE">Approve</SelectItem>
+                <SelectItem value="EXPORT">Export</SelectItem>
+                <SelectItem value="IMPORT">Import</SelectItem>
+                <SelectItem value="PRINT">Print</SelectItem>
+                <SelectItem value="ASSIGN">Assign</SelectItem>
+                <SelectItem value="CLOSE">Close</SelectItem>
               </SelectContent>
             </Select>
             <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All Status" />
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -201,63 +192,47 @@ export default function PermissionList() {
             </Select>
           </div>
 
-          {/* DataTable */}
+          {/* Data Table */}
           <DataTable
             columns={columns}
             data={permissions}
+            pageCount={Math.ceil(totalItems / itemsPerPage)}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
             isLoading={isFetching}
-            showSearch={false}
-            showPagination={true}
-            pagination={{
-              page: currentPage,
-              pageSize: itemsPerPage,
-              total: totalItems,
-              onPageChange: setCurrentPage,
-              onPageSizeChange: () => {},
-            }}
           />
+
+          {/* Display total count */}
+          <div className="mt-4 text-sm text-muted-foreground">
+            Showing {permissions.length} of {totalItems} permission(s)
+          </div>
         </CardContent>
       </Card>
 
       {/* Modals */}
-      <CreatePermissionModal
-        open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      {selectedPermission && (
-        <>
-          <EditPermissionModal
-            open={editModalOpen}
-            permission={selectedPermission}
-            onClose={() => {
-              setEditModalOpen(false);
-              setSelectedPermission(null);
-            }}
-            onSuccess={handleEditSuccess}
-          />
-
-          <DeletePermissionModal
-            open={deleteModalOpen}
-            permission={selectedPermission}
-            onClose={() => {
-              setDeleteModalOpen(false);
-              setSelectedPermission(null);
-            }}
-            onSuccess={handleDeleteSuccess}
-          />
-
-          <ViewPermissionModal
-            open={viewModalOpen}
-            permission={selectedPermission}
-            onClose={() => {
-              setViewModalOpen(false);
-              setSelectedPermission(null);
-            }}
-          />
-        </>
+      {formOpen && (
+        <PermissionForm
+          open={formOpen}
+          permission={selectedPermission}
+          onClose={() => {
+            setFormOpen(false);
+            setSelectedPermission(null);
+          }}
+          onSuccess={handleFormSuccess}
+        />
       )}
-    </div>
+
+      {deleteDialogOpen && selectedPermission && (
+        <DeletePermissionDialog
+          open={deleteDialogOpen}
+          permission={selectedPermission}
+          onClose={() => {
+            setDeleteDialogOpen(false);
+            setSelectedPermission(null);
+          }}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
+    </>
   );
 }
