@@ -55,144 +55,132 @@ export default function RolesPageTabs() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Shield className="h-6 w-6 text-primary" />
-            </div>
-            Role Management
-          </h1>
-          <p className="text-muted-foreground">
-            Manage roles, permissions, and access controls
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => handleExport('csv')}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => handleExport('excel')}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export Excel
-          </Button>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Role
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <RoleForm
-                onSuccess={() => {
-                  setIsCreateDialogOpen(false);
-                  toast.success('Role created successfully');
-                }}
-                onCancel={() => setIsCreateDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Filters Card */}
+      {/* Main Card with Filters and Content */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filters & Search
-          </CardTitle>
-          <CardDescription>
-            Filter and search roles across all views
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Roles</CardTitle>
+              <CardDescription>
+                Manage roles, permissions, and access controls
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExport('csv')}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExport('excel')}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export Excel
+              </Button>
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Role
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <RoleForm
+                    onSuccess={() => {
+                      setIsCreateDialogOpen(false);
+                      toast.success('Role created successfully');
+                    }}
+                    onCancel={() => setIsCreateDialogOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search roles by name or code..."
-                value={globalSearch}
-                onChange={(e) => setGlobalSearch(e.target.value)}
-                className="pl-8"
-              />
+        <CardContent className="space-y-4">
+          {/* Main Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="list" className="flex items-center gap-2">
+                <List className="h-4 w-4" />
+                Role List
+              </TabsTrigger>
+              <TabsTrigger value="hierarchy" className="flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                Hierarchy Tree
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search Input */}
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search roles by name or code..."
+                  value={globalSearch}
+                  onChange={(e) => setGlobalSearch(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active Only</SelectItem>
+                  <SelectItem value="inactive">Inactive Only</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Type Filter */}
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="system">System Roles</SelectItem>
+                  <SelectItem value="custom">Custom Roles</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Reset Filters */}
+              {(globalSearch || statusFilter !== 'all' || typeFilter !== 'all') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setGlobalSearch('');
+                    setStatusFilter('all');
+                    setTypeFilter('all');
+                  }}
+                >
+                  Reset
+                </Button>
+              )}
             </div>
 
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active Only</SelectItem>
-                <SelectItem value="inactive">Inactive Only</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* List Tab */}
+            <TabsContent value="list" className="space-y-4 m-0">
+              <RoleList />
+            </TabsContent>
 
-            {/* Type Filter */}
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="system">System Roles</SelectItem>
-                <SelectItem value="custom">Custom Roles</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Reset Filters */}
-            {(globalSearch || statusFilter !== 'all' || typeFilter !== 'all') && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setGlobalSearch('');
-                  setStatusFilter('all');
-                  setTypeFilter('all');
-                }}
-              >
-                Reset
-              </Button>
-            )}
-          </div>
+            {/* Hierarchy Tab */}
+            <TabsContent value="hierarchy" className="space-y-4 m-0">
+              <RoleHierarchyTree />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-
-      {/* Main Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="list" className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            Role List
-          </TabsTrigger>
-          <TabsTrigger value="hierarchy" className="flex items-center gap-2">
-            <GitBranch className="h-4 w-4" />
-            Hierarchy Tree
-          </TabsTrigger>
-        </TabsList>
-
-        {/* List Tab */}
-        <TabsContent value="list" className="space-y-4 m-0">
-          <RoleList />
-        </TabsContent>
-
-        {/* Hierarchy Tab */}
-        <TabsContent value="hierarchy" className="space-y-4 m-0">
-          <RoleHierarchyTree />
-        </TabsContent>
-      </Tabs>
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-4">

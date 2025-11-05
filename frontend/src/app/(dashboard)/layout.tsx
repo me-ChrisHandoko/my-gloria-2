@@ -107,21 +107,23 @@ function generateBreadcrumbs(pathname: string) {
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const pathname = usePathname();
-
-  // Breadcrumbs
   const breadcrumbs = generateBreadcrumbs(pathname);
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <SidebarProvider>
-        <div className="flex min-h-screen w-full">
+        {/* PERBAIKAN: Tambah overflow-x-hidden di sini */}
+        <div className="flex min-h-screen w-full overflow-x-hidden">
+          {" "}
+          {/* Tambah overflow-x-hidden */}
           {/* Sidebar with lazy loading */}
           <Suspense fallback={<SidebarSkeleton />}>
             <AppSidebar user={user} />
           </Suspense>
-
           {/* Main content area */}
-          <SidebarInset>
+          <SidebarInset className="flex-1 overflow-x-hidden">
+            {" "}
+            {/* Tambah overflow-x-hidden */}
             {/* Header with breadcrumb */}
             <Suspense fallback={<HeaderSkeleton />}>
               <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -137,7 +139,6 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
                           Dashboard
                         </BreadcrumbLink>
                       </BreadcrumbItem>
-
                       {breadcrumbs.map((crumb, index) => (
                         <React.Fragment key={crumb.path}>
                           {index === 0 && breadcrumbs.length > 0 && (
@@ -160,22 +161,28 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
                     </BreadcrumbList>
                   </Breadcrumb>
 
-                  {/* Right side header actions can be added here */}
                   <div className="ml-auto flex items-center gap-2">
-                    {/* Add notification, search, or other header actions here */}
+                    {/* Header actions */}
                   </div>
                 </div>
               </header>
             </Suspense>
-
             {/* Main content */}
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 overflow-x-hidden">
+              {" "}
+              {/* Tambah overflow-x-hidden */}
               <ErrorBoundary
                 FallbackComponent={ErrorFallback}
                 resetKeys={[pathname]}
               >
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                  {children}
+                {/* Wrapper dengan vertical scroll */}
+                <div className="h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden">
+                  {" "}
+                  {/* Tambah overflow-x-hidden */}
+                  {/* Container dengan max width */}
+                  <div className="mx-auto w-full max-w-screen-2xl px-4 py-4">
+                    {children}
+                  </div>
                 </div>
               </ErrorBoundary>
             </main>

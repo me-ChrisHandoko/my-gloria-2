@@ -8,14 +8,7 @@ export const metadata: Metadata = {
 
 export default function PermissionsDashboardPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Permission Management</h1>
-        <p className="text-muted-foreground mt-2">
-          Overview of roles, permissions, and user access statistics
-        </p>
-      </div>
-
+    <div className="container mx-auto px-4 py-6">
       <PermissionDashboard />
     </div>
   );

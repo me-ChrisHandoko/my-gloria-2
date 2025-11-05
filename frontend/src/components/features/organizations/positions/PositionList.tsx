@@ -15,6 +15,9 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { createPositionColumns } from "./PositionColumns";
@@ -200,15 +203,15 @@ export default function PositionList() {
   if (isLoadingPositions && positions.length === 0) {
     return (
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent>
           <div className="space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64" />
-            <div className="mt-6 space-y-2">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -216,66 +219,58 @@ export default function PositionList() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Positions
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Manage organizational positions and assignments
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={handleCreate}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Position
-          </button>
-        </div>
-      </div>
-
+    <>
       <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Positions</CardTitle>
+              <CardDescription>
+                Manage organizational positions and assignments
+              </CardDescription>
+            </div>
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Position
+            </Button>
+          </div>
+        </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="mt-6 mb-6 space-y-3">
-            {/* Filters row */}
-            <div className="flex flex-wrap gap-4">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[200px]">
               <Input
                 placeholder="Search positions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full sm:max-w-xs"
               />
-              <Select value={hierarchyLevelFilter} onValueChange={setHierarchyLevelFilter}>
-                <SelectTrigger className="w-full sm:w-[160px]">
-                  <SelectValue placeholder="All Levels" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="1-3">Senior (1-3)</SelectItem>
-                  <SelectItem value="4-6">Mid (4-6)</SelectItem>
-                  <SelectItem value="7-10">Entry (7-10)</SelectItem>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
-                    <SelectItem key={level} value={level.toString()}>
-                      Level {level}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
-                <SelectTrigger className="w-full sm:w-[130px]">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
+            <Select value={hierarchyLevelFilter} onValueChange={setHierarchyLevelFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="1-3">Senior (1-3)</SelectItem>
+                <SelectItem value="4-6">Mid (4-6)</SelectItem>
+                <SelectItem value="7-10">Entry (7-10)</SelectItem>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
+                  <SelectItem key={level} value={level.toString()}>
+                    Level {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* DataTable */}
@@ -293,6 +288,11 @@ export default function PositionList() {
               onPageSizeChange: () => {},
             }}
           />
+
+          {/* Display total count */}
+          <div className="mt-4 text-sm text-muted-foreground">
+            Showing {positions.length} of {totalItems} position(s)
+          </div>
         </CardContent>
       </Card>
 
@@ -375,6 +375,6 @@ export default function PositionList() {
           />
         </>
       )}
-    </div>
+    </>
   );
 }

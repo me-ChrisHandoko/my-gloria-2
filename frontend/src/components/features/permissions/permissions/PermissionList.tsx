@@ -153,13 +153,12 @@ export default function PermissionList() {
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="mb-4 flex flex-col gap-4 sm:flex-row">
-            <div className="flex-1">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[200px]">
               <Input
                 placeholder="Search permissions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
               />
             </div>
             <Select value={actionFilter} onValueChange={setActionFilter}>
@@ -196,16 +195,16 @@ export default function PermissionList() {
           <DataTable
             columns={columns}
             data={permissions}
-            pageCount={Math.ceil(totalItems / itemsPerPage)}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
+            pagination={{
+              page: currentPage,
+              pageSize: itemsPerPage,
+              total: totalItems,
+              onPageChange: setCurrentPage,
+              onPageSizeChange: () => {},
+            }}
             isLoading={isFetching}
+            showSearch={false}
           />
-
-          {/* Display total count */}
-          <div className="mt-4 text-sm text-muted-foreground">
-            Showing {permissions.length} of {totalItems} permission(s)
-          </div>
         </CardContent>
       </Card>
 

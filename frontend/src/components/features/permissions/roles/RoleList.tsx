@@ -387,71 +387,20 @@ export default function RoleList({ onRoleSelect }: RoleListProps) {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 flex-1">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search roles..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="pl-8"
-            />
-          </div>
-
-          <Select
-            value={isActiveFilter === undefined ? 'all' : isActiveFilter ? 'active' : 'inactive'}
-            onValueChange={(value) => {
-              setIsActiveFilter(value === 'all' ? undefined : value === 'active');
-              setPage(1);
-            }}
+      {/* Bulk Actions - only show when rows are selected */}
+      {Object.keys(rowSelection).length > 0 && (
+        <div className="flex items-center justify-end">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+            disabled={isDeleting}
           >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={isSystemFilter === undefined ? 'all' : isSystemFilter ? 'system' : 'custom'}
-            onValueChange={(value) => {
-              setIsSystemFilter(value === 'all' ? undefined : value === 'system');
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="system">System</SelectItem>
-              <SelectItem value="custom">Custom</SelectItem>
-            </SelectContent>
-          </Select>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete Selected ({Object.keys(rowSelection).length})
+          </Button>
         </div>
-
-        <div className="flex items-center gap-2">
-          {Object.keys(rowSelection).length > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleBulkDelete}
-              disabled={isDeleting}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Selected ({Object.keys(rowSelection).length})
-            </Button>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Table */}
       <div className="rounded-md border">

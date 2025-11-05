@@ -12,7 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { createSchoolColumns } from "./SchoolColumns";
 import { type School } from "@/types";
@@ -131,15 +137,15 @@ export default function SchoolList() {
   if (isLoadingSchools && schools.length === 0) {
     return (
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent>
           <div className="space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64" />
-            <div className="mt-6 space-y-2">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -147,43 +153,38 @@ export default function SchoolList() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Schools
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Manage schools and their information
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={handleCreate}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add School
-          </button>
-        </div>
-      </div>
-
+    <>
       <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Schools</CardTitle>
+              <CardDescription>
+                Manage schools and their information
+              </CardDescription>
+            </div>
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add School
+            </Button>
+          </div>
+        </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="mt-6 mb-6 flex flex-wrap gap-4">
-            <Input
-              placeholder="Search schools..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-xs"
-            />
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[200px]">
+              <Input
+                placeholder="Search schools..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <Select
               value={selectedLocation}
               onValueChange={setSelectedLocation}
             >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All Locations" />
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by location" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>
@@ -192,8 +193,8 @@ export default function SchoolList() {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All Status" />
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -218,6 +219,11 @@ export default function SchoolList() {
               onPageSizeChange: () => {},
             }}
           />
+
+          {/* Display total count */}
+          <div className="mt-4 text-sm text-muted-foreground">
+            Showing {schools.length} of {totalItems} school(s)
+          </div>
         </CardContent>
       </Card>
 
@@ -260,6 +266,6 @@ export default function SchoolList() {
           />
         </>
       )}
-    </div>
+    </>
   );
 }
