@@ -95,21 +95,6 @@ export const createUserColumns = ({
     },
   },
   {
-    accessorKey: 'isSuperadmin',
-    header: 'Super Admin',
-    cell: ({ row }) => {
-      const isSuperadmin = row.getValue('isSuperadmin') as boolean;
-      return isSuperadmin ? (
-        <Badge variant="destructive">
-          <ShieldCheckIcon className="mr-1 h-3 w-3" />
-          Super Admin
-        </Badge>
-      ) : (
-        <span className="text-gray-400">No</span>
-      );
-    },
-  },
-  {
     accessorKey: 'isActive',
     header: 'Status',
     cell: ({ row }) => {

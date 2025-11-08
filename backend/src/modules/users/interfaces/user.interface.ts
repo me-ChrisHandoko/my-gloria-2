@@ -2,7 +2,6 @@ export interface IUser {
   id: string;
   clerkUserId: string;
   nip: string;
-  isSuperadmin: boolean;
   isActive: boolean;
   lastActive?: Date | null;
   preferences?: any;
@@ -35,7 +34,6 @@ export interface IPaginatedResult<T> {
 export interface IUserFilters {
   search?: string;
   isActive?: boolean;
-  isSuperadmin?: boolean;
   nip?: string;
   clerkUserId?: string;
 }

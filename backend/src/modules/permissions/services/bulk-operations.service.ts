@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { UserRolesService } from './user-roles.service';
 import { RolePermissionsService } from './role-permissions.service';
@@ -299,10 +295,15 @@ export class BulkOperationsService {
                 resource: perm.resource,
                 action: perm.action,
                 description: perm.description,
-                isSystemPermission: perm.isSystemPermission || perm.isSystem || false,
+                isSystemPermission:
+                  perm.isSystemPermission || perm.isSystem || false,
                 isActive: perm.isActive !== false,
-                createdAt: perm.createdAt ? new Date(perm.createdAt) : new Date(),
-                updatedAt: perm.updatedAt ? new Date(perm.updatedAt) : new Date(),
+                createdAt: perm.createdAt
+                  ? new Date(perm.createdAt)
+                  : new Date(),
+                updatedAt: perm.updatedAt
+                  ? new Date(perm.updatedAt)
+                  : new Date(),
               },
             });
             result.imported.permissions++;
@@ -333,10 +334,15 @@ export class BulkOperationsService {
                 name: role.name,
                 description: role.description,
                 hierarchyLevel: role.hierarchyLevel || role.hierarchy_level,
-                isSystemRole: role.isSystemRole || role.isSystem || role.is_system || false,
+                isSystemRole:
+                  role.isSystemRole || role.isSystem || role.is_system || false,
                 isActive: role.isActive !== false && role.is_active !== false,
-                createdAt: role.createdAt ? new Date(role.createdAt) : new Date(),
-                updatedAt: role.updatedAt ? new Date(role.updatedAt) : new Date(),
+                createdAt: role.createdAt
+                  ? new Date(role.createdAt)
+                  : new Date(),
+                updatedAt: role.updatedAt
+                  ? new Date(role.updatedAt)
+                  : new Date(),
               },
             });
             result.imported.roles++;

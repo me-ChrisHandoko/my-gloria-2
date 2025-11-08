@@ -161,7 +161,6 @@ describe('Gloria Backend E2E Tests', () => {
         id: 'user-admin',
         clerkUserId: 'clerk_admin',
         nip: '100001',
-        isSuperadmin: true,
         updatedAt: new Date(),
       },
     });

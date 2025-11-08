@@ -248,8 +248,7 @@ export class ModulesController {
   @RequiredPermission('modules', PermissionAction.READ)
   @ApiOperation({
     summary: 'Get module permissions',
-    description:
-      'Retrieves all permissions available for a specific module.',
+    description: 'Retrieves all permissions available for a specific module.',
   })
   @ApiParam({
     name: 'id',

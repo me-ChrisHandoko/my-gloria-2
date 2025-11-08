@@ -72,13 +72,11 @@ export class UserService {
 
   async findAll(queryDto: QueryUserDto): Promise<PaginatedUserResponseDto> {
     try {
-      const { page, limit, search, isActive, isSuperadmin, sortBy, sortOrder } =
-        queryDto;
+      const { page, limit, search, isActive, sortBy, sortOrder } = queryDto;
 
       const filters = {
         search,
         isActive,
-        isSuperadmin,
       };
 
       const sortOptions = {

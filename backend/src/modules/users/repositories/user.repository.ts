@@ -18,7 +18,6 @@ export class UserRepository {
         id: data.id,
         clerkUserId: data.clerkUserId,
         nip: data.nip,
-        isSuperadmin: data.isSuperadmin || false,
         isActive: data.isActive ?? true,
         preferences: data.preferences ? JSON.parse(data.preferences) : null,
         updatedAt: new Date(),
@@ -180,10 +179,6 @@ export class UserRepository {
 
     if (filters?.isActive !== undefined) {
       where.isActive = filters.isActive;
-    }
-
-    if (filters?.isSuperadmin !== undefined) {
-      where.isSuperadmin = filters.isSuperadmin;
     }
 
     if (filters?.nip) {

@@ -17,7 +17,6 @@ export interface User {
   nip: string;
   name: string;
   email: string;
-  isSuperadmin: boolean;
   isActive: boolean;
   lastActive?: string;
   preferences?: any;
@@ -46,7 +45,6 @@ export interface GetUsersQueryParams {
   limit?: number;
   search?: string;
   isActive?: boolean;
-  isSuperadmin?: boolean;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -55,7 +53,6 @@ export interface UpdateUserDto {
   nip?: string;
   name?: string;
   email?: string;
-  isSuperadmin?: boolean;
   isActive?: boolean;
   lastActive?: string;
   preferences?: any;
@@ -91,7 +88,6 @@ export const usersApi = apiSlice.injectEndpoints({
         if (params.limit) queryParams.limit = params.limit;
         if (params.search) queryParams.search = params.search;
         if (params.isActive !== undefined) queryParams.isActive = params.isActive;
-        if (params.isSuperadmin !== undefined) queryParams.isSuperadmin = params.isSuperadmin;
         if (params.sortBy) queryParams.sortBy = params.sortBy;
         if (params.sortOrder) queryParams.sortOrder = params.sortOrder;
 

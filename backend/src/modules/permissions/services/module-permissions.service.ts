@@ -156,9 +156,7 @@ export class ModulePermissionsService {
     });
 
     if (!permission) {
-      throw new NotFoundException(
-        `Module permission with ID ${id} not found`,
-      );
+      throw new NotFoundException(`Module permission with ID ${id} not found`);
     }
 
     return this.formatResponse(permission);
@@ -203,9 +201,7 @@ export class ModulePermissionsService {
     });
 
     if (!existing) {
-      throw new NotFoundException(
-        `Module permission with ID ${id} not found`,
-      );
+      throw new NotFoundException(`Module permission with ID ${id} not found`);
     }
 
     const updated = await this.prisma.modulePermission.update({
@@ -237,9 +233,7 @@ export class ModulePermissionsService {
     });
 
     if (!permission) {
-      throw new NotFoundException(
-        `Module permission with ID ${id} not found`,
-      );
+      throw new NotFoundException(`Module permission with ID ${id} not found`);
     }
 
     await this.prisma.modulePermission.delete({

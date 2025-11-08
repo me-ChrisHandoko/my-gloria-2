@@ -42,7 +42,6 @@ describe('UserService', () => {
     id: '123e4567-e89b-12d3-a456-426614174000',
     clerkUserId: 'user_2abc123def456',
     nip: '123456789012345',
-    isSuperadmin: false,
     isActive: true,
     lastActive: null,
     preferences: null,

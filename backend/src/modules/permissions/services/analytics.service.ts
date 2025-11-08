@@ -109,8 +109,7 @@ export class AnalyticsService {
    */
   async getPermissionUsageStatistics(): Promise<PermissionUsageStatistics> {
     const cacheKey = `${this.cachePrefix}permission-usage`;
-    const cached =
-      await this.cache.get<PermissionUsageStatistics>(cacheKey);
+    const cached = await this.cache.get<PermissionUsageStatistics>(cacheKey);
 
     if (cached) {
       return cached;
@@ -378,10 +377,7 @@ export class AnalyticsService {
       where: {
         userProfileId,
         isGranted: true,
-        OR: [
-          { effectiveUntil: null },
-          { effectiveUntil: { gte: new Date() } },
-        ],
+        OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: new Date() } }],
       },
       include: {
         permission: {
@@ -449,10 +445,7 @@ export class AnalyticsService {
       where: {
         userProfileId,
         isActive: true,
-        OR: [
-          { effectiveUntil: null },
-          { effectiveUntil: { gte: new Date() } },
-        ],
+        OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: new Date() } }],
       },
       include: {
         module: {

@@ -3,7 +3,12 @@ import { PrismaService } from '../../../core/database/prisma.service';
 import { v7 as uuidv7 } from 'uuid';
 
 interface PermissionChangeEvent {
-  entityType: 'PERMISSION' | 'ROLE' | 'USER_ROLE' | 'USER_PERMISSION' | 'MODULE_ACCESS';
+  entityType:
+    | 'PERMISSION'
+    | 'ROLE'
+    | 'USER_ROLE'
+    | 'USER_PERMISSION'
+    | 'MODULE_ACCESS';
   entityId: string;
   action: 'CREATE' | 'UPDATE' | 'DELETE' | 'GRANT' | 'REVOKE';
   performedBy: string;
@@ -63,9 +68,9 @@ export class PermissionAuditService {
           module: 'PERMISSIONS',
           entityType: event.entityType,
           entityId: event.entityId,
-          oldValues: event.changes?.oldValues as any,
-          newValues: event.changes?.newValues as any,
-          changedFields: event.changes?.changedFields as any,
+          oldValues: event.changes?.oldValues,
+          newValues: event.changes?.newValues,
+          changedFields: event.changes?.changedFields,
           metadata: {
             ...event.metadata,
             category: 'PERMISSION',
@@ -95,7 +100,9 @@ export class PermissionAuditService {
    */
   async logPermissionCheck(log: PermissionCheckLog): Promise<void> {
     // TODO: Implement when PermissionCheckLog model is added to database schema
-    this.logger.debug('Permission check logging disabled - model not in schema');
+    this.logger.debug(
+      'Permission check logging disabled - model not in schema',
+    );
   }
 
   /**
@@ -131,7 +138,9 @@ export class PermissionAuditService {
     limit = 100,
   ): Promise<any[]> {
     // TODO: Implement when PermissionCheckLog model is added to database schema
-    this.logger.debug('Permission check retrieval disabled - model not in schema');
+    this.logger.debug(
+      'Permission check retrieval disabled - model not in schema',
+    );
     return [];
   }
 
@@ -150,7 +159,9 @@ export class PermissionAuditService {
     checksByUser: Array<{ userProfileId: string; count: number }>;
   }> {
     // TODO: Implement when PermissionCheckLog model is added to database schema
-    this.logger.debug('Permission check statistics disabled - model not in schema');
+    this.logger.debug(
+      'Permission check statistics disabled - model not in schema',
+    );
     return {
       totalChecks: 0,
       granted: 0,
@@ -166,7 +177,9 @@ export class PermissionAuditService {
    */
   async cleanupOldPermissionChecks(daysToKeep = 90): Promise<number> {
     // TODO: Implement when PermissionCheckLog model is added to database schema
-    this.logger.debug('Permission check cleanup disabled - model not in schema');
+    this.logger.debug(
+      'Permission check cleanup disabled - model not in schema',
+    );
     return 0;
   }
 }

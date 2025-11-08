@@ -539,7 +539,6 @@ model UserProfile {
   id                     String             @id
   clerkUserId            String             @unique @map("clerk_user_id")
   nip                    String             @unique @db.VarChar(15)
-  isSuperadmin           Boolean            @default(false) @map("is_superadmin")
   isActive               Boolean            @default(true) @map("is_active")
   lastActive             DateTime?          @map("last_active")
   preferences            Json?

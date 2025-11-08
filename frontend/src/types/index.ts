@@ -8,7 +8,6 @@ export interface User {
   departmentId?: string;
   positionId?: string;
   nip?: string;
-  isSuperadmin?: boolean;
   isActive?: boolean;
 
   // Optional name fields for component compatibility

@@ -49,7 +49,9 @@ export class RoleHierarchyService {
       }
 
       if (!parent) {
-        throw new NotFoundException(`Parent role with ID ${parentId} not found`);
+        throw new NotFoundException(
+          `Parent role with ID ${parentId} not found`,
+        );
       }
 
       // Prevent self-referencing
@@ -156,8 +158,7 @@ export class RoleHierarchyService {
     roleId: string,
   ): Promise<RolePermissionResponseDto[]> {
     const cacheKey = `${this.cachePrefix}inherited:${roleId}`;
-    const cached =
-      await this.cache.get<RolePermissionResponseDto[]>(cacheKey);
+    const cached = await this.cache.get<RolePermissionResponseDto[]>(cacheKey);
 
     if (cached) {
       return cached;
@@ -236,7 +237,9 @@ export class RoleHierarchyService {
     });
 
     if (hierarchies.length === 0) {
-      throw new BadRequestException('Role does not have any parent relationships');
+      throw new BadRequestException(
+        'Role does not have any parent relationships',
+      );
     }
 
     // Delete all parent relationships for this role
@@ -278,9 +281,7 @@ export class RoleHierarchyService {
   /**
    * Build hierarchical tree structure
    */
-  private async buildHierarchyTree(
-    roleId: string,
-  ): Promise<RoleHierarchyNode> {
+  private async buildHierarchyTree(roleId: string): Promise<RoleHierarchyNode> {
     const role = await this.prisma.role.findUnique({
       where: { id: roleId },
     });

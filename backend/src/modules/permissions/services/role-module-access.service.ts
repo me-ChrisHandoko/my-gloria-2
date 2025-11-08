@@ -283,9 +283,7 @@ export class RoleModuleAccessService {
     });
 
     if (!access) {
-      throw new NotFoundException(
-        `Role module access with ID ${id} not found`,
-      );
+      throw new NotFoundException(`Role module access with ID ${id} not found`);
     }
 
     return this.formatResponse(access);
@@ -300,9 +298,7 @@ export class RoleModuleAccessService {
     });
 
     if (!existing) {
-      throw new NotFoundException(
-        `Role module access with ID ${id} not found`,
-      );
+      throw new NotFoundException(`Role module access with ID ${id} not found`);
     }
 
     const updated = await this.prisma.roleModuleAccess.update({
@@ -351,9 +347,7 @@ export class RoleModuleAccessService {
     });
 
     if (!access) {
-      throw new NotFoundException(
-        `Role module access with ID ${id} not found`,
-      );
+      throw new NotFoundException(`Role module access with ID ${id} not found`);
     }
 
     await this.prisma.roleModuleAccess.delete({
@@ -365,7 +359,10 @@ export class RoleModuleAccessService {
     this.logger.log(`Revoked role module access: ${id}`);
   }
 
-  private async invalidateCache(roleId: string, moduleId: string): Promise<void> {
+  private async invalidateCache(
+    roleId: string,
+    moduleId: string,
+  ): Promise<void> {
     await this.cache.del(`${this.cachePrefix}role:${roleId}`);
     await this.cache.del(`${this.cachePrefix}module:${moduleId}`);
   }

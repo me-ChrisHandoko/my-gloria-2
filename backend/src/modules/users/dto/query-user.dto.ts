@@ -65,15 +65,6 @@ export class QueryUserDto {
   isActive?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Filter by superadmin status',
-    example: false,
-  })
-  @IsOptional()
-  @Type(() => Boolean)
-  @IsBoolean()
-  isSuperadmin?: boolean;
-
-  @ApiPropertyOptional({
     description: 'Sort by field',
     enum: UserSortBy,
     default: UserSortBy.CREATED_AT,

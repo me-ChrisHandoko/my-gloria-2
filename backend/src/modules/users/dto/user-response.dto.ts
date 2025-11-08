@@ -38,13 +38,6 @@ export class UserResponseDto {
   email: string;
 
   @ApiProperty({
-    description: 'Superadmin status',
-    example: false,
-  })
-  @Expose()
-  isSuperadmin: boolean;
-
-  @ApiProperty({
     description: 'Account active status',
     example: true,
   })

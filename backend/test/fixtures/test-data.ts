@@ -12,7 +12,6 @@ export const testFixtures = {
       nip: 'NIP001',
       clerkUserId: 'clerk_admin',
       isActive: true,
-      isSuperadmin: false,
       updatedAt: new Date(),
     },
     teacher: {
@@ -20,7 +19,6 @@ export const testFixtures = {
       nip: 'NIP002',
       clerkUserId: 'clerk_teacher',
       isActive: true,
-      isSuperadmin: false,
       updatedAt: new Date(),
     },
     student: {
@@ -28,7 +26,6 @@ export const testFixtures = {
       nip: 'NIP003',
       clerkUserId: 'clerk_student',
       isActive: true,
-      isSuperadmin: false,
       updatedAt: new Date(),
     },
     inactive: {
@@ -36,7 +33,6 @@ export const testFixtures = {
       nip: 'NIP004',
       clerkUserId: 'clerk_inactive',
       isActive: false,
-      isSuperadmin: false,
       updatedAt: new Date(),
     },
   },

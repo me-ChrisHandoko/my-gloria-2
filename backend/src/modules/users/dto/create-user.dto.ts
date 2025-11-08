@@ -58,14 +58,6 @@ export class CreateUserDto {
   lastName?: string;
 
   @ApiPropertyOptional({
-    description: 'Whether the user has superadmin privileges',
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  isSuperadmin?: boolean;
-
-  @ApiPropertyOptional({
     description: 'Whether the user account is active',
     default: true,
   })

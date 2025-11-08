@@ -267,9 +267,7 @@ export class UserModuleAccessService {
     });
 
     if (!access) {
-      throw new NotFoundException(
-        `User module access with ID ${id} not found`,
-      );
+      throw new NotFoundException(`User module access with ID ${id} not found`);
     }
 
     return this.formatResponse(access);
@@ -284,9 +282,7 @@ export class UserModuleAccessService {
     });
 
     if (!existing) {
-      throw new NotFoundException(
-        `User module access with ID ${id} not found`,
-      );
+      throw new NotFoundException(`User module access with ID ${id} not found`);
     }
 
     const effectiveUntil = dto.effectiveUntil
@@ -333,9 +329,7 @@ export class UserModuleAccessService {
     });
 
     if (!access) {
-      throw new NotFoundException(
-        `User module access with ID ${id} not found`,
-      );
+      throw new NotFoundException(`User module access with ID ${id} not found`);
     }
 
     await this.prisma.userModuleAccess.delete({
@@ -361,7 +355,9 @@ export class UserModuleAccessService {
     });
 
     if (result.count > 0) {
-      this.logger.log(`Deactivated ${result.count} expired user module accesses`);
+      this.logger.log(
+        `Deactivated ${result.count} expired user module accesses`,
+      );
     }
 
     return result.count;
