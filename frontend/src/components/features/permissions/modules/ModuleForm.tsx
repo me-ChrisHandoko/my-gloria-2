@@ -13,7 +13,7 @@
  * - Real-time validation
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -44,9 +44,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Save, Box } from 'lucide-react';
+import { Loader2, Save, Box, Check, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 // Form validation schema
 const moduleFormSchema = z.object({
@@ -82,6 +92,8 @@ interface ModuleFormProps {
 
 export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: ModuleFormProps) {
   const isEditMode = !!moduleId;
+  const [openCategory, setOpenCategory] = useState(false);
+  const [openParent, setOpenParent] = useState(false);
 
   // API hooks
   const { data: moduleData, isLoading: isLoadingModule } = useGetModuleByIdQuery(moduleId!, {
@@ -96,6 +108,27 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
   const [createModule, { isLoading: isCreating }] = useCreateModuleMutation();
   const [updateModule, { isLoading: isUpdating }] = useUpdateModuleMutation();
 
+  // Category options
+  const categories = [
+    { value: ModuleCategory.SERVICE, label: 'Service' },
+    { value: ModuleCategory.PERFORMANCE, label: 'Performance' },
+    { value: ModuleCategory.QUALITY, label: 'Quality' },
+    { value: ModuleCategory.FEEDBACK, label: 'Feedback' },
+    { value: ModuleCategory.TRAINING, label: 'Training' },
+    { value: ModuleCategory.SYSTEM, label: 'System' },
+  ];
+
+  // Parent module options
+  const parentModules = [
+    { value: 'none', label: 'No parent (root level)' },
+    ...(modulesData?.data
+      .filter((m) => m.id !== moduleId)
+      .map((module) => ({
+        value: module.id,
+        label: `${module.name} (${module.code})`,
+      })) || []),
+  ];
+
   // Form setup
   const form = useForm<ModuleFormValues>({
     resolver: zodResolver(moduleFormSchema),
@@ -106,7 +139,7 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
       category: ModuleCategory.SERVICE,
       icon: '',
       path: '',
-      parentId: parentId || '',
+      parentId: parentId || 'none',
       sortOrder: 0,
       isActive: true,
       isVisible: true,
@@ -123,7 +156,7 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
         category: moduleData.category,
         icon: moduleData.icon || '',
         path: moduleData.path || '',
-        parentId: moduleData.parentId || '',
+        parentId: moduleData.parentId || 'none',
         sortOrder: moduleData.sortOrder,
         isActive: moduleData.isActive,
         isVisible: moduleData.isVisible,
@@ -134,13 +167,13 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
   // Form submission
   const onSubmit = async (data: ModuleFormValues) => {
     try {
-      // Clean up empty strings to undefined
+      // Clean up empty strings and "none" values to undefined
       const cleanedData = {
         ...data,
         description: data.description || undefined,
         icon: data.icon || undefined,
         path: data.path || undefined,
-        parentId: data.parentId || undefined,
+        parentId: data.parentId === 'none' || !data.parentId ? undefined : data.parentId,
       };
 
       if (isEditMode && moduleId) {
@@ -179,7 +212,7 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Code */}
             <FormField
               control={form.control}
@@ -206,23 +239,56 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
               control={form.control}
               name="category"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>Category *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={ModuleCategory.SERVICE}>Service</SelectItem>
-                      <SelectItem value={ModuleCategory.PERFORMANCE}>Performance</SelectItem>
-                      <SelectItem value={ModuleCategory.QUALITY}>Quality</SelectItem>
-                      <SelectItem value={ModuleCategory.FEEDBACK}>Feedback</SelectItem>
-                      <SelectItem value={ModuleCategory.TRAINING}>Training</SelectItem>
-                      <SelectItem value={ModuleCategory.SYSTEM}>System</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openCategory} onOpenChange={setOpenCategory}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openCategory}
+                          className={cn(
+                            'w-full justify-between',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          {field.value
+                            ? categories.find((category) => category.value === field.value)?.label
+                            : 'Select category'}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search category..." />
+                        <CommandList>
+                          <CommandEmpty>No category found.</CommandEmpty>
+                          <CommandGroup>
+                            {categories.map((category) => (
+                              <CommandItem
+                                key={category.value}
+                                value={category.label}
+                                onSelect={() => {
+                                  field.onChange(category.value);
+                                  setOpenCategory(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    category.value === field.value ? 'opacity-100' : 'opacity-0'
+                                  )}
+                                />
+                                {category.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormDescription>Module category for organization</FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -230,43 +296,45 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
             />
           </div>
 
-          {/* Name */}
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name *</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Service Management" {...field} />
-                </FormControl>
-                <FormDescription>Display name for the module</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Name */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Service Management" {...field} />
+                  </FormControl>
+                  <FormDescription>Display name for the module</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Description */}
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Describe the purpose and features of this module..."
-                    rows={3}
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>Optional detailed description</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* Description */}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Describe the purpose and features of this module..."
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>Optional detailed description</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Icon */}
             <FormField
               control={form.control}
@@ -300,35 +368,62 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Parent Module */}
             <FormField
               control={form.control}
               name="parentId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>Parent Module</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={!modulesData?.data.length}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="No parent (root level)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">No parent (root level)</SelectItem>
-                      {modulesData?.data
-                        .filter((m) => m.id !== moduleId) // Don't allow self as parent
-                        .map((module) => (
-                          <SelectItem key={module.id} value={module.id}>
-                            {module.name} ({module.code})
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openParent} onOpenChange={setOpenParent}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openParent}
+                          className={cn(
+                            'w-full justify-between',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          {field.value
+                            ? parentModules.find((parent) => parent.value === field.value)?.label
+                            : 'No parent (root level)'}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search parent module..." />
+                        <CommandList>
+                          <CommandEmpty>No module found.</CommandEmpty>
+                          <CommandGroup>
+                            {parentModules.map((parent) => (
+                              <CommandItem
+                                key={parent.value}
+                                value={parent.label}
+                                onSelect={() => {
+                                  field.onChange(parent.value);
+                                  setOpenParent(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    parent.value === field.value ? 'opacity-100' : 'opacity-0'
+                                  )}
+                                />
+                                {parent.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormDescription>Optional parent for hierarchy</FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -353,16 +448,13 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
           </div>
 
           {/* Status Switches */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="isActive"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Active</FormLabel>
-                    <FormDescription>Module is active and functional</FormDescription>
-                  </div>
+                <FormItem className="flex flex-row items-center justify-between space-x-2 rounded-lg border p-3">
+                  <FormLabel className="text-sm font-medium">Active</FormLabel>
                   <FormControl>
                     <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
@@ -374,11 +466,8 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
               control={form.control}
               name="isVisible"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Visible</FormLabel>
-                    <FormDescription>Show in navigation menus</FormDescription>
-                  </div>
+                <FormItem className="flex flex-row items-center justify-between space-x-2 rounded-lg border p-3">
+                  <FormLabel className="text-sm font-medium">Visible</FormLabel>
                   <FormControl>
                     <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>

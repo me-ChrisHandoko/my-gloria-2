@@ -84,7 +84,7 @@ export interface QueryModulesParams extends QueryParams {
 // ==========================================
 
 class ModulesService {
-  private readonly baseUrl = '/modules';
+  private readonly baseUrl = '/permissions/modules';
 
   /**
    * Get paginated list of modules

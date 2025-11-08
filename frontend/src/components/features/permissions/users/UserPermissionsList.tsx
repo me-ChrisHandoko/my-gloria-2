@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Loader2, Key, Plus, Trash2, Calendar, AlertCircle, CheckCircle, XCircle, Clock, Tag, Database } from 'lucide-react';
 import { format, isPast, isFuture } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import UserPermissionAssignment from './UserPermissionAssignment';
 
 interface UserPermissionsListProps {
@@ -49,7 +49,6 @@ interface UserPermissionsListProps {
 }
 
 export default function UserPermissionsList({ userId }: UserPermissionsListProps) {
-  const { toast } = useToast();
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedPermissionId, setSelectedPermissionId] = useState<string | null>(null);

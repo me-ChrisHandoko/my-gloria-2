@@ -34,7 +34,7 @@ export const modulesApi = apiSlice.injectEndpoints({
         if (params.parentId !== undefined) queryParams.parentId = params.parentId;
 
         return {
-          url: '/modules',
+          url: '/permissions/modules',
           params: queryParams,
         };
       },
@@ -81,7 +81,7 @@ export const modulesApi = apiSlice.injectEndpoints({
 
     // Get full module tree
     getModuleTree: builder.query<ModuleTreeNode[], void>({
-      query: () => '/modules/tree',
+      query: () => '/permissions/modules/tree',
       transformResponse: (response: any) => {
         if (response && response.success && response.data) {
           return response.data;
@@ -94,7 +94,7 @@ export const modulesApi = apiSlice.injectEndpoints({
 
     // Get module by code
     getModuleByCode: builder.query<Module, string>({
-      query: (code) => `/modules/code/${code}`,
+      query: (code) => `/permissions/modules/code/${code}`,
       transformResponse: (response: any) => {
         if (response && response.success && response.data) {
           return response.data;
@@ -108,7 +108,7 @@ export const modulesApi = apiSlice.injectEndpoints({
 
     // Get module by ID
     getModuleById: builder.query<Module, string>({
-      query: (id) => `/modules/${id}`,
+      query: (id) => `/permissions/modules/${id}`,
       transformResponse: (response: any) => {
         if (response && response.success && response.data) {
           return response.data;
@@ -120,7 +120,7 @@ export const modulesApi = apiSlice.injectEndpoints({
 
     // Get module children
     getModuleChildren: builder.query<Module[], string>({
-      query: (id) => `/modules/${id}/children`,
+      query: (id) => `/permissions/modules/${id}/children`,
       transformResponse: (response: any) => {
         if (response && response.success && response.data) {
           return response.data;
@@ -134,7 +134,7 @@ export const modulesApi = apiSlice.injectEndpoints({
 
     // Get module ancestors
     getModuleAncestors: builder.query<Module[], string>({
-      query: (id) => `/modules/${id}/ancestors`,
+      query: (id) => `/permissions/modules/${id}/ancestors`,
       transformResponse: (response: any) => {
         if (response && response.success && response.data) {
           return response.data;
@@ -148,7 +148,7 @@ export const modulesApi = apiSlice.injectEndpoints({
 
     // Get module change history
     getModuleHistory: builder.query<ModuleChangeHistory[], string>({
-      query: (id) => `/modules/${id}/history`,
+      query: (id) => `/permissions/modules/${id}/history`,
       transformResponse: (response: any) => {
         if (response && response.success && response.data) {
           return response.data;
@@ -165,7 +165,7 @@ export const modulesApi = apiSlice.injectEndpoints({
     // Create module
     createModule: builder.mutation<Module, CreateModuleDto>({
       query: (data) => ({
-        url: '/modules',
+        url: '/permissions/modules',
         method: 'POST',
         body: data,
       }),
@@ -178,7 +178,7 @@ export const modulesApi = apiSlice.injectEndpoints({
     // Update module
     updateModule: builder.mutation<Module, { id: string; data: UpdateModuleDto }>({
       query: ({ id, data }) => ({
-        url: `/modules/${id}`,
+        url: `/permissions/modules/${id}`,
         method: 'PATCH',
         body: data,
       }),
@@ -192,7 +192,7 @@ export const modulesApi = apiSlice.injectEndpoints({
     // Move module
     moveModule: builder.mutation<Module, { id: string; newParentId: string | null }>({
       query: ({ id, newParentId }) => ({
-        url: `/modules/${id}/move`,
+        url: `/permissions/modules/${id}/move`,
         method: 'PATCH',
         body: { newParentId },
       }),
@@ -206,7 +206,7 @@ export const modulesApi = apiSlice.injectEndpoints({
     // Delete module
     deleteModule: builder.mutation<Module, { id: string; reason: string }>({
       query: ({ id, reason }) => ({
-        url: `/modules/${id}`,
+        url: `/permissions/modules/${id}`,
         method: 'DELETE',
         body: { reason },
       }),

@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Loader2, Shield, Plus, Trash2, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { format, isPast, isFuture, isToday } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import UserRoleAssignment from './UserRoleAssignment';
 
 interface UserRolesListProps {
@@ -47,7 +47,6 @@ interface UserRolesListProps {
 }
 
 export default function UserRolesList({ userId }: UserRolesListProps) {
-  const { toast } = useToast();
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);

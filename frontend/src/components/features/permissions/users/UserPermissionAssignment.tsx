@@ -40,7 +40,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, Key, Calendar, Database, TrendingUp } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import TemporalDatePickerAdapter from './TemporalDatePickerAdapter';
 
@@ -57,7 +57,6 @@ export default function UserPermissionAssignment({
   onOpenChange,
   onSuccess,
 }: UserPermissionAssignmentProps) {
-  const { toast } = useToast();
   const [selectedPermissionId, setSelectedPermissionId] = useState<string>('');
   const [isGranted, setIsGranted] = useState<boolean>(true);
   const [resourceType, setResourceType] = useState<string>('');

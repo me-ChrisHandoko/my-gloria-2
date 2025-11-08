@@ -32,14 +32,13 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, FileText, Shield, Key, Package, Download, AlertCircle, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface UserPermissionAuditProps {
   userId: string;
 }
 
 export default function UserPermissionAudit({ userId }: UserPermissionAuditProps) {
-  const { toast } = useToast();
   const { data: audit, isLoading, error, refetch } = useGetUserPermissionAuditQuery(userId);
 
   const handleExport = () => {

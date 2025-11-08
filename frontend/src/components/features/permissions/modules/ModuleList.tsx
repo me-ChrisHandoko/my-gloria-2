@@ -288,83 +288,73 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filters and Actions Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 gap-2">
-          {/* Search */}
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search modules..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="pl-9"
-            />
-          </div>
-
-          {/* Category Filter */}
-          <Select
-            value={categoryFilter || 'all'}
-            onValueChange={(value) => {
-              setCategoryFilter(value === 'all' ? undefined : (value as ModuleCategory));
+      {/* Filters Bar */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[200px]">
+          <Input
+            placeholder="Search modules..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
               setPage(1);
             }}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="SERVICE">Service</SelectItem>
-              <SelectItem value="PERFORMANCE">Performance</SelectItem>
-              <SelectItem value="QUALITY">Quality</SelectItem>
-              <SelectItem value="FEEDBACK">Feedback</SelectItem>
-              <SelectItem value="TRAINING">Training</SelectItem>
-              <SelectItem value="SYSTEM">System</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Status Filter */}
-          <Select
-            value={isActiveFilter === undefined ? 'all' : isActiveFilter ? 'active' : 'inactive'}
-            onValueChange={(value) => {
-              setIsActiveFilter(value === 'all' ? undefined : value === 'active');
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+          />
         </div>
 
-        {/* Create Button */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Module
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <ModuleForm
-              onSuccess={() => {
-                setIsCreateDialogOpen(false);
-                toast.success('Module created successfully');
-              }}
-              onCancel={() => setIsCreateDialogOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        {/* Category Filter */}
+        <Select
+          value={categoryFilter || 'all'}
+          onValueChange={(value) => {
+            setCategoryFilter(value === 'all' ? undefined : (value as ModuleCategory));
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="SERVICE">Service</SelectItem>
+            <SelectItem value="PERFORMANCE">Performance</SelectItem>
+            <SelectItem value="QUALITY">Quality</SelectItem>
+            <SelectItem value="FEEDBACK">Feedback</SelectItem>
+            <SelectItem value="TRAINING">Training</SelectItem>
+            <SelectItem value="SYSTEM">System</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Status Filter */}
+        <Select
+          value={isActiveFilter === undefined ? 'all' : isActiveFilter ? 'active' : 'inactive'}
+          onValueChange={(value) => {
+            setIsActiveFilter(value === 'all' ? undefined : value === 'active');
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+
+      {/* Hidden Create Dialog (now controlled from parent) */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <ModuleForm
+            onSuccess={() => {
+              setIsCreateDialogOpen(false);
+              toast.success('Module created successfully');
+            }}
+            onCancel={() => setIsCreateDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Data Table */}
       <div className="rounded-md border">

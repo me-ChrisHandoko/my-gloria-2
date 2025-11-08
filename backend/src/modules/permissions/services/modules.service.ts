@@ -150,7 +150,7 @@ export class ModulesService {
         skip,
         take: limit,
         orderBy: {
-          [sortBy === 'sortOrder' ? 'sort_order' : sortBy]: sortOrder,
+          [sortBy]: sortOrder,
         },
         include: {
           _count: {
@@ -565,15 +565,15 @@ export class ModulesService {
       icon: module.icon,
       path: module.path,
       parentId: module.parentId,
-      sortOrder: module.sort_order,
+      sortOrder: module.sortOrder,
       isActive: module.isActive,
       isVisible: module.isVisible,
       version: module.version,
       deletedAt: module.deletedAt,
-      createdAt: module.created_at,
-      updatedAt: module.updated_at,
-      createdBy: module.created_by,
-      updatedBy: module.updated_by,
+      createdAt: module.createdAt,
+      updatedAt: module.updatedAt,
+      createdBy: module.createdBy,
+      updatedBy: module.updatedBy,
       childModuleCount: module._count?.children,
       permissionCount: module._count?.modulePermissions,
     };

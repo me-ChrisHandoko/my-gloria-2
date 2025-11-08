@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, Shield, Calendar } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import TemporalDatePickerAdapter from './TemporalDatePickerAdapter';
 
@@ -53,7 +53,6 @@ export default function UserRoleAssignment({
   onOpenChange,
   onSuccess,
 }: UserRoleAssignmentProps) {
-  const { toast } = useToast();
   const [selectedRoleId, setSelectedRoleId] = useState<string>('');
   const [effectiveFrom, setEffectiveFrom] = useState<Date | undefined>(undefined);
   const [effectiveTo, setEffectiveTo] = useState<Date | undefined>(undefined);
