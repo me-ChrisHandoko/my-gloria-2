@@ -29,6 +29,7 @@ import {
   PermissionAction,
 } from '../../../core/auth/decorators/permissions.decorator';
 import { AuditLog } from '../../../core/auth/decorators/audit-log.decorator';
+import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
 
 @ApiTags('Permissions - User Roles')
 @ApiBearerAuth()
@@ -65,11 +66,16 @@ export class UserRolesController {
   async assignRole(
     @Param('userId', ParseUUIDPipe) userProfileId: string,
     @Body() dto: Omit<AssignUserRoleDto, 'userProfileId'>,
+    @CurrentUser() currentUser: any,
   ): Promise<UserRoleResponseDto> {
-    return this.userRolesService.assign({
-      ...dto,
-      userProfileId,
-    });
+    return this.userRolesService.assign(
+      {
+        ...dto,
+        userProfileId,
+      },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+      currentUser.userProfileId || currentUser.id,
+    );
   }
 
   @Post(':userId/roles/bulk')
@@ -97,11 +103,16 @@ export class UserRolesController {
   async bulkAssignRoles(
     @Param('userId', ParseUUIDPipe) userProfileId: string,
     @Body() dto: Omit<BulkAssignUserRolesDto, 'userProfileId'>,
+    @CurrentUser() currentUser: any,
   ): Promise<UserRoleResponseDto[]> {
-    return this.userRolesService.bulkAssign({
-      ...dto,
-      userProfileId,
-    });
+    return this.userRolesService.bulkAssign(
+      {
+        ...dto,
+        userProfileId,
+      },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+      currentUser.userProfileId || currentUser.id,
+    );
   }
 
   @Get(':userId/roles')
