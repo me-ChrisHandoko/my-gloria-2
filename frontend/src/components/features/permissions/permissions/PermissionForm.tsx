@@ -37,7 +37,6 @@ import { toast } from "sonner";
 import {
   useCreatePermissionMutation,
   useUpdatePermissionMutation,
-  useGetPermissionGroupsQuery,
 } from "@/store/api/permissionApi";
 import type { Permission } from "@/lib/api/services/permissions.service";
 
@@ -75,7 +74,6 @@ const formSchema = z.object({
     message: "Please select an action",
   }),
   scope: z.enum(permissionScopes).optional(),
-  groupId: z.string().optional(),
   isActive: z.boolean(),
 });
 
@@ -101,12 +99,6 @@ export default function PermissionForm({
   const [updatePermission, { isLoading: isUpdating }] =
     useUpdatePermissionMutation();
 
-  const { data: groupsData } = useGetPermissionGroupsQuery({
-    includeInactive: false,
-  });
-
-  const groups = groupsData || [];
-
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -116,7 +108,6 @@ export default function PermissionForm({
       resource: "",
       action: "READ",
       scope: undefined,
-      groupId: undefined,
       isActive: true,
     },
   });
@@ -131,7 +122,6 @@ export default function PermissionForm({
         resource: permission.resource,
         action: permission.action,
         scope: permission.scope || undefined,
-        groupId: permission.groupId || undefined,
         isActive: permission.isActive,
       });
     } else {
@@ -142,7 +132,6 @@ export default function PermissionForm({
         resource: "",
         action: "READ",
         scope: undefined,
-        groupId: undefined,
         isActive: true,
       });
     }
@@ -156,7 +145,6 @@ export default function PermissionForm({
           name: data.name,
           description: data.description || undefined,
           scope: data.scope || undefined,
-          groupId: data.groupId || undefined,
           isActive: data.isActive,
         };
 
@@ -173,7 +161,6 @@ export default function PermissionForm({
           resource: data.resource,
           action: data.action,
           scope: data.scope || undefined,
-          groupId: data.groupId || undefined,
         };
 
         await createPermission(createData).unwrap();
@@ -330,37 +317,6 @@ export default function PermissionForm({
                 )}
               />
 
-              {/* Group */}
-              <FormField
-                control={form.control}
-                name="groupId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Group</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select group (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {groups.map((group) => (
-                          <SelectItem key={group.id} value={group.id}>
-                            {group.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Permission group for organization
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
             {/* Description */}

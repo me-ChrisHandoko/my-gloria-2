@@ -241,13 +241,11 @@ export class UserRepository {
           permission: true,
         },
       },
-      moduleAccess: {
+      userModuleAccess: {
         include: {
           module: true,
         },
       },
-      overrides: true,
-      permissionCache: true,
     };
   }
 }

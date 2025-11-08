@@ -129,48 +129,6 @@ export const permissionApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    getPermissionGroups: builder.query<PermissionGroup[], { includeInactive?: boolean }>({
-      query: (params) => ({
-        url: '/permissions/groups',
-        params,
-      }),
-      transformResponse: (response: any) => {
-        // The global transformer in apiSliceWithHook wraps array responses with pagination metadata
-        // Extract the actual array from { data: [...], total, page, ... }
-        if (response && typeof response === 'object' && Array.isArray(response.data)) {
-          return response.data;
-        }
-        // Fallback: if response is already an array, return it
-        if (Array.isArray(response)) {
-          return response;
-        }
-        // Unexpected format: return empty array
-        console.warn('[permissionApi] Unexpected response format for getPermissionGroups:', response);
-        return [];
-      },
-      providesTags: ['PermissionGroup'],
-    }),
-
-    createPermissionGroup: builder.mutation<PermissionGroup, Partial<PermissionGroup>>({
-      query: (data) => ({
-        url: '/permissions/groups',
-        method: 'POST',
-        body: data,
-      }),
-      invalidatesTags: ['PermissionGroup'],
-    }),
-
-    updatePermissionGroup: builder.mutation<
-      PermissionGroup,
-      { id: string; data: Partial<PermissionGroup> }
-    >({
-      query: ({ id, data }) => ({
-        url: `/permissions/groups/${id}`,
-        method: 'PUT',
-        body: data,
-      }),
-      invalidatesTags: ['PermissionGroup'],
-    }),
 
     getStatistics: builder.query<PermissionStatistics, void>({
       query: () => '/permissions/statistics',
@@ -193,9 +151,6 @@ export const {
   useCreatePermissionMutation,
   useUpdatePermissionMutation,
   useDeletePermissionMutation,
-  useGetPermissionGroupsQuery,
-  useCreatePermissionGroupMutation,
-  useUpdatePermissionGroupMutation,
   useGetStatisticsQuery,
   useRefreshCacheMutation,
 } = permissionApi;

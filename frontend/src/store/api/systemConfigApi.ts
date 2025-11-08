@@ -16,7 +16,7 @@ export const systemConfigApi = apiSlice.injectEndpoints({
       organizationId?: string;
     }>({
       query: (params = {}) => ({
-        url: '/audit-logs',
+        url: '/api/v1/audit/logs',
         params: {
           page: params.page || 1,
           limit: params.limit || 50,
@@ -41,16 +41,10 @@ export const systemConfigApi = apiSlice.injectEndpoints({
       keepUnusedDataFor: 300,
     }),
 
-    // Get audit log by ID
-    getAuditLogById: builder.query<AuditLog, string>({
-      query: (id) => `/audit-logs/${id}`,
-      providesTags: (_result, _error, id) => [{ type: 'Audit', id }],
-    }),
-
     // Get user activity
     getUserActivity: builder.query<AuditLog[], { userId: string; limit?: number }>({
       query: ({ userId, limit = 20 }) => ({
-        url: `/users/${userId}/activity`,
+        url: `/api/v1/audit/user/${userId}`,
         params: { limit },
       }),
       providesTags: (_result, _error, { userId }) => [
@@ -66,7 +60,7 @@ export const systemConfigApi = apiSlice.injectEndpoints({
       recentErrors: number;
     }, { organizationId?: string; period?: string }>({
       query: (params = {}) => ({
-        url: '/audit-logs/stats',
+        url: '/api/v1/audit/statistics',
         params,
       }),
       providesTags: ['Audit'],
@@ -84,7 +78,7 @@ export const systemConfigApi = apiSlice.injectEndpoints({
       };
     }>({
       query: ({ format, filters = {} }) => ({
-        url: '/audit-logs/export',
+        url: '/api/v1/audit/retention/export',
         params: {
           format,
           ...filters,
@@ -129,34 +123,6 @@ export const systemConfigApi = apiSlice.injectEndpoints({
       providesTags: (_result, _error, id) => [{ type: 'FeatureFlag', id }],
     }),
 
-    // Check feature flag
-    checkFeatureFlag: builder.query<{ enabled: boolean }, {
-      name: string;
-      userId?: string;
-      organizationId?: string;
-    }>({
-      query: ({ name, userId, organizationId }) => ({
-        url: `/feature-flags/check/${name}`,
-        params: { userId, organizationId },
-      }),
-      providesTags: (_result, _error, { name }) => [
-        { type: 'FeatureFlag', id: `check-${name}` }
-      ],
-      keepUnusedDataFor: 300,
-    }),
-
-    // Get active feature flags for user/organization
-    getActiveFeatureFlags: builder.query<string[], {
-      userId?: string;
-      organizationId?: string;
-    }>({
-      query: (params) => ({
-        url: '/feature-flags/active',
-        params,
-      }),
-      providesTags: ['FeatureFlag'],
-      keepUnusedDataFor: 300,
-    }),
 
     // ===== SYSTEM CONFIG QUERIES =====
 
@@ -198,14 +164,6 @@ export const systemConfigApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Get system config by category
-    getSystemConfigsByCategory: builder.query<SystemConfig[], string>({
-      query: (category) => `/system-configs/category/${category}`,
-      providesTags: (_result, _error, category) => [
-        { type: 'SystemConfig', id: `category-${category}` }
-      ],
-    }),
-
     // Get public configs
     getPublicSystemConfigs: builder.query<Record<string, any>, void>({
       query: () => '/system-configs/public',
@@ -215,25 +173,15 @@ export const systemConfigApi = apiSlice.injectEndpoints({
 
     // ===== AUDIT LOG MUTATIONS =====
 
-    // Create audit log (usually automated)
-    createAuditLog: builder.mutation<AuditLog, Partial<AuditLog>>({
-      query: (log) => ({
-        url: '/audit-logs',
-        method: 'POST',
-        body: log,
-      }),
-      invalidatesTags: [{ type: 'Audit', id: 'LIST' }],
-    }),
-
     // Clean old audit logs
     cleanAuditLogs: builder.mutation<
       { success: boolean; deleted: number },
       { olderThan: string; resource?: string }
     >({
       query: (params) => ({
-        url: '/audit-logs/clean',
-        method: 'DELETE',
-        params,
+        url: '/api/v1/audit/retention/apply',
+        method: 'POST',
+        body: params,
       }),
       invalidatesTags: [{ type: 'Audit', id: 'LIST' }],
     }),
@@ -297,20 +245,6 @@ export const systemConfigApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Test feature flag conditions
-    testFeatureFlagConditions: builder.mutation<
-      { matches: boolean; details: any },
-      {
-        flagId: string;
-        context: Record<string, any>;
-      }
-    >({
-      query: ({ flagId, context }) => ({
-        url: `/feature-flags/${flagId}/test`,
-        method: 'POST',
-        body: { context },
-      }),
-    }),
 
     // ===== SYSTEM CONFIG MUTATIONS =====
 
@@ -378,21 +312,8 @@ export const systemConfigApi = apiSlice.injectEndpoints({
     >({
       query: (configs) => ({
         url: '/system-configs/bulk-update',
-        method: 'PUT',
-        body: { configs },
-      }),
-      invalidatesTags: [{ type: 'SystemConfig', id: 'LIST' }],
-    }),
-
-    // Reset system configs to defaults
-    resetSystemConfigsToDefaults: builder.mutation<
-      { success: boolean; reset: number },
-      { category?: string; organizationId?: string }
-    >({
-      query: (params) => ({
-        url: '/system-configs/reset',
         method: 'POST',
-        body: params,
+        body: { configs },
       }),
       invalidatesTags: [{ type: 'SystemConfig', id: 'LIST' }],
     }),
@@ -405,35 +326,28 @@ export const {
   // Audit log hooks
   useGetAuditLogsQuery,
   useLazyGetAuditLogsQuery,
-  useGetAuditLogByIdQuery,
   useGetUserActivityQuery,
   useGetAuditStatsQuery,
   useLazyExportAuditLogsQuery,
-  useCreateAuditLogMutation,
   useCleanAuditLogsMutation,
   // Feature flag hooks
   useGetFeatureFlagsQuery,
   useLazyGetFeatureFlagsQuery,
   useGetFeatureFlagByIdQuery,
-  useCheckFeatureFlagQuery,
-  useGetActiveFeatureFlagsQuery,
   useCreateFeatureFlagMutation,
   useUpdateFeatureFlagMutation,
   useToggleFeatureFlagMutation,
   useDeleteFeatureFlagMutation,
-  useTestFeatureFlagConditionsMutation,
   // System config hooks
   useGetSystemConfigsQuery,
   useLazyGetSystemConfigsQuery,
   useGetSystemConfigByKeyQuery,
-  useGetSystemConfigsByCategoryQuery,
   useGetPublicSystemConfigsQuery,
   useCreateSystemConfigMutation,
   useUpdateSystemConfigMutation,
   useUpdateSystemConfigByKeyMutation,
   useDeleteSystemConfigMutation,
   useBulkUpdateSystemConfigsMutation,
-  useResetSystemConfigsToDefaultsMutation,
 } = systemConfigApi;
 
 // Export endpoints

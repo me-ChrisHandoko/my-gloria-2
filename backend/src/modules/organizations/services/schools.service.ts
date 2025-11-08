@@ -465,7 +465,6 @@ export class SchoolsService {
       address: school.address,
       phone: school.phone,
       email: school.email,
-      website: school.website,
       principal: school.principal,
       description: school.description,
       isActive: school.isActive,

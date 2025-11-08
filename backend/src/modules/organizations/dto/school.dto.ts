@@ -4,11 +4,9 @@ import {
   IsBoolean,
   IsEmail,
   IsPhoneNumber,
-  IsUrl,
   MaxLength,
   MinLength,
   IsNotEmpty,
-  IsUUID,
   IsInt,
   Min,
   Max,
@@ -77,14 +75,6 @@ export class CreateSchoolDto {
   @IsOptional()
   @IsEmail()
   email?: string;
-
-  @ApiPropertyOptional({
-    description: 'School website URL',
-    example: 'https://www.gloriaschool.org',
-  })
-  @IsOptional()
-  @IsUrl()
-  website?: string;
 
   @ApiPropertyOptional({
     description: 'Principal or head of school name',
@@ -159,12 +149,6 @@ export class SchoolResponseDto {
     example: 'info@gloriaschool.org',
   })
   email?: string;
-
-  @ApiPropertyOptional({
-    description: 'School website URL',
-    example: 'https://www.gloriaschool.org',
-  })
-  website?: string;
 
   @ApiPropertyOptional({
     description: 'Principal name',
@@ -246,14 +230,6 @@ export class QuerySchoolDto {
   @IsBoolean()
   @Type(() => Boolean)
   isActive?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Filter by organization ID',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  @IsOptional()
-  @IsUUID()
-  organizationId?: string;
 
   @ApiPropertyOptional({
     description: 'Filter by status',

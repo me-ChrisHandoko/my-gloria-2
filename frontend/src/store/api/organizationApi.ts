@@ -91,32 +91,6 @@ export const organizationApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Get organization statistics
-    getOrganizationStats: builder.query<{
-      totalUsers: number;
-      totalSchools: number;
-      totalDepartments: number;
-      activeWorkflows: number;
-    }, string>({
-      query: (id) => `/organizations/schools/${id}/stats`,
-      providesTags: (result, error, id) => [
-        { type: 'Organization', id: `${id}-stats` }
-      ],
-      // Cache stats for 10 minutes
-      keepUnusedDataFor: 600,
-    }),
-
-    // Get user's organizations
-    getUserOrganizations: builder.query<Organization[], void>({
-      query: () => '/organizations/my-organizations',
-      providesTags: ['Organization'],
-      transformResponse: (response: Organization[]) =>
-        response.map(org => ({
-          ...org,
-          createdAt: new Date(org.createdAt),
-          updatedAt: new Date(org.updatedAt),
-        })),
-    }),
 
     // ===== MUTATIONS =====
 
@@ -190,124 +164,19 @@ export const organizationApi = apiSlice.injectEndpoints({
       ],
     }),
 
-    // Bulk operations for admin efficiency
-    bulkUpdateOrganizations: builder.mutation<
-      { success: boolean; updated: number },
-      { ids: string[]; data: Partial<Organization> }
-    >({
-      query: ({ ids, data }) => ({
-        url: '/organizations/bulk-update',
-        method: 'PATCH',
-        body: { ids, data },
-      }),
-      invalidatesTags: (result, error, { ids }) => [
-        ...ids.map(id => ({ type: 'Organization' as const, id })),
-        { type: 'Organization', id: 'LIST' },
-      ],
-    }),
-
-    // Activate/Deactivate organization
-    updateOrganizationStatus: builder.mutation<
-      Organization,
-      { id: string; isActive: boolean }
-    >({
-      query: ({ id, isActive }) => ({
-        url: `/organizations/${id}/status`,
-        method: 'PATCH',
-        body: { isActive },
-      }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: 'Organization', id },
-        { type: 'Organization', id: 'LIST' },
-      ],
-    }),
-
-    // Archive organization (soft delete)
-    archiveOrganization: builder.mutation<
-      { success: boolean; message: string },
-      string
-    >({
-      query: (id) => ({
-        url: `/organizations/${id}/archive`,
-        method: 'POST',
-      }),
-      invalidatesTags: (result, error, id) => [
-        { type: 'Organization', id },
-        { type: 'Organization', id: 'LIST' },
-      ],
-    }),
-
     // Restore archived organization
     restoreOrganization: builder.mutation<
       Organization,
       string
     >({
       query: (id) => ({
-        url: `/organizations/${id}/restore`,
+        url: `/organizations/schools/${id}/restore`,
         method: 'POST',
       }),
       invalidatesTags: (result, error, id) => [
         { type: 'Organization', id },
         { type: 'Organization', id: 'LIST' },
       ],
-    }),
-
-    // Update organization settings
-    updateOrganizationSettings: builder.mutation<
-      Organization,
-      { id: string; settings: Record<string, any> }
-    >({
-      query: ({ id, settings }) => ({
-        url: `/organizations/${id}/settings`,
-        method: 'PUT',
-        body: settings,
-      }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: 'Organization', id },
-      ],
-    }),
-
-    // Upload organization logo
-    uploadOrganizationLogo: builder.mutation<
-      { url: string },
-      { id: string; logo: FormData }
-    >({
-      query: ({ id, logo }) => ({
-        url: `/organizations/${id}/logo`,
-        method: 'POST',
-        body: logo,
-      }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: 'Organization', id },
-      ],
-    }),
-
-    // Export organizations data
-    exportOrganizations: builder.query<
-      Blob,
-      { format: 'csv' | 'excel' | 'pdf'; filters?: QueryParams }
-    >({
-      query: ({ format, filters = {} }) => ({
-        url: '/organizations/export',
-        params: {
-          format,
-          ...filters,
-        },
-        responseHandler: (response) => response.blob(),
-      }),
-    }),
-
-    // Import organizations from file
-    importOrganizations: builder.mutation<
-      { success: boolean; imported: number; failed: number; errors?: any[] },
-      FormData
-    >({
-      query: (formData) => ({
-        url: '/organizations/import',
-        method: 'POST',
-        body: formData,
-      }),
-      invalidatesTags: [{ type: 'Organization', id: 'LIST' }],
     }),
   }),
   overrideExisting: false,
@@ -319,19 +188,10 @@ export const {
   useLazyGetOrganizationsQuery,
   useGetOrganizationByIdQuery,
   useGetOrganizationHierarchyQuery,
-  useGetOrganizationStatsQuery,
-  useGetUserOrganizationsQuery,
   useCreateOrganizationMutation,
   useUpdateOrganizationMutation,
   useDeleteOrganizationMutation,
-  useBulkUpdateOrganizationsMutation,
-  useUpdateOrganizationStatusMutation,
-  useArchiveOrganizationMutation,
   useRestoreOrganizationMutation,
-  useUpdateOrganizationSettingsMutation,
-  useUploadOrganizationLogoMutation,
-  useLazyExportOrganizationsQuery,
-  useImportOrganizationsMutation,
 } = organizationApi;
 
 // Export endpoints for server-side usage

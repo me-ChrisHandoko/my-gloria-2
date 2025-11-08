@@ -328,12 +328,8 @@ export class DatabaseOptimizationService {
          ON gloria_ops.system_configurations(category, is_public);`,
 
         // Workflow instances
-        `CREATE INDEX IF NOT EXISTS idx_workflow_instances_state_status 
+        `CREATE INDEX IF NOT EXISTS idx_workflow_instances_state_status
          ON gloria_ops.workflow_instances(state, status);`,
-
-        // Permission cache
-        `CREATE INDEX IF NOT EXISTS idx_permission_cache_user_valid 
-         ON gloria_ops.permission_cache(user_profile_id, is_valid, expires_at);`,
       ];
 
       for (const indexSql of indexesToCreate) {
