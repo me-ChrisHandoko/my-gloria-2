@@ -31,9 +31,15 @@ export enum PermissionScope {
 export interface ModulePermission {
   id: string;
   moduleId: string;
+  code: string;
+  name: string;
+  resource: string;
   action: PermissionAction;
+  category?: string;
   scope: PermissionScope;
   description?: string;
+  isActive: boolean;
+  isSystem: boolean;
   createdAt: string;
   createdBy: string;
   version: number;
@@ -44,9 +50,14 @@ export interface ModulePermission {
 // ==========================================
 
 export interface CreateModulePermissionDto {
+  code: string;
+  name: string;
+  resource: string;
   action: PermissionAction;
+  category?: string;
   scope: PermissionScope;
   description?: string;
+  isActive?: boolean;
 }
 
 // ==========================================

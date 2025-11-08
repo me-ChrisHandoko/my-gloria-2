@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { EmailChannelService } from './channels/email-channel.service';
 import { InAppChannelService } from './channels/in-app-channel.service';
 import { PushChannelService } from './channels/push-channel.service';
 import { SmsChannelService } from './channels/sms-channel.service';
@@ -16,14 +15,12 @@ export class NotificationChannelsService {
   private channels: Map<NotificationChannel, ChannelService>;
 
   constructor(
-    private readonly emailChannel: EmailChannelService,
     private readonly inAppChannel: InAppChannelService,
     private readonly pushChannel: PushChannelService,
     private readonly smsChannel: SmsChannelService,
     private readonly logger: LoggingService,
   ) {
     this.channels = new Map<NotificationChannel, ChannelService>([
-      ['email', this.emailChannel],
       ['inApp', this.inAppChannel],
       ['push', this.pushChannel],
       ['sms', this.smsChannel],

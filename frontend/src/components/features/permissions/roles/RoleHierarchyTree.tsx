@@ -76,19 +76,35 @@ interface TreeNodeProps {
 function buildHierarchyTree(roles: Role[]): RoleHierarchyNode[] {
   const rolesMap = new Map<string, RoleHierarchyNode>();
 
-  // Convert all roles to RoleHierarchyNode with empty children array
+  // Convert all roles to RoleHierarchyNode with level, path, and empty children array
   roles.forEach(role => {
     rolesMap.set(role.id, {
       ...role,
       children: [],
+      level: role.hierarchyLevel || 0,
+      path: [],
     });
   });
 
   const rootNodes: RoleHierarchyNode[] = [];
 
-  // Build parent-child relationships
+  // Build parent-child relationships and calculate paths
+  const buildPath = (roleId: string, visited: Set<string> = new Set()): string[] => {
+    if (visited.has(roleId)) return []; // Prevent circular references
+    visited.add(roleId);
+
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return [];
+
+    if (!role.parentId) return [roleId];
+
+    const parentPath = buildPath(role.parentId, visited);
+    return [...parentPath, roleId];
+  };
+
   roles.forEach(role => {
     const node = rolesMap.get(role.id)!;
+    node.path = buildPath(role.id);
 
     if (role.parentId) {
       const parent = rolesMap.get(role.parentId);

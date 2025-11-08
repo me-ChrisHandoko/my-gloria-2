@@ -304,7 +304,7 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
                         {permission.permissionCode}
                       </span>
                       <Badge variant="outline" className="text-xs">
-                        From: {permission.roleName}
+                        From: {permission.fromRole.roleName}
                       </Badge>
                     </div>
                   </div>

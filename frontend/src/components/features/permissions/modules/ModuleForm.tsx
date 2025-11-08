@@ -70,15 +70,13 @@ const moduleFormSchema = z.object({
     .min(1, 'Name is required')
     .max(255, 'Name must be less than 255 characters'),
   description: z.string().optional(),
-  category: z.nativeEnum(ModuleCategory, {
-    errorMap: () => ({ message: 'Please select a valid category' }),
-  }),
+  category: z.nativeEnum(ModuleCategory),
   icon: z.string().optional(),
   path: z.string().optional(),
   parentId: z.string().optional(),
-  sortOrder: z.coerce.number().min(0).default(0),
-  isActive: z.boolean().default(true),
-  isVisible: z.boolean().default(true),
+  sortOrder: z.number().min(0),
+  isActive: z.boolean(),
+  isVisible: z.boolean(),
 });
 
 type ModuleFormValues = z.infer<typeof moduleFormSchema>;

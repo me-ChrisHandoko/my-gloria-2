@@ -96,8 +96,8 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
     page,
     limit,
     search: search || undefined,
-    sortBy: sorting[0]?.id,
-    sortOrder: sorting[0]?.desc ? 'desc' : 'asc',
+    sort: sorting[0]?.id,
+    order: sorting[0]?.desc ? 'desc' : 'asc',
     category: categoryFilter,
     isActive: isActiveFilter,
   });

@@ -77,21 +77,13 @@ export default function UserPermissionAssignment({
     e.preventDefault();
 
     if (!selectedPermissionId) {
-      toast({
-        variant: 'destructive',
-        title: 'Validation Error',
-        description: 'Please select a permission to assign.',
-      });
+      toast.error('Please select a permission to assign.');
       return;
     }
 
     const priorityNum = parseInt(priority) || 0;
     if (priorityNum < 0 || priorityNum > 100) {
-      toast({
-        variant: 'destructive',
-        title: 'Validation Error',
-        description: 'Priority must be between 0 and 100.',
-      });
+      toast.error('Priority must be between 0 and 100.');
       return;
     }
 
@@ -107,10 +99,7 @@ export default function UserPermissionAssignment({
         effectiveTo,
       }).unwrap();
 
-      toast({
-        title: isGranted ? 'Permission granted' : 'Permission denied',
-        description: `The permission has been successfully ${isGranted ? 'granted to' : 'denied for'} the user.`,
-      });
+      toast.success(`The permission has been successfully ${isGranted ? 'granted to' : 'denied for'} the user.`);
 
       // Reset form
       setSelectedPermissionId('');
@@ -123,11 +112,7 @@ export default function UserPermissionAssignment({
 
       onSuccess?.();
     } catch (err: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to assign permission',
-        description: err?.data?.message || 'An error occurred while assigning the permission.',
-      });
+      toast.error(err?.data?.message || 'An error occurred while assigning the permission.');
     }
   };
 

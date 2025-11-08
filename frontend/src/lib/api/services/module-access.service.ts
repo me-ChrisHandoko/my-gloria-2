@@ -188,7 +188,7 @@ class ModuleAccessService {
    * Get active modules
    */
   async getActiveModules(params?: QueryParams): Promise<PaginatedResponse<Module>> {
-    const queryString = apiClient.buildQueryString({ ...params, isActive: true, isVisible: true });
+    const queryString = apiClient.buildQueryString({ ...params, isActive: true, isVisible: true } as QueryParams);
     return apiClient.get<PaginatedResponse<Module>>(`/modules${queryString}`);
   }
 
@@ -199,7 +199,7 @@ class ModuleAccessService {
     category: ModuleCategory,
     params?: QueryParams
   ): Promise<PaginatedResponse<Module>> {
-    const queryString = apiClient.buildQueryString({ ...params, category });
+    const queryString = apiClient.buildQueryString({ ...params, category } as QueryParams);
     return apiClient.get<PaginatedResponse<Module>>(`/modules${queryString}`);
   }
 

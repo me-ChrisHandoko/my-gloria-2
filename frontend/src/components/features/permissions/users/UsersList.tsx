@@ -187,7 +187,7 @@ export default function UsersList({ onUserSelect }: UsersListProps) {
     },
     manualPagination: true,
     manualSorting: true,
-    pageCount: data?.totalPages ?? 0,
+    pageCount: data?.pagination?.totalPages ?? 0,
   });
 
   // Loading state

@@ -69,24 +69,24 @@ export default function ModuleTree({
     if (!treeData || !searchTerm.trim()) return treeData;
 
     const filterNodes = (nodes: ModuleTreeNode[]): ModuleTreeNode[] => {
-      return nodes
-        .map((node) => {
-          const matchesSearch =
-            node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            node.code.toLowerCase().includes(searchTerm.toLowerCase());
+      const filtered: ModuleTreeNode[] = [];
 
-          const filteredChildren = node.children ? filterNodes(node.children) : [];
+      for (const node of nodes) {
+        const matchesSearch =
+          node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          node.code.toLowerCase().includes(searchTerm.toLowerCase());
 
-          if (matchesSearch || filteredChildren.length > 0) {
-            return {
-              ...node,
-              children: filteredChildren.length > 0 ? filteredChildren : node.children,
-            };
-          }
+        const filteredChildren = node.children ? filterNodes(node.children) : [];
 
-          return null;
-        })
-        .filter((node): node is ModuleTreeNode => node !== null);
+        if (matchesSearch || filteredChildren.length > 0) {
+          filtered.push({
+            ...node,
+            children: filteredChildren.length > 0 ? filteredChildren : node.children,
+          });
+        }
+      }
+
+      return filtered;
     };
 
     return filterNodes(treeData);

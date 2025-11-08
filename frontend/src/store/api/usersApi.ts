@@ -80,16 +80,16 @@ export const usersApi = apiSlice.injectEndpoints({
      * ```
      */
     getUsers: builder.query<PaginatedUsersResponse, GetUsersQueryParams | void>({
-      query: (params = {}) => {
+      query: (params) => {
         const queryParams: Record<string, any> = {};
 
         // Add optional parameters if they have values
-        if (params.page) queryParams.page = params.page;
-        if (params.limit) queryParams.limit = params.limit;
-        if (params.search) queryParams.search = params.search;
-        if (params.isActive !== undefined) queryParams.isActive = params.isActive;
-        if (params.sortBy) queryParams.sortBy = params.sortBy;
-        if (params.sortOrder) queryParams.sortOrder = params.sortOrder;
+        if (params && params.page) queryParams.page = params.page;
+        if (params && params.limit) queryParams.limit = params.limit;
+        if (params && params.search) queryParams.search = params.search;
+        if (params && params.isActive !== undefined) queryParams.isActive = params.isActive;
+        if (params && params.sortBy) queryParams.sortBy = params.sortBy;
+        if (params && params.sortOrder) queryParams.sortOrder = params.sortOrder;
 
         return {
           url: '/users',

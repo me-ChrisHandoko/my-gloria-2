@@ -83,7 +83,7 @@ export const notificationApi = apiSlice.injectEndpoints({
         params,
       }),
       providesTags: (result) =>
-        result && Array.isArray(result.data)
+        result && Array.isArray(result)
           ? [
               ...result.map(({ id }) => ({ type: 'Notification' as const, id })),
               'Notification',

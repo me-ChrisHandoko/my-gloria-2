@@ -23,11 +23,11 @@ export const modulesApi = apiSlice.injectEndpoints({
         const queryParams: Record<string, any> = {
           page: params.page || 1,
           limit: params.limit || 10,
-          sortOrder: params.sortOrder || 'asc',
+          order: params.order || 'asc',
         };
 
         if (params.search) queryParams.search = params.search;
-        if (params.sortBy) queryParams.sortBy = params.sortBy;
+        if (params.sort) queryParams.sort = params.sort;
         if (params.category) queryParams.category = params.category;
         if (params.isActive !== undefined) queryParams.isActive = params.isActive;
         if (params.isVisible !== undefined) queryParams.isVisible = params.isVisible;

@@ -24,12 +24,12 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
         const queryParams: Record<string, any> = {
           page: params.page || 1,
           limit: params.limit || 10,
-          sortOrder: params.sortOrder || 'desc',
+          order: params.order || 'desc',
         };
 
         // Add optional parameters conditionally
         if (params.search) queryParams.search = params.search;
-        if (params.sortBy) queryParams.sortBy = params.sortBy;
+        if (params.sort) queryParams.sort = params.sort;
         if (params.userProfileId) queryParams.userProfileId = params.userProfileId;
         if (params.moduleId) queryParams.moduleId = params.moduleId;
         if (params.category) queryParams.category = params.category;
@@ -181,9 +181,9 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: [
+      invalidatesTags: (_result: any, _error: any, arg: GrantModuleAccessDto) => [
         { type: 'ModuleAccess', id: 'LIST' },
-        (_result, _error, arg) => ({ type: 'ModuleAccess', id: `user-${arg.userProfileId}` }),
+        { type: 'ModuleAccess', id: `user-${arg.userProfileId}` },
       ],
       // Optimistic update
       async onQueryStarted(data, { dispatch, queryFulfilled }) {

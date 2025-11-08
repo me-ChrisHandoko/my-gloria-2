@@ -69,11 +69,7 @@ export default function UserRoleAssignment({
     e.preventDefault();
 
     if (!selectedRoleId) {
-      toast({
-        variant: 'destructive',
-        title: 'Validation Error',
-        description: 'Please select a role to assign.',
-      });
+      toast.error('Please select a role to assign.');
       return;
     }
 
@@ -85,10 +81,7 @@ export default function UserRoleAssignment({
         effectiveTo,
       }).unwrap();
 
-      toast({
-        title: 'Role assigned',
-        description: 'The role has been successfully assigned to the user.',
-      });
+      toast.success('The role has been successfully assigned to the user.');
 
       // Reset form
       setSelectedRoleId('');
@@ -97,11 +90,7 @@ export default function UserRoleAssignment({
 
       onSuccess?.();
     } catch (err: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to assign role',
-        description: err?.data?.message || 'An error occurred while assigning the role.',
-      });
+      toast.error(err?.data?.message || 'An error occurred while assigning the role.');
     }
   };
 

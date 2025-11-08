@@ -137,32 +137,27 @@ export interface QueryRoleParams extends QueryParams {
 class RolesService {
   // Get all roles
   async getRoles(params?: QueryRoleParams): Promise<PaginatedResponse<Role>> {
-    const response = await apiClient.get('/api/v1/roles', { params });
-    return response.data;
+    return apiClient.get<PaginatedResponse<Role>>('/api/v1/roles', { params });
   }
 
   // Get role by ID
   async getRoleById(id: string): Promise<Role> {
-    const response = await apiClient.get(`/api/v1/roles/${id}`);
-    return response.data;
+    return apiClient.get<Role>(`/api/v1/roles/${id}`);
   }
 
   // Get role by code
   async getRoleByCode(code: string): Promise<Role> {
-    const response = await apiClient.get(`/api/v1/roles/code/${code}`);
-    return response.data;
+    return apiClient.get<Role>(`/api/v1/roles/code/${code}`);
   }
 
   // Create role
   async createRole(data: CreateRoleDto): Promise<Role> {
-    const response = await apiClient.post('/api/v1/roles', data);
-    return response.data;
+    return apiClient.post<Role>('/api/v1/roles', data);
   }
 
   // Update role
   async updateRole(id: string, data: UpdateRoleDto): Promise<Role> {
-    const response = await apiClient.put(`/api/v1/roles/${id}`, data);
-    return response.data;
+    return apiClient.put<Role>(`/api/v1/roles/${id}`, data);
   }
 
   // Delete role (soft delete)
@@ -172,8 +167,7 @@ class RolesService {
 
   // Assign role to user
   async assignRole(data: AssignRoleDto): Promise<UserRole> {
-    const response = await apiClient.post('/api/v1/roles/assign', data);
-    return response.data;
+    return apiClient.post<UserRole>('/api/v1/roles/assign', data);
   }
 
   // Remove role from user
@@ -183,8 +177,7 @@ class RolesService {
 
   // Get user roles
   async getUserRoles(userProfileId: string): Promise<Role[]> {
-    const response = await apiClient.get(`/api/v1/roles/user/${userProfileId}`);
-    return response.data;
+    return apiClient.get<Role[]>(`/api/v1/roles/user/${userProfileId}`);
   }
 
   // Update user role temporal settings
@@ -193,17 +186,15 @@ class RolesService {
     roleId: string,
     data: UpdateUserRoleTemporalDto
   ): Promise<UserRole> {
-    const response = await apiClient.put(
+    return apiClient.put<UserRole>(
       `/api/v1/roles/users/${userProfileId}/roles/${roleId}`,
       data
     );
-    return response.data;
   }
 
   // Get role statistics
   async getStatistics(): Promise<any> {
-    const response = await apiClient.get('/api/v1/roles/statistics');
-    return response.data;
+    return apiClient.get<any>('/api/v1/roles/statistics');
   }
 
   // Assign permission to role
@@ -211,11 +202,10 @@ class RolesService {
     roleId: string,
     data: AssignRolePermissionDto
   ): Promise<any> {
-    const response = await apiClient.post(
+    return apiClient.post<any>(
       `/api/v1/roles/${roleId}/permissions`,
       data
     );
-    return response.data;
   }
 
   // Bulk assign permissions to role
@@ -223,11 +213,10 @@ class RolesService {
     roleId: string,
     data: BulkAssignRolePermissionsDto
   ): Promise<any> {
-    const response = await apiClient.post(
+    return apiClient.post<any>(
       `/api/v1/roles/${roleId}/permissions/bulk`,
       data
     );
-    return response.data;
   }
 
   // Remove permission from role
@@ -245,17 +234,15 @@ class RolesService {
     roleId: string,
     data: CreateRoleHierarchyDto
   ): Promise<RoleHierarchy> {
-    const response = await apiClient.post(
+    return apiClient.post<RoleHierarchy>(
       `/api/v1/roles/${roleId}/hierarchy`,
       data
     );
-    return response.data;
   }
 
   // Get role hierarchy
   async getRoleHierarchy(roleId: string): Promise<any> {
-    const response = await apiClient.get(`/api/v1/roles/${roleId}/hierarchy`);
-    return response.data;
+    return apiClient.get<any>(`/api/v1/roles/${roleId}/hierarchy`);
   }
 
   // Delete role hierarchy
@@ -270,20 +257,17 @@ class RolesService {
 
   // Get all role templates
   async getRoleTemplates(params?: QueryParams): Promise<PaginatedResponse<RoleTemplate>> {
-    const response = await apiClient.get('/api/v1/roles/templates', { params });
-    return response.data;
+    return apiClient.get<PaginatedResponse<RoleTemplate>>('/api/v1/roles/templates', { params });
   }
 
   // Get role template by ID
   async getRoleTemplateById(id: string): Promise<RoleTemplate> {
-    const response = await apiClient.get(`/api/v1/roles/templates/${id}`);
-    return response.data;
+    return apiClient.get<RoleTemplate>(`/api/v1/roles/templates/${id}`);
   }
 
   // Create role template
   async createRoleTemplate(data: CreateRoleTemplateDto): Promise<RoleTemplate> {
-    const response = await apiClient.post('/api/v1/roles/templates', data);
-    return response.data;
+    return apiClient.post<RoleTemplate>('/api/v1/roles/templates', data);
   }
 
   // Delete role template
@@ -293,23 +277,20 @@ class RolesService {
 
   // Apply role template
   async applyRoleTemplate(data: ApplyRoleTemplateDto): Promise<any> {
-    const response = await apiClient.post(
+    return apiClient.post<any>(
       '/api/v1/roles/templates/apply',
       data
     );
-    return response.data;
   }
 
   // Get users assigned to a role
   async getRoleUsers(roleId: string, params?: QueryParams): Promise<PaginatedResponse<RoleUser>> {
-    const response = await apiClient.get(`/api/v1/roles/${roleId}/users`, { params });
-    return response.data;
+    return apiClient.get<PaginatedResponse<RoleUser>>(`/api/v1/roles/${roleId}/users`, { params });
   }
 
   // Get modules accessible by a role
   async getRoleModules(roleId: string): Promise<any> {
-    const response = await apiClient.get(`/api/v1/roles/${roleId}/modules`);
-    return response.data;
+    return apiClient.get<any>(`/api/v1/roles/${roleId}/modules`);
   }
 }
 

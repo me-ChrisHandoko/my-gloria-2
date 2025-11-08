@@ -58,9 +58,9 @@ const roleFormSchema = z.object({
     .min(2, 'Name must be at least 2 characters')
     .max(100, 'Name must be less than 100 characters'),
   description: z.string().optional(),
-  hierarchyLevel: z.coerce.number().min(0).max(10).default(0),
+  hierarchyLevel: z.number().min(0).max(10),
   parentId: z.string().optional(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
   organizationId: z.string().optional(),
 });
 

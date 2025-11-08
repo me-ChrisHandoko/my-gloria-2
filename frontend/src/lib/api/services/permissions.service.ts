@@ -41,6 +41,7 @@ export interface Permission {
   resource: string;
   action: PermissionAction;
   scope?: PermissionScope;
+  category?: string;
   groupId?: string;
   group?: PermissionGroup;
   conditions?: any;

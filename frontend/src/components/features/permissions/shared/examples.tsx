@@ -55,8 +55,8 @@ export function TemporalDatePickerExample() {
         effectiveFrom={effectiveFrom}
         effectiveTo={effectiveTo}
         onChange={(from, to) => {
-          setEffectiveFrom(from);
-          setEffectiveTo(to);
+          setEffectiveFrom(from ?? null);
+          setEffectiveTo(to ?? null);
         }}
       />
       <div className="text-sm text-gray-600">

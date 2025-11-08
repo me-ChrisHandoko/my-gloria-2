@@ -67,8 +67,8 @@ export const permissionApi = apiSlice.injectEndpoints({
           ...actualResponse,
           data: actualResponse.data.map(perm => ({
             ...perm,
-            createdAt: new Date(perm.createdAt),
-            updatedAt: new Date(perm.updatedAt),
+            createdAt: new Date(perm.createdAt).toISOString(),
+            updatedAt: new Date(perm.updatedAt).toISOString(),
           })),
         };
       },

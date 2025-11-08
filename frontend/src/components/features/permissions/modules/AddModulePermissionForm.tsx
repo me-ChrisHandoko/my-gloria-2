@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCreateModulePermissionMutation } from '@/store/api/modulePermissionsApi';
+import { PermissionAction, PermissionScope } from '@/lib/api/services/module-permissions.service';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -45,9 +46,10 @@ const permissionFormSchema = z.object({
     .max(255, 'Name must be less than 255 characters'),
   description: z.string().optional(),
   resource: z.string().min(1, 'Resource is required'),
-  action: z.string().min(1, 'Action is required'),
+  action: z.nativeEnum(PermissionAction),
+  scope: z.nativeEnum(PermissionScope),
   category: z.string().optional(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
 });
 
 type PermissionFormValues = z.infer<typeof permissionFormSchema>;
@@ -72,7 +74,8 @@ export function AddModulePermissionForm({
       name: '',
       description: '',
       resource: '',
-      action: 'READ',
+      action: PermissionAction.READ,
+      scope: PermissionScope.SELF,
       category: '',
       isActive: true,
     },
@@ -162,6 +165,50 @@ export function AddModulePermissionForm({
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            {/* Resource */}
+            <FormField
+              control={form.control}
+              name="resource"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Resource *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., module" {...field} />
+                  </FormControl>
+                  <FormDescription>Target resource type</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Scope */}
+            <FormField
+              control={form.control}
+              name="scope"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Scope *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select scope" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="SELF">Self Only</SelectItem>
+                      <SelectItem value="DEPARTMENT">Department</SelectItem>
+                      <SelectItem value="ORGANIZATION">Organization</SelectItem>
+                      <SelectItem value="SYSTEM">System Wide</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>Permission scope level</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
           {/* Name */}
           <FormField
             control={form.control}
@@ -198,39 +245,21 @@ export function AddModulePermissionForm({
             )}
           />
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* Resource */}
-            <FormField
-              control={form.control}
-              name="resource"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Resource *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., module" {...field} />
-                  </FormControl>
-                  <FormDescription>Target resource type</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Category */}
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., module_management" {...field} />
-                  </FormControl>
-                  <FormDescription>Permission category</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          {/* Category */}
+          <FormField
+            control={form.control}
+            name="category"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., module_management" {...field} />
+                </FormControl>
+                <FormDescription>Permission category</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {/* Active Status */}
           <FormField

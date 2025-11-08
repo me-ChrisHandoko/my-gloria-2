@@ -72,11 +72,11 @@ const formSchema = z.object({
     .min(2, "Resource must be at least 2 characters")
     .max(50, "Resource must not exceed 50 characters"),
   action: z.enum(permissionActions, {
-    required_error: "Please select an action",
+    message: "Please select an action",
   }),
   scope: z.enum(permissionScopes).optional(),
   groupId: z.string().optional(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
 });
 
 type FormData = z.infer<typeof formSchema>;

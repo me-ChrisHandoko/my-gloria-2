@@ -7,11 +7,12 @@ export const metadata: Metadata = {
 };
 
 interface UserPermissionsPageProps {
-  params: {
+  params: Promise<{
     userId: string;
-  };
+  }>;
 }
 
-export default function UserPermissionsPage({ params }: UserPermissionsPageProps) {
-  return <UserAssignmentTabs userId={params.userId} />;
+export default async function UserPermissionsPage({ params }: UserPermissionsPageProps) {
+  const { userId } = await params;
+  return <UserAssignmentTabs userId={userId} />;
 }
