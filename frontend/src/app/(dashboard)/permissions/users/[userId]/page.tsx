@@ -13,16 +13,5 @@ interface UserPermissionsPageProps {
 }
 
 export default function UserPermissionsPage({ params }: UserPermissionsPageProps) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">User Permissions</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage user roles, permissions, and access audit
-        </p>
-      </div>
-
-      <UserAssignmentTabs userId={params.userId} />
-    </div>
-  );
+  return <UserAssignmentTabs userId={params.userId} />;
 }

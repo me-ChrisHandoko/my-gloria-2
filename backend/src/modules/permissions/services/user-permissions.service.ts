@@ -254,15 +254,15 @@ export class UserPermissionsService {
 
     // Apply filters
     if (query?.isGranted !== undefined) {
-      where.is_granted = query.isGranted;
+      where.isGranted = query.isGranted;
     }
 
     if (query?.resourceType) {
-      where.resource_type = query.resourceType;
+      where.resourceType = query.resourceType;
     }
 
     if (query?.resourceId) {
-      where.resource_id = query.resourceId;
+      where.resourceId = query.resourceId;
     }
 
     // Handle expired permissions
@@ -275,7 +275,7 @@ export class UserPermissionsService {
 
     // Handle denied permissions
     if (!query?.includeDenied) {
-      where.is_granted = true;
+      where.isGranted = true;
     }
 
     const userPermissions = await this.prisma.userPermission.findMany({
@@ -376,24 +376,24 @@ export class UserPermissionsService {
   ): UserPermissionResponseDto {
     return {
       id: userPermission.id,
-      userProfileId: userPermission.user_profile_id,
-      permissionId: userPermission.permission_id,
-      isGranted: userPermission.is_granted,
+      userProfileId: userPermission.userProfileId,
+      permissionId: userPermission.permissionId,
+      isGranted: userPermission.isGranted,
       conditions: userPermission.conditions,
-      grantedBy: userPermission.granted_by,
-      grantReason: userPermission.grant_reason,
+      grantedBy: userPermission.grantedBy,
+      grantReason: userPermission.grantReason,
       priority: userPermission.priority,
-      isTemporary: userPermission.is_temporary,
-      resourceType: userPermission.resource_type,
-      resourceId: userPermission.resource_id,
-      effectiveFrom: userPermission.effective_from,
-      effectiveUntil: userPermission.effective_until,
-      createdAt: userPermission.created_at,
-      updatedAt: userPermission.updated_at,
-      userProfile: userPermission.userProfiles
+      isTemporary: userPermission.isTemporary,
+      resourceType: userPermission.resourceType,
+      resourceId: userPermission.resourceId,
+      effectiveFrom: userPermission.effectiveFrom,
+      effectiveUntil: userPermission.effectiveUntil,
+      createdAt: userPermission.createdAt,
+      updatedAt: userPermission.updatedAt,
+      userProfile: userPermission.userProfile
         ? {
-            id: userPermission.userProfiles.id,
-            nip: userPermission.userProfiles.nip,
+            id: userPermission.userProfile.id,
+            nip: userPermission.userProfile.nip,
           }
         : undefined,
       permission: userPermission.permission

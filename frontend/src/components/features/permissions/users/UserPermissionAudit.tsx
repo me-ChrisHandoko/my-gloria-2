@@ -51,15 +51,15 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
           name: audit.userName,
           email: audit.userEmail,
         },
-        roles: audit.directRoles,
-        directPermissions: audit.directPermissions,
-        inheritedPermissions: audit.inheritedPermissions,
-        effectivePermissions: audit.allEffectivePermissions,
-        moduleAccesses: audit.moduleAccesses,
+        roles: audit.directRoles || [],
+        directPermissions: audit.directPermissions || [],
+        inheritedPermissions: audit.inheritedPermissions || [],
+        effectivePermissions: audit.allEffectivePermissions || [],
+        moduleAccesses: audit.moduleAccesses || [],
         statistics: {
-          totalRoles: audit.totalRoles,
-          totalPermissions: audit.totalPermissions,
-          totalModuleAccesses: audit.totalModuleAccesses,
+          totalRoles: audit.totalRoles || 0,
+          totalPermissions: audit.totalPermissions || 0,
+          totalModuleAccesses: audit.totalModuleAccesses || 0,
         },
         exportedAt: new Date().toISOString(),
       };
@@ -74,14 +74,11 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
       link.click();
       URL.revokeObjectURL(url);
 
-      toast({
-        title: 'Audit exported',
+      toast.success('Audit exported', {
         description: 'Permission audit has been exported successfully.',
       });
     } catch (err) {
-      toast({
-        variant: 'destructive',
-        title: 'Export failed',
+      toast.error('Export failed', {
         description: 'An error occurred while exporting the audit.',
       });
     }
@@ -119,6 +116,18 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
     );
   }
 
+  // Format date safely
+  const formatDate = (dateValue: any) => {
+    if (!dateValue) return 'N/A';
+    try {
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return 'N/A';
+      return format(date, 'PPP p');
+    } catch {
+      return 'N/A';
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header with Export */}
@@ -126,7 +135,7 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
         <div>
           <h3 className="text-lg font-semibold">Permission Audit</h3>
           <p className="text-sm text-muted-foreground">
-            Last updated: {format(new Date(audit.lastUpdatedAt), 'PPP p')}
+            Last updated: {audit.lastUpdatedAt ? formatDate(audit.lastUpdatedAt) : formatDate(new Date())}
           </p>
         </div>
         <Button onClick={handleExport} variant="outline" size="sm">
@@ -145,7 +154,7 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{audit.totalRoles}</div>
+            <div className="text-2xl font-bold">{audit.totalRoles || 0}</div>
           </CardContent>
         </Card>
 
@@ -157,7 +166,7 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{audit.totalPermissions}</div>
+            <div className="text-2xl font-bold">{audit.totalPermissions || 0}</div>
           </CardContent>
         </Card>
 
@@ -169,7 +178,7 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{audit.totalModuleAccesses}</div>
+            <div className="text-2xl font-bold">{audit.totalModuleAccesses || 0}</div>
           </CardContent>
         </Card>
       </div>
@@ -179,12 +188,12 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            Direct Roles ({audit.directRoles.length})
+            Direct Roles ({audit.directRoles?.length || 0})
           </CardTitle>
           <CardDescription>Roles directly assigned to this user</CardDescription>
         </CardHeader>
         <CardContent>
-          {audit.directRoles.length === 0 ? (
+          {!audit.directRoles || audit.directRoles.length === 0 ? (
             <p className="text-sm text-muted-foreground">No direct roles assigned</p>
           ) : (
             <div className="space-y-2">
@@ -229,12 +238,12 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5 text-primary" />
-            Direct Permissions ({audit.directPermissions.length})
+            Direct Permissions ({audit.directPermissions?.length || 0})
           </CardTitle>
           <CardDescription>Permissions directly assigned to this user</CardDescription>
         </CardHeader>
         <CardContent>
-          {audit.directPermissions.length === 0 ? (
+          {!audit.directPermissions || audit.directPermissions.length === 0 ? (
             <p className="text-sm text-muted-foreground">No direct permissions assigned</p>
           ) : (
             <div className="space-y-2">
@@ -274,12 +283,12 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5 text-blue-500" />
-            Inherited Permissions ({audit.inheritedPermissions.length})
+            Inherited Permissions ({audit.inheritedPermissions?.length || 0})
           </CardTitle>
           <CardDescription>Permissions inherited from assigned roles</CardDescription>
         </CardHeader>
         <CardContent>
-          {audit.inheritedPermissions.length === 0 ? (
+          {!audit.inheritedPermissions || audit.inheritedPermissions.length === 0 ? (
             <p className="text-sm text-muted-foreground">No inherited permissions</p>
           ) : (
             <div className="space-y-2">
@@ -311,14 +320,14 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-500" />
-            All Effective Permissions ({audit.allEffectivePermissions.length})
+            All Effective Permissions ({audit.allEffectivePermissions?.length || 0})
           </CardTitle>
           <CardDescription>
             Resolved permissions after combining direct and inherited permissions
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {audit.allEffectivePermissions.length === 0 ? (
+          {!audit.allEffectivePermissions || audit.allEffectivePermissions.length === 0 ? (
             <p className="text-sm text-muted-foreground">No effective permissions</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -345,12 +354,12 @@ export default function UserPermissionAudit({ userId }: UserPermissionAuditProps
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-purple-500" />
-            Module Accesses ({audit.moduleAccesses.length})
+            Module Accesses ({audit.moduleAccesses?.length || 0})
           </CardTitle>
           <CardDescription>Modules accessible by this user</CardDescription>
         </CardHeader>
         <CardContent>
-          {audit.moduleAccesses.length === 0 ? (
+          {!audit.moduleAccesses || audit.moduleAccesses.length === 0 ? (
             <p className="text-sm text-muted-foreground">No module accesses</p>
           ) : (
             <div className="space-y-2">

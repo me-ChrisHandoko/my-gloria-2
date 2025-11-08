@@ -51,11 +51,30 @@ export default function UserRolesList({ userId }: UserRolesListProps) {
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
 
-  const { data: userRoles, isLoading, error, refetch } = useGetUserRolesQuery({
+  const { data: userRolesData, isLoading, error, refetch } = useGetUserRolesQuery({
     userId,
     includeExpired: false,
     includeInactive: false,
   });
+
+  // Handle different response formats
+  const userRoles = React.useMemo(() => {
+    if (!userRolesData) return [];
+
+    // If it's already an array, return it
+    if (Array.isArray(userRolesData)) {
+      return userRolesData;
+    }
+
+    // If it's wrapped in a data property
+    if (userRolesData && typeof userRolesData === 'object' && 'data' in userRolesData) {
+      const data = (userRolesData as any).data;
+      return Array.isArray(data) ? data : [];
+    }
+
+    // Otherwise return empty array
+    return [];
+  }, [userRolesData]);
 
   const [revokeRole, { isLoading: isRevoking }] = useRevokeUserRoleMutation();
 
@@ -69,17 +88,14 @@ export default function UserRolesList({ userId }: UserRolesListProps) {
 
     try {
       await revokeRole({ userId, roleId: selectedRoleId }).unwrap();
-      toast({
-        title: 'Role revoked',
+      toast.success('Role revoked', {
         description: 'The role has been successfully revoked from the user.',
       });
       setRevokeDialogOpen(false);
       setSelectedRoleId(null);
       refetch();
     } catch (err: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to revoke role',
+      toast.error('Failed to revoke role', {
         description: err?.data?.message || 'An error occurred while revoking the role.',
       });
     }

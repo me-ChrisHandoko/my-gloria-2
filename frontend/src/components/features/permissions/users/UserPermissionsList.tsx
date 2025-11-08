@@ -53,11 +53,30 @@ export default function UserPermissionsList({ userId }: UserPermissionsListProps
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedPermissionId, setSelectedPermissionId] = useState<string | null>(null);
 
-  const { data: userPermissions, isLoading, error, refetch } = useGetUserPermissionsQuery({
+  const { data: userPermissionsData, isLoading, error, refetch } = useGetUserPermissionsQuery({
     userId,
     isGranted: true,
     includeExpired: false,
   });
+
+  // Handle different response formats
+  const userPermissions = React.useMemo(() => {
+    if (!userPermissionsData) return [];
+
+    // If it's already an array, return it
+    if (Array.isArray(userPermissionsData)) {
+      return userPermissionsData;
+    }
+
+    // If it's wrapped in a data property
+    if (userPermissionsData && typeof userPermissionsData === 'object' && 'data' in userPermissionsData) {
+      const data = (userPermissionsData as any).data;
+      return Array.isArray(data) ? data : [];
+    }
+
+    // Otherwise return empty array
+    return [];
+  }, [userPermissionsData]);
 
   const [revokePermission, { isLoading: isRevoking }] = useRevokeUserPermissionMutation();
 
@@ -71,17 +90,14 @@ export default function UserPermissionsList({ userId }: UserPermissionsListProps
 
     try {
       await revokePermission({ userId, permissionId: selectedPermissionId }).unwrap();
-      toast({
-        title: 'Permission revoked',
+      toast.success('Permission revoked', {
         description: 'The permission has been successfully revoked from the user.',
       });
       setRevokeDialogOpen(false);
       setSelectedPermissionId(null);
       refetch();
     } catch (err: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to revoke permission',
+      toast.error('Failed to revoke permission', {
         description: err?.data?.message || 'An error occurred while revoking the permission.',
       });
     }
