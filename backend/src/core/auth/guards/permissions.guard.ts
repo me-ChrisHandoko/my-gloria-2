@@ -246,9 +246,80 @@ export class PermissionsGuard implements CanActivate {
     user: UserContext,
     permission: RequiredPermissionData,
   ): Promise<boolean> {
-    // Position-based permissions are not directly implemented in the current schema
-    // Positions can inherit permissions through roles assigned to positions
-    // This is a placeholder for future implementation
+    // Get active user positions
+    const userPositions = await this.prisma.userPosition.findMany({
+      where: {
+        userProfileId: user.id,
+        isActive: true,
+        startDate: { lte: new Date() },
+        OR: [{ endDate: null }, { endDate: { gte: new Date() } }],
+      },
+      include: {
+        position: {
+          include: {
+            positionHierarchy: true,
+            roleModuleAccess: {
+              where: {
+                isActive: true,
+              },
+              include: {
+                role: {
+                  include: {
+                    rolePermissions: {
+                      where: {
+                        isGranted: true,
+                        permission: {
+                          resource: permission.resource,
+                          action: permission.action as any,
+                          isActive: true,
+                        },
+                      },
+                      include: {
+                        permission: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Check if any position grants the required permission
+    for (const userPosition of userPositions) {
+      // Check permissions from roles associated with this position
+      const hasPermissionFromRole = userPosition.position.roleModuleAccess.some(
+        (rma: any) =>
+          rma.role.rolePermissions.some((rp: any) => {
+            if (!permission.scope || !rp.permission.scope) {
+              return true;
+            }
+            // Use permissionScope from UserPosition if available, otherwise use permission scope
+            const effectiveScope =
+              userPosition.permissionScope || rp.permission.scope;
+            return this.isScopeSufficient(effectiveScope, permission.scope);
+          }),
+      );
+
+      if (hasPermissionFromRole) {
+        return true;
+      }
+
+      // Check parent positions if current position doesn't have permission
+      if (userPosition.position.positionHierarchy?.reportsToId) {
+        const hasPermissionFromParent =
+          await this.checkParentPositionPermissions(
+            userPosition.position.positionHierarchy.reportsToId,
+            permission,
+          );
+        if (hasPermissionFromParent) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }
 
@@ -256,8 +327,64 @@ export class PermissionsGuard implements CanActivate {
     parentId: string,
     permission: RequiredPermissionData,
   ): Promise<boolean> {
-    // Position hierarchy permissions not directly implemented in current schema
-    // This is a placeholder for future implementation
+    // Get parent position with its role module access
+    const parentPosition = await this.prisma.position.findUnique({
+      where: { id: parentId },
+      include: {
+        positionHierarchy: true,
+        roleModuleAccess: {
+          where: {
+            isActive: true,
+          },
+          include: {
+            role: {
+              include: {
+                rolePermissions: {
+                  where: {
+                    isGranted: true,
+                    permission: {
+                      resource: permission.resource,
+                      action: permission.action as any,
+                      isActive: true,
+                    },
+                  },
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!parentPosition) {
+      return false;
+    }
+
+    // Check if parent position has the required permission
+    const hasPermission = parentPosition.roleModuleAccess.some((rma: any) =>
+      rma.role.rolePermissions.some((rp: any) => {
+        if (!permission.scope || !rp.permission.scope) {
+          return true;
+        }
+        return this.isScopeSufficient(rp.permission.scope, permission.scope);
+      }),
+    );
+
+    if (hasPermission) {
+      return true;
+    }
+
+    // Recursively check grandparent positions (traverse up the hierarchy)
+    if (parentPosition.positionHierarchy?.reportsToId) {
+      return this.checkParentPositionPermissions(
+        parentPosition.positionHierarchy.reportsToId,
+        permission,
+      );
+    }
+
     return false;
   }
 
@@ -454,31 +581,44 @@ export class PermissionsGuard implements CanActivate {
     allowed: boolean,
   ): Promise<void> {
     try {
-      // TODO: PermissionCheckLog model was removed in Phase 3 schema simplification
-      // Consider implementing permission logging via WorkflowHistory or AuditLog
-      // await this.prisma.permissionCheckLog.create({
-      //   data: {
-      //     id: uuidv7(),
-      //     userProfileId: user.id,
-      //     resource: requiredPermissions[0]?.resource || 'unknown',
-      //     action: requiredPermissions[0]?.action || 'unknown',
-      //     isAllowed: allowed,
-      //     checkDuration: 0,
-      //     metadata: {
-      //       checkedPermissions: requiredPermissions.map((p, i) => ({
-      //         resource: p.resource,
-      //         action: p.action,
-      //         scope: p.scope || 'none',
-      //         allowed: results[i]?.allowed || false,
-      //         reason: results[i]?.reason || '',
-      //       })),
-      //       schoolId: user.schoolId,
-      //       departmentId: user.departmentId,
-      //       positionId: user.positionId,
-      //     },
-      //   },
-      // });
+      // Log permission checks to AuditLog for compliance and monitoring
+      // Only log denied permissions or successful access to sensitive resources
+      const shouldLog = !allowed || this.isSensitiveResource(requiredPermissions);
 
+      if (shouldLog) {
+        await this.prisma.auditLog.create({
+          data: {
+            id: uuidv7(),
+            actorId: user.clerkUserId,
+            actorProfileId: user.id,
+            action: allowed ? 'READ' : 'READ', // Permission check is a READ action
+            module: 'PERMISSIONS',
+            category: 'PERMISSION',
+            entityType: 'PERMISSION_CHECK',
+            entityId: requiredPermissions[0]?.resource || 'unknown',
+            entityDisplay: `${requiredPermissions[0]?.resource}:${requiredPermissions[0]?.action}`,
+            metadata: {
+              allowed,
+              checkedPermissions: requiredPermissions.map((p, i) => ({
+                resource: p.resource,
+                action: p.action,
+                scope: p.scope || 'none',
+                allowed: results[i]?.allowed || false,
+                reason: results[i]?.reason || '',
+              })),
+              userContext: {
+                schoolId: user.schoolId,
+                departmentId: user.departmentId,
+                positionId: user.positionId,
+                roles: user.roles?.map((r) => r.name),
+              },
+              timestamp: new Date().toISOString(),
+            },
+          },
+        });
+      }
+
+      // Also log to security logging service for denied permissions
       if (!allowed) {
         this.loggingService.logSecurity(
           `Permission denied for ${user.id}`,
@@ -492,6 +632,25 @@ export class PermissionsGuard implements CanActivate {
     } catch (error) {
       this.logger.error('Failed to log permission check:', error);
     }
+  }
+
+  /**
+   * Determine if resource is sensitive and requires logging even on success
+   */
+  private isSensitiveResource(permissions: RequiredPermissionData[]): boolean {
+    const sensitiveResources = [
+      'permissions',
+      'roles',
+      'users',
+      'user-permissions',
+      'user-roles',
+      'system-config',
+      'api-keys',
+    ];
+
+    return permissions.some((p) =>
+      sensitiveResources.includes(p.resource.toLowerCase()),
+    );
   }
 
   async invalidateUserPermissionCache(userId: string): Promise<void> {

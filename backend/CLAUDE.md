@@ -112,22 +112,50 @@ src/
 - Implement guards for authentication/authorization
 - Use interceptors for logging and transformation
 
-### Authentication Flow
-1. Clerk handles user authentication externally
-2. ClerkGuard validates JWT tokens from Clerk
-3. UserProfile is created/linked on first login via clerkUserId
-4. Permissions are computed based on roles, positions, and overrides
+### Authentication & Authorization Flow
+1. **Authentication** (ClerkAuthGuard - runs first):
+   - Clerk handles user authentication externally
+   - ClerkAuthGuard validates JWT tokens from Clerk
+   - UserProfile is created/linked on first login via clerkUserId
+   - User roles and permissions are loaded into request context
 
-### Permission System
-Multi-layer permission resolution:
-1. Role-based permissions (via UserRole → Role → RolePermission)
-2. Position-based permissions (via UserPosition → Position hierarchy)
-3. Direct user permissions (UserPermission)
-4. Resource-specific permissions (ResourcePermission)
-5. Module access control (UserModuleAccess)
-6. Override system for exceptions (UserOverride)
+2. **Authorization** (PermissionsGuard - runs second):
+   - Checks @RequiredPermission decorators on controllers
+   - Superadmin bypass: Users with hierarchyLevel = 0 skip all checks
+   - Multi-layer permission resolution (see below)
+   - Scope-based access control enforcement
 
-Scopes: OWN → DEPARTMENT → SCHOOL → ALL
+### Permission System (RBAC)
+**Status**: ✅ FULLY ACTIVE (as of latest update)
+
+Multi-layer permission resolution (in priority order):
+1. **Direct User Permissions** (highest priority) - UserPermission with priority field
+2. **Role-based Permissions** - UserRole → Role → RolePermission with hierarchy inheritance
+3. **Position-based Permissions** ✅ IMPLEMENTED - UserPosition → Position → RoleModuleAccess with hierarchy traversal
+4. **Scope-based Access** - OWN → DEPARTMENT → SCHOOL → ALL (enforced at each layer)
+5. **Module Access Control** - UserModuleAccess and RoleModuleAccess
+
+**Position-based Permissions Details:**
+- User positions link users to organizational positions via UserPosition
+- Positions can have roles assigned via RoleModuleAccess.positionId
+- Position hierarchy supports permission inheritance (child inherits from parent via reportsToId)
+- UserPosition.permissionScope can override default permission scope
+- Automatic traversal up position hierarchy until permission found or root reached
+
+**Global Guards Registered** (src/core/auth/auth.module.ts):
+- ClerkAuthGuard (authentication)
+- PermissionsGuard (authorization)
+
+**Using Decorators in Controllers**:
+```typescript
+import { RequiredPermission, PermissionAction } from '@core/auth/decorators/permissions.decorator';
+
+@Post()
+@RequiredPermission('users', PermissionAction.CREATE)
+async create(@Body() dto: CreateUserDto) { ... }
+```
+
+**Scope Hierarchy**: OWN → DEPARTMENT → SCHOOL → ALL
 
 ### Error Handling
 - Use NestJS built-in exceptions (BadRequestException, UnauthorizedException, etc.)
@@ -149,9 +177,20 @@ Required environment variables:
 - Permission scopes enforce data boundaries
 
 ### Audit & Compliance
-- AuditLog tracks all sensitive operations
-- PermissionCheckLog monitors access attempts
-- Soft deletes preserve data integrity
+- **AuditLog** tracks all sensitive operations including permission checks
+- **Permission Logging** (via AuditLog):
+  - All denied permission attempts are logged
+  - Successful access to sensitive resources is logged
+  - Metadata includes permission details, user context, and access decision
+  - Sensitive resources: permissions, roles, users, system-config, api-keys
+- **Soft deletes** preserve data integrity
+- **Query audit logs**:
+  ```sql
+  SELECT * FROM audit_logs
+  WHERE category = 'PERMISSION'
+  AND entity_type = 'PERMISSION_CHECK'
+  ORDER BY created_at DESC;
+  ```
 
 ### Performance Optimization
 - Use Prisma's select/include carefully to avoid N+1 queries
