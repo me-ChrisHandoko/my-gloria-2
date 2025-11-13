@@ -24,12 +24,12 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
         const queryParams: Record<string, any> = {
           page: params.page || 1,
           limit: params.limit || 10,
-          order: params.order || 'desc',
+          sortOrder: params.sortOrder || 'desc',
         };
 
         // Add optional parameters conditionally
         if (params.search) queryParams.search = params.search;
-        if (params.sort) queryParams.sort = params.sort;
+        if (params.sortBy) queryParams.sortBy = params.sortBy;
         if (params.userProfileId) queryParams.userProfileId = params.userProfileId;
         if (params.moduleId) queryParams.moduleId = params.moduleId;
         if (params.category) queryParams.category = params.category;

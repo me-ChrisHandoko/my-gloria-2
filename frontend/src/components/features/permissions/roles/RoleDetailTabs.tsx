@@ -30,29 +30,39 @@ export default function RoleDetailTabs({ roleId }: RoleDetailTabsProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Loading role details...</p>
+      <>
+        <DialogHeader>
+          <DialogTitle>Loading Role Details</DialogTitle>
+        </DialogHeader>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Loading role details...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   // Error state
   if (error || !role) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <AlertCircle className="h-12 w-12 text-destructive" />
-          <div>
-            <p className="font-medium text-destructive">Failed to load role</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {(error as any)?.data?.message || 'An error occurred while loading role details'}
-            </p>
+      <>
+        <DialogHeader>
+          <DialogTitle>Error Loading Role</DialogTitle>
+        </DialogHeader>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <AlertCircle className="h-12 w-12 text-destructive" />
+            <div>
+              <p className="font-medium text-destructive">Failed to load role</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {(error as any)?.data?.message || 'An error occurred while loading role details'}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 

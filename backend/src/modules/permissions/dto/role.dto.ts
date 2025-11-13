@@ -263,22 +263,38 @@ export class PaginatedRoleResponseDto {
   data: RoleResponseDto[];
 
   @ApiProperty({
-    description: 'Pagination metadata',
-    example: {
-      total: 100,
-      page: 1,
-      limit: 10,
-      totalPages: 10,
-      hasNext: true,
-      hasPrevious: false,
-    },
+    description: 'Total number of items',
+    example: 100,
   })
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrevious: boolean;
-  };
+  total: number;
+
+  @ApiProperty({
+    description: 'Current page number',
+    example: 1,
+  })
+  page: number;
+
+  @ApiProperty({
+    description: 'Items per page',
+    example: 10,
+  })
+  limit: number;
+
+  @ApiProperty({
+    description: 'Total number of pages',
+    example: 10,
+  })
+  totalPages: number;
+
+  @ApiProperty({
+    description: 'Whether there is a next page',
+    example: true,
+  })
+  hasNext: boolean;
+
+  @ApiProperty({
+    description: 'Whether there is a previous page',
+    example: false,
+  })
+  hasPrevious: boolean;
 }

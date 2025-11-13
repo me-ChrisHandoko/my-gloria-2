@@ -7,12 +7,14 @@ export const metadata: Metadata = {
 };
 
 interface RoleDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function RoleDetailPage({ params }: RoleDetailPageProps) {
+export default async function RoleDetailPage({ params }: RoleDetailPageProps) {
+  const { id } = await params;
+
   return (
     <div className="space-y-6">
       <div>
@@ -22,7 +24,7 @@ export default function RoleDetailPage({ params }: RoleDetailPageProps) {
         </p>
       </div>
 
-      <RoleDetailTabs roleId={params.id} />
+      <RoleDetailTabs roleId={id} />
     </div>
   );
 }

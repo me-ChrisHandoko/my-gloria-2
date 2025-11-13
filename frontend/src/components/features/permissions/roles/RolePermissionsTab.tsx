@@ -48,62 +48,6 @@ interface RolePermissionsTabProps {
   roleId: string;
 }
 
-// Mock permissions list - replace with actual API call
-const mockAvailablePermissions: Permission[] = [
-  {
-    id: '1',
-    code: 'USER_CREATE',
-    name: 'Create User',
-    description: 'Permission to create new users',
-    resource: 'USER',
-    action: 'CREATE',
-    category: 'User Management',
-    isActive: true,
-    isSystem: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    code: 'USER_READ',
-    name: 'Read User',
-    description: 'Permission to view user information',
-    resource: 'USER',
-    action: 'READ',
-    category: 'User Management',
-    isActive: true,
-    isSystem: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    code: 'USER_UPDATE',
-    name: 'Update User',
-    description: 'Permission to update user information',
-    resource: 'USER',
-    action: 'UPDATE',
-    category: 'User Management',
-    isActive: true,
-    isSystem: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    code: 'USER_DELETE',
-    name: 'Delete User',
-    description: 'Permission to delete users',
-    resource: 'USER',
-    action: 'DELETE',
-    category: 'User Management',
-    isActive: true,
-    isSystem: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
 export default function RolePermissionsTab({ roleId }: RolePermissionsTabProps) {
   const [searchAvailable, setSearchAvailable] = useState('');
   const [searchAssigned, setSearchAssigned] = useState('');
@@ -111,7 +55,7 @@ export default function RolePermissionsTab({ roleId }: RolePermissionsTabProps) 
   const [selectedAssigned, setSelectedAssigned] = useState<Set<string>>(new Set());
 
   // API hooks
-  const { data: assignedPermissions, isLoading: isLoadingAssigned } =
+  const { data: assignedPermissionsData, isLoading: isLoadingAssigned } =
     useGetRolePermissionsQuery(roleId);
 
   const [assignPermission, { isLoading: isAssigning }] = useAssignRolePermissionMutation();
@@ -119,15 +63,18 @@ export default function RolePermissionsTab({ roleId }: RolePermissionsTabProps) 
     useBulkAssignRolePermissionsMutation();
   const [revokePermission, { isLoading: isRevoking }] = useRevokeRolePermissionMutation();
 
+  // Normalize assigned permissions data (handle both array and object responses)
+  const assignedPermissions = Array.isArray(assignedPermissionsData)
+    ? assignedPermissionsData
+    : assignedPermissionsData?.data || [];
+
   // Get assigned permission IDs
   const assignedPermissionIds = new Set(
-    assignedPermissions?.map((ap) => ap.permissionId) || []
+    assignedPermissions.map((ap) => ap.permissionId)
   );
 
-  // Filter available permissions (not yet assigned)
-  const availablePermissions = mockAvailablePermissions.filter(
-    (p) => !assignedPermissionIds.has(p.id)
-  );
+  // Available permissions - empty until real API is implemented
+  const availablePermissions: Permission[] = [];
 
   // Filter functions
   const filterPermissions = (permissions: Permission[], search: string) => {

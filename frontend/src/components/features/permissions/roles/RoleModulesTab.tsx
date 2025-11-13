@@ -49,50 +49,6 @@ interface RoleModulesTabProps {
   roleId: string;
 }
 
-// Mock modules list - replace with actual API call
-const mockAvailableModules: Module[] = [
-  {
-    id: '1',
-    code: 'USER_MANAGEMENT',
-    name: 'User Management',
-    description: 'Manage users and profiles',
-    icon: 'Users',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    code: 'ROLE_MANAGEMENT',
-    name: 'Role Management',
-    description: 'Manage roles and permissions',
-    icon: 'Shield',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    code: 'REPORTS',
-    name: 'Reports',
-    description: 'View and generate reports',
-    icon: 'FileText',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    code: 'SETTINGS',
-    name: 'Settings',
-    description: 'System configuration and settings',
-    icon: 'Settings',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
 const accessLevelColors: Record<ModuleAccessLevel, string> = {
   [ModuleAccessLevel.READ]: 'bg-blue-500',
   [ModuleAccessLevel.WRITE]: 'bg-green-500',
@@ -117,7 +73,7 @@ export default function RoleModulesTab({ roleId }: RoleModulesTabProps) {
   );
 
   // API hooks
-  const { data: grantedModules, isLoading: isLoadingGranted } =
+  const { data: grantedModulesData, isLoading: isLoadingGranted } =
     useGetRoleModuleAccessesQuery(roleId);
 
   const [grantModuleAccess, { isLoading: isGranting }] = useGrantRoleModuleAccessMutation();
@@ -125,13 +81,16 @@ export default function RoleModulesTab({ roleId }: RoleModulesTabProps) {
     useBulkGrantRoleModuleAccessMutation();
   const [revokeModuleAccess, { isLoading: isRevoking }] = useRevokeRoleModuleAccessMutation();
 
-  // Get granted module IDs
-  const grantedModuleIds = new Set(grantedModules?.map((gm) => gm.moduleId) || []);
+  // Normalize granted modules data (handle both array and object responses)
+  const grantedModules = Array.isArray(grantedModulesData)
+    ? grantedModulesData
+    : grantedModulesData?.data || [];
 
-  // Filter available modules (not yet granted)
-  const availableModules = mockAvailableModules.filter(
-    (m) => !grantedModuleIds.has(m.id)
-  );
+  // Get granted module IDs
+  const grantedModuleIds = new Set(grantedModules.map((gm) => gm.moduleId));
+
+  // Available modules - empty until real API is implemented
+  const availableModules: Module[] = [];
 
   // Filter functions
   const filterModules = (modules: Module[], search: string) => {
@@ -147,7 +106,7 @@ export default function RoleModulesTab({ roleId }: RoleModulesTabProps) {
 
   const filteredAvailable = filterModules(availableModules, searchAvailable);
   const filteredGranted = filterModules(
-    grantedModules?.map((gm) => gm.module!).filter(Boolean) || [],
+    grantedModules.map((gm) => gm.module!).filter(Boolean),
     searchGranted
   );
 

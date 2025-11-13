@@ -147,14 +147,12 @@ export class RolesService {
 
     const result: PaginatedRoleResponseDto = {
       data: roles.map((role) => this.formatRoleResponse(role)),
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNext,
-        hasPrevious,
-      },
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext,
+      hasPrevious,
     };
 
     await this.cache.set(cacheKey, result, this.cacheTTL);

@@ -13,18 +13,18 @@
  * - Real-time validation
  */
 
-import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   useCreateModuleMutation,
   useUpdateModuleMutation,
   useGetModuleByIdQuery,
   useGetModulesQuery,
-} from '@/store/api/modulesApi';
-import { ModuleCategory } from '@/lib/api/services/modules.service';
-import { Button } from '@/components/ui/button';
+} from "@/store/api/modulesApi";
+import { ModuleCategory } from "@/lib/api/services/modules.service";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -33,21 +33,29 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Loader2, Save, Box, Check, ChevronsUpDown } from 'lucide-react';
-import { toast } from 'sonner';
-import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Save, Box, Check, ChevronsUpDown } from "lucide-react";
+import { toast } from "sonner";
+import {
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -55,27 +63,30 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import { renderIcon } from "@/lib/utils/iconRenderer";
 
 // Form validation schema
 const moduleFormSchema = z.object({
   code: z
     .string()
-    .min(1, 'Code is required')
-    .max(50, 'Code must be less than 50 characters')
-    .regex(/^[A-Z0-9_-]+$/, 'Code must be uppercase letters, numbers, hyphens, and underscores only'),
+    .min(1, "Code is required")
+    .max(50, "Code must be less than 50 characters")
+    .regex(
+      /^[A-Z0-9_-]+$/,
+      "Code must be uppercase letters, numbers, hyphens, and underscores only"
+    ),
   name: z
     .string()
-    .min(1, 'Name is required')
-    .max(255, 'Name must be less than 255 characters'),
+    .min(1, "Name is required")
+    .max(255, "Name must be less than 255 characters"),
   description: z.string().optional(),
   category: z.nativeEnum(ModuleCategory),
   icon: z.string().optional(),
   path: z.string().optional(),
   parentId: z.string().optional(),
   sortOrder: z.number().min(0),
-  isActive: z.boolean(),
   isVisible: z.boolean(),
 });
 
@@ -88,15 +99,21 @@ interface ModuleFormProps {
   onCancel?: () => void;
 }
 
-export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: ModuleFormProps) {
+export default function ModuleForm({
+  moduleId,
+  parentId,
+  onSuccess,
+  onCancel,
+}: ModuleFormProps) {
   const isEditMode = !!moduleId;
   const [openCategory, setOpenCategory] = useState(false);
   const [openParent, setOpenParent] = useState(false);
 
   // API hooks
-  const { data: moduleData, isLoading: isLoadingModule } = useGetModuleByIdQuery(moduleId!, {
-    skip: !moduleId,
-  });
+  const { data: moduleData, isLoading: isLoadingModule } =
+    useGetModuleByIdQuery(moduleId!, {
+      skip: !moduleId,
+    });
 
   const { data: modulesData } = useGetModulesQuery({
     limit: 100,
@@ -108,17 +125,17 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
 
   // Category options
   const categories = [
-    { value: ModuleCategory.SERVICE, label: 'Service' },
-    { value: ModuleCategory.PERFORMANCE, label: 'Performance' },
-    { value: ModuleCategory.QUALITY, label: 'Quality' },
-    { value: ModuleCategory.FEEDBACK, label: 'Feedback' },
-    { value: ModuleCategory.TRAINING, label: 'Training' },
-    { value: ModuleCategory.SYSTEM, label: 'System' },
+    { value: ModuleCategory.SERVICE, label: "Service" },
+    { value: ModuleCategory.PERFORMANCE, label: "Performance" },
+    { value: ModuleCategory.QUALITY, label: "Quality" },
+    { value: ModuleCategory.FEEDBACK, label: "Feedback" },
+    { value: ModuleCategory.TRAINING, label: "Training" },
+    { value: ModuleCategory.SYSTEM, label: "System" },
   ];
 
   // Parent module options
   const parentModules = [
-    { value: 'none', label: 'No parent (root level)' },
+    { value: "none", label: "No parent (root level)" },
     ...(modulesData?.data
       .filter((m) => m.id !== moduleId)
       .map((module) => ({
@@ -131,15 +148,14 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
   const form = useForm<ModuleFormValues>({
     resolver: zodResolver(moduleFormSchema),
     defaultValues: {
-      code: '',
-      name: '',
-      description: '',
+      code: "",
+      name: "",
+      description: "",
       category: ModuleCategory.SERVICE,
-      icon: '',
-      path: '',
-      parentId: parentId || 'none',
+      icon: "",
+      path: "",
+      parentId: parentId || "none",
       sortOrder: 0,
-      isActive: true,
       isVisible: true,
     },
   });
@@ -150,13 +166,12 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
       form.reset({
         code: moduleData.code,
         name: moduleData.name,
-        description: moduleData.description || '',
+        description: moduleData.description || "",
         category: moduleData.category,
-        icon: moduleData.icon || '',
-        path: moduleData.path || '',
-        parentId: moduleData.parentId || 'none',
+        icon: moduleData.icon || "",
+        path: moduleData.path || "",
+        parentId: moduleData.parentId || "none",
         sortOrder: moduleData.sortOrder,
-        isActive: moduleData.isActive,
         isVisible: moduleData.isVisible,
       });
     }
@@ -171,7 +186,10 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
         description: data.description || undefined,
         icon: data.icon || undefined,
         path: data.path || undefined,
-        parentId: data.parentId === 'none' || !data.parentId ? undefined : data.parentId,
+        parentId:
+          data.parentId === "none" || !data.parentId
+            ? undefined
+            : data.parentId,
       };
 
       if (isEditMode && moduleId) {
@@ -179,16 +197,16 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
           id: moduleId,
           data: cleanedData,
         }).unwrap();
-        toast.success('Module updated successfully');
+        toast.success("Module updated successfully");
       } else {
         await createModule(cleanedData).unwrap();
-        toast.success('Module created successfully');
+        toast.success("Module created successfully");
       }
 
       onSuccess?.();
     } catch (error: any) {
-      console.error('Form submission error:', error);
-      toast.error(error?.data?.message || 'Operation failed');
+      console.error("Form submission error:", error);
+      toast.error(error?.data?.message || "Operation failed");
     }
   };
 
@@ -199,12 +217,12 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <Box className="h-5 w-5" />
-          {isEditMode ? 'Edit Module' : 'Create New Module'}
+          {isEditMode ? "Edit Module" : "Create New Module"}
         </DialogTitle>
         <DialogDescription>
           {isEditMode
-            ? 'Update module information and settings.'
-            : 'Fill in the module details to create a new module.'}
+            ? "Update module information and settings."
+            : "Fill in the module details to create a new module."}
         </DialogDescription>
       </DialogHeader>
 
@@ -222,11 +240,17 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
                     <Input
                       placeholder="e.g., SERVICE_01"
                       {...field}
+                      onChange={(e) => {
+                        const upperValue = e.target.value.toUpperCase();
+                        field.onChange(upperValue);
+                      }}
                       disabled={isEditMode}
-                      className="font-mono"
+                      className="font-mono uppercase"
                     />
                   </FormControl>
-                  <FormDescription>Unique module identifier (uppercase, numbers, -, _)</FormDescription>
+                  <FormDescription>
+                    Unique module identifier (numbers, -, _)
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -247,13 +271,15 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
                           role="combobox"
                           aria-expanded={openCategory}
                           className={cn(
-                            'w-full justify-between',
-                            !field.value && 'text-muted-foreground'
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
                           )}
                         >
                           {field.value
-                            ? categories.find((category) => category.value === field.value)?.label
-                            : 'Select category'}
+                            ? categories.find(
+                                (category) => category.value === field.value
+                              )?.label
+                            : "Select category"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -275,8 +301,10 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
                               >
                                 <Check
                                   className={cn(
-                                    'mr-2 h-4 w-4',
-                                    category.value === field.value ? 'opacity-100' : 'opacity-0'
+                                    "mr-2 h-4 w-4",
+                                    category.value === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
                                   )}
                                 />
                                 {category.label}
@@ -287,7 +315,9 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>Module category for organization</FormDescription>
+                  <FormDescription>
+                    Module category for organization
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -311,28 +341,6 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
               )}
             />
 
-            {/* Description */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe the purpose and features of this module..."
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>Optional detailed description</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Icon */}
             <FormField
               control={form.control}
@@ -340,26 +348,24 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Icon</FormLabel>
-                  <FormControl>
-                    <Input placeholder="📊 or lucide-icon-name" {...field} />
-                  </FormControl>
-                  <FormDescription>Emoji or icon name</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Path */}
-            <FormField
-              control={form.control}
-              name="path"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Path</FormLabel>
-                  <FormControl>
-                    <Input placeholder="/modules/service" {...field} className="font-mono" />
-                  </FormControl>
-                  <FormDescription>Frontend route path</FormDescription>
+                  <div className="flex gap-2 items-center">
+                    <FormControl>
+                      <Input
+                        placeholder="building-2, users, or 🏢"
+                        {...field}
+                        value={field.value || ""}
+                        className="flex-1"
+                      />
+                    </FormControl>
+                    {field.value && (
+                      <div className="flex items-center justify-center w-10 h-10 rounded-md border bg-muted">
+                        {renderIcon({ icon: field.value, size: 20 })}
+                      </div>
+                    )}
+                  </div>
+                  <FormDescription>
+                    Lucide icon name (e.g., building-2, users) or emoji
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -382,13 +388,15 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
                           role="combobox"
                           aria-expanded={openParent}
                           className={cn(
-                            'w-full justify-between',
-                            !field.value && 'text-muted-foreground'
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
                           )}
                         >
                           {field.value
-                            ? parentModules.find((parent) => parent.value === field.value)?.label
-                            : 'No parent (root level)'}
+                            ? parentModules.find(
+                                (parent) => parent.value === field.value
+                              )?.label
+                            : "No parent (root level)"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -410,8 +418,10 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
                               >
                                 <Check
                                   className={cn(
-                                    'mr-2 h-4 w-4',
-                                    parent.value === field.value ? 'opacity-100' : 'opacity-0'
+                                    "mr-2 h-4 w-4",
+                                    parent.value === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
                                   )}
                                 />
                                 {parent.label}
@@ -422,13 +432,38 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>Optional parent for hierarchy</FormDescription>
+                  <FormDescription>
+                    Optional parent for hierarchy
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Sort Order */}
+            {/* Path */}
+            <FormField
+              control={form.control}
+              name="path"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Path</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="/modules/service"
+                      {...field}
+                      value={field.value || ""}
+                      className="font-mono"
+                    />
+                  </FormControl>
+                  <FormDescription>Frontend route path</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Sort Order & Visible Toggle */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="sortOrder"
@@ -436,26 +471,23 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
                 <FormItem>
                   <FormLabel>Sort Order</FormLabel>
                   <FormControl>
-                    <Input type="number" min="0" {...field} />
+                    <Input
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => {
+                        const value =
+                          e.target.value === ""
+                            ? 0
+                            : parseInt(e.target.value, 10);
+                        field.onChange(value);
+                      }}
+                    />
                   </FormControl>
-                  <FormDescription>Display order (lower = first)</FormDescription>
+                  <FormDescription>
+                    Display order (lower = first)
+                  </FormDescription>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Status Switches */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="isActive"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between space-x-2 rounded-lg border p-3">
-                  <FormLabel className="text-sm font-medium">Active</FormLabel>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
                 </FormItem>
               )}
             />
@@ -464,31 +496,64 @@ export default function ModuleForm({ moduleId, parentId, onSuccess, onCancel }: 
               control={form.control}
               name="isVisible"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between space-x-2 rounded-lg border p-3">
-                  <FormLabel className="text-sm font-medium">Visible</FormLabel>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Visible in UI</FormLabel>
+                  <div className="flex flex-row items-center justify-between rounded-lg border p-2">
+                    <FormDescription className="text-xs">
+                      Show this module in the navigation menu
+                    </FormDescription>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </div>
                 </FormItem>
               )}
             />
           </div>
 
+          {/* Description - Full Width */}
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Describe the purpose and features of this module..."
+                    rows={3}
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormDescription>Optional detailed description</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           {/* Form Actions */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditMode ? 'Updating...' : 'Creating...'}
+                  {isEditMode ? "Updating..." : "Creating..."}
                 </>
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  {isEditMode ? 'Update Module' : 'Create Module'}
+                  {isEditMode ? "Update Module" : "Create Module"}
                 </>
               )}
             </Button>

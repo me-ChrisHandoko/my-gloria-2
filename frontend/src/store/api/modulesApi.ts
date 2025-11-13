@@ -23,11 +23,11 @@ export const modulesApi = apiSlice.injectEndpoints({
         const queryParams: Record<string, any> = {
           page: params.page || 1,
           limit: params.limit || 10,
-          order: params.order || 'asc',
+          sortOrder: params.sortOrder || 'asc',
         };
 
         if (params.search) queryParams.search = params.search;
-        if (params.sort) queryParams.sort = params.sort;
+        if (params.sortBy) queryParams.sortBy = params.sortBy;
         if (params.category) queryParams.category = params.category;
         if (params.isActive !== undefined) queryParams.isActive = params.isActive;
         if (params.isVisible !== undefined) queryParams.isVisible = params.isVisible;
@@ -39,35 +39,27 @@ export const modulesApi = apiSlice.injectEndpoints({
         };
       },
       transformResponse: (response: any) => {
-        if (response && response.success && response.data) {
-          let actualResponse = response.data;
-
-          // Check if double-wrapped
-          if (actualResponse && actualResponse.success && actualResponse.data) {
-            actualResponse = actualResponse.data;
-          }
-
-          if (!actualResponse || !Array.isArray(actualResponse.data)) {
-            return {
-              data: [],
-              total: 0,
-              page: 1,
-              limit: 10,
-              totalPages: 0,
-            };
-          }
-
+        // With the fixed backend, response is now properly structured
+        // The transform interceptor correctly identifies it as paginated
+        // and flattens the structure, so we just need to process the data
+        if (!response || !Array.isArray(response.data)) {
           return {
-            ...actualResponse,
-            data: actualResponse.data.map((module: any) => ({
-              ...module,
-              createdAt: new Date(module.createdAt).toISOString(),
-              updatedAt: new Date(module.updatedAt).toISOString(),
-            })),
+            data: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 0,
           };
         }
 
-        return response || { data: [], total: 0, page: 1, limit: 10, totalPages: 0 };
+        return {
+          ...response,
+          data: response.data.map((module: any) => ({
+            ...module,
+            createdAt: new Date(module.createdAt).toISOString(),
+            updatedAt: new Date(module.updatedAt).toISOString(),
+          })),
+        };
       },
       providesTags: (result) =>
         result && Array.isArray(result.data)
@@ -83,10 +75,34 @@ export const modulesApi = apiSlice.injectEndpoints({
     getModuleTree: builder.query<ModuleTreeNode[], void>({
       query: () => '/permissions/modules/tree',
       transformResponse: (response: any) => {
-        if (response && response.success && response.data) {
+        // Handle paginated response structure (has data, total, page, etc.)
+        if (
+          response &&
+          typeof response === 'object' &&
+          'data' in response &&
+          Array.isArray(response.data)
+        ) {
           return response.data;
         }
-        return response || [];
+
+        // Handle standard wrapped structure (has success and data)
+        if (response && response.success && response.data) {
+          const data = response.data;
+
+          if (!Array.isArray(data)) {
+            return [];
+          }
+
+          return data;
+        }
+
+        // If response is already an array, return it
+        if (Array.isArray(response)) {
+          return response;
+        }
+
+        // Fallback to empty array
+        return [];
       },
       providesTags: [{ type: 'Module', id: 'TREE' }],
       keepUnusedDataFor: 300, // Cache for 5 minutes

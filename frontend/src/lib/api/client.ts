@@ -573,8 +573,8 @@ class ApiClient {
     if (params.page) searchParams.append('page', params.page.toString());
     if (params.limit) searchParams.append('limit', params.limit.toString());
     if (params.search) searchParams.append('search', params.search);
-    if (params.sort) searchParams.append('sort', params.sort);
-    if (params.order) searchParams.append('order', params.order);
+    if (params.sortBy) searchParams.append('sortBy', params.sortBy);
+    if (params.sortOrder) searchParams.append('sortOrder', params.sortOrder);
 
     if (params.filters) {
       Object.entries(params.filters).forEach(([key, value]) => {

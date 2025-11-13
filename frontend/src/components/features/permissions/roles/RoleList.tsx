@@ -210,13 +210,18 @@ export default function RoleList({ onRoleSelect }: RoleListProps) {
       ),
       cell: ({ row }) => {
         const role = row.original;
+        const truncateText = (text: string, maxLength: number = 50) => {
+          if (text.length <= maxLength) return text;
+          return text.substring(0, maxLength).trim() + '...';
+        };
+
         return (
           <div className="flex items-center gap-2">
-            <div>
+            <div className="max-w-md">
               <div className="font-medium">{role.name}</div>
               {role.description && (
-                <div className="text-sm text-muted-foreground line-clamp-1">
-                  {role.description}
+                <div className="text-sm text-muted-foreground truncate">
+                  {truncateText(role.description)}
                 </div>
               )}
             </div>

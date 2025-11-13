@@ -12,17 +12,16 @@
  * - Real-time validation
  */
 
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   useCreateRoleMutation,
   useUpdateRoleMutation,
   useGetRoleByIdQuery,
-  useGetRolesQuery,
-} from '@/store/api/rolesApi';
-import { Button } from '@/components/ui/button';
+} from "@/store/api/rolesApi";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -31,37 +30,35 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Save, Shield } from "lucide-react";
+import { toast } from "sonner";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Loader2, Save, Shield } from 'lucide-react';
-import { toast } from 'sonner';
-import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // Form validation schema
 const roleFormSchema = z.object({
   code: z
     .string()
-    .min(2, 'Code must be at least 2 characters')
-    .max(50, 'Code must be less than 50 characters')
-    .regex(/^[A-Z0-9_]+$/, 'Code must be uppercase letters, numbers, and underscores only'),
+    .min(2, "Code must be at least 2 characters")
+    .max(50, "Code must be less than 50 characters")
+    .regex(
+      /^[A-Z0-9_]+$/,
+      "Code must be uppercase letters, numbers, and underscores only"
+    ),
   name: z
     .string()
-    .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name must be less than 100 characters'),
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters"),
   description: z.string().optional(),
-  hierarchyLevel: z.number().min(0).max(10),
-  parentId: z.string().optional(),
-  isActive: z.boolean(),
-  organizationId: z.string().optional(),
+  hierarchyLevel: z.number().min(0).max(100),
+  isActive: z.boolean().optional(),
 });
 
 type RoleFormValues = z.infer<typeof roleFormSchema>;
@@ -72,18 +69,20 @@ interface RoleFormProps {
   onCancel?: () => void;
 }
 
-export default function RoleForm({ roleId, onSuccess, onCancel }: RoleFormProps) {
+export default function RoleForm({
+  roleId,
+  onSuccess,
+  onCancel,
+}: RoleFormProps) {
   const isEditMode = !!roleId;
 
   // API hooks
-  const { data: roleData, isLoading: isLoadingRole } = useGetRoleByIdQuery(roleId!, {
-    skip: !roleId,
-  });
-
-  const { data: rolesData } = useGetRolesQuery({
-    limit: 100,
-    isActive: true,
-  });
+  const { data: roleData, isLoading: isLoadingRole } = useGetRoleByIdQuery(
+    roleId!,
+    {
+      skip: !roleId,
+    }
+  );
 
   const [createRole, { isLoading: isCreating }] = useCreateRoleMutation();
   const [updateRole, { isLoading: isUpdating }] = useUpdateRoleMutation();
@@ -92,13 +91,11 @@ export default function RoleForm({ roleId, onSuccess, onCancel }: RoleFormProps)
   const form = useForm<RoleFormValues>({
     resolver: zodResolver(roleFormSchema),
     defaultValues: {
-      code: '',
-      name: '',
-      description: '',
+      code: "",
+      name: "",
+      description: "",
       hierarchyLevel: 0,
-      parentId: undefined,
       isActive: true,
-      organizationId: '',
     },
   });
 
@@ -108,11 +105,9 @@ export default function RoleForm({ roleId, onSuccess, onCancel }: RoleFormProps)
       form.reset({
         code: roleData.code,
         name: roleData.name,
-        description: roleData.description || '',
+        description: roleData.description || "",
         hierarchyLevel: roleData.hierarchyLevel,
-        parentId: roleData.parentId || undefined,
         isActive: roleData.isActive,
-        organizationId: roleData.organizationId || '',
       });
     }
   }, [roleData, isEditMode, form]);
@@ -120,38 +115,39 @@ export default function RoleForm({ roleId, onSuccess, onCancel }: RoleFormProps)
   // Handle form submission
   const onSubmit = async (values: RoleFormValues) => {
     try {
-      // Clean up empty values
-      const payload = {
-        ...values,
+      // Prepare payload based on mode
+      const basePayload = {
+        code: values.code,
+        name: values.name,
         description: values.description || undefined,
-        parentId: values.parentId || undefined,
-        organizationId: values.organizationId || undefined,
+        hierarchyLevel: values.hierarchyLevel,
       };
+
+      // Add isActive only for update mode
+      const payload = isEditMode
+        ? { ...basePayload, isActive: values.isActive }
+        : basePayload;
 
       if (isEditMode && roleId) {
         await updateRole({
           id: roleId,
           data: payload,
         }).unwrap();
-        toast.success('Role updated successfully');
+        toast.success("Role updated successfully");
       } else {
         await createRole(payload).unwrap();
-        toast.success('Role created successfully');
+        toast.success("Role created successfully");
       }
 
       onSuccess?.();
-    } catch (err: any) {
-      const errorMessage = err?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} role`;
+    } catch (err) {
+      const error = err as { data?: { message?: string } };
+      const errorMessage =
+        error?.data?.message ||
+        `Failed to ${isEditMode ? "update" : "create"} role`;
       toast.error(errorMessage);
     }
   };
-
-  // Get available parent roles (exclude current role and its children in edit mode)
-  const availableParentRoles = rolesData?.data?.filter((role) => {
-    if (isEditMode && role.id === roleId) return false;
-    // In production, you'd also filter out children of current role
-    return true;
-  }) || [];
 
   // Loading state
   if (isLoadingRole && isEditMode) {
@@ -167,63 +163,93 @@ export default function RoleForm({ roleId, onSuccess, onCancel }: RoleFormProps)
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <Shield className="h-5 w-5" />
-          {isEditMode ? 'Edit Role' : 'Create New Role'}
+          {isEditMode ? "Edit Role" : "Create New Role"}
         </DialogTitle>
         <DialogDescription>
           {isEditMode
-            ? 'Update role information and settings'
-            : 'Create a new role with permissions and hierarchy'}
+            ? "Update role information and settings"
+            : "Create a new role with permissions and hierarchy"}
         </DialogDescription>
       </DialogHeader>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Code Field */}
+          {/* 2-Column Grid for Code and Name */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Code Field */}
+            <FormField
+              control={form.control}
+              name="code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Code <span className="text-destructive">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="ADMIN"
+                      {...field}
+                      onChange={(e) => {
+                        const upperValue = e.target.value.toUpperCase();
+                        field.onChange(upperValue);
+                      }}
+                      className="font-mono uppercase"
+                      disabled={isEditMode} // Code cannot be changed in edit mode
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Unique identifier in uppercase (e.g., ADMIN, MANAGER, USER)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Name Field */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Name <span className="text-destructive">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input placeholder="Administrator" {...field} />
+                  </FormControl>
+                  <FormDescription>Display name for the role</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Hierarchy Level Field - Full Width */}
           <FormField
             control={form.control}
-            name="code"
+            name="hierarchyLevel"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>
-                  Code <span className="text-destructive">*</span>
-                </FormLabel>
+                <FormLabel>Hierarchy Level</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="ADMIN"
+                    type="number"
+                    min={0}
+                    max={100}
+                    placeholder="0"
                     {...field}
-                    className="font-mono"
-                    disabled={isEditMode} // Code cannot be changed in edit mode
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                   />
                 </FormControl>
                 <FormDescription>
-                  Unique identifier in uppercase (e.g., ADMIN, MANAGER, USER)
+                  Level in organizational hierarchy (0 = highest, max 100)
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Name Field */}
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Name <span className="text-destructive">*</span>
-                </FormLabel>
-                <FormControl>
-                  <Input placeholder="Administrator" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Display name for the role
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Description Field */}
+          {/* Description Field - Full Width */}
           <FormField
             control={form.control}
             name="description"
@@ -246,62 +272,6 @@ export default function RoleForm({ roleId, onSuccess, onCancel }: RoleFormProps)
             )}
           />
 
-          {/* Hierarchy Level Field */}
-          <FormField
-            control={form.control}
-            name="hierarchyLevel"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Hierarchy Level</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={10}
-                    placeholder="0"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Level in organizational hierarchy (0 = highest)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Parent Role Selector */}
-          <FormField
-            control={form.control}
-            name="parentId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Parent Role</FormLabel>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select parent role (optional)" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {availableParentRoles.map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name} ({role.code}) - L{role.hierarchyLevel}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Set parent role for hierarchy and permission inheritance
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           {/* Active Status Switch */}
           <FormField
             control={form.control}
@@ -310,9 +280,7 @@ export default function RoleForm({ roleId, onSuccess, onCancel }: RoleFormProps)
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
                   <FormLabel className="text-base">Active Status</FormLabel>
-                  <FormDescription>
-                    Enable or disable this role
-                  </FormDescription>
+                  <FormDescription>Enable or disable this role</FormDescription>
                 </div>
                 <FormControl>
                   <Switch
@@ -336,19 +304,16 @@ export default function RoleForm({ roleId, onSuccess, onCancel }: RoleFormProps)
                 Cancel
               </Button>
             )}
-            <Button
-              type="submit"
-              disabled={isCreating || isUpdating}
-            >
-              {(isCreating || isUpdating) ? (
+            <Button type="submit" disabled={isCreating || isUpdating}>
+              {isCreating || isUpdating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditMode ? 'Updating...' : 'Creating...'}
+                  {isEditMode ? "Updating..." : "Creating..."}
                 </>
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  {isEditMode ? 'Update Role' : 'Create Role'}
+                  {isEditMode ? "Update Role" : "Create Role"}
                 </>
               )}
             </Button>

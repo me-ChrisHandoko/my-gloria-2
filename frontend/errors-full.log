@@ -1,3 +1,6 @@
+.next/types/app/(dashboard)/permissions/roles/[id]/page.ts(34,29): error TS2344: Type 'RoleDetailPageProps' does not satisfy the constraint 'PageProps'.
+  Types of property 'params' are incompatible.
+    Type '{ id: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/typescript/lib/lib.es5.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/typescript/lib/lib.es2015.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/typescript/lib/lib.es2016.d.ts
@@ -3467,6 +3470,27 @@
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/src/lib/api/auth-provider.tsx
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/cache-life.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/validator.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/layout.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(auth)/layout.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(auth)/sign-in/[[...sign-in]]/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(auth)/sign-up/[[...sign-up]]/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/layout.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/dashboard/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/organizations/departments/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/organizations/positions/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/organizations/schools/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/permissions/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/permissions/analytics/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/permissions/modules/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/permissions/permissions/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/permissions/roles/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/permissions/roles/[id]/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/permissions/users/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/permissions/users/[userId]/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/(dashboard)/users/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/auth/callback/page.ts
+/Users/christianhandoko/Development/work/my-gloria-2/frontend/.next/types/app/auth/validate/page.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@babel/types/lib/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@types/babel__generator/index.d.ts
 /Users/christianhandoko/Development/work/my-gloria-2/frontend/node_modules/@babel/parser/typings/babel-parser.d.ts

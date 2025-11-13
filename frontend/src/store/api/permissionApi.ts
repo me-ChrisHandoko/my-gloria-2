@@ -33,27 +33,12 @@ export const permissionApi = apiSlice.injectEndpoints({
           params: queryParams,
         };
       },
-      // Transform response to handle wrapped response from backend TransformInterceptor
-      // This follows DepartmentList pattern for consistency
+      // Transform response to handle dates
+      // With the fixed backend, response is now properly structured
+      // The transform interceptor correctly identifies it as paginated
       transformResponse: (response: any) => {
-        // Handle wrapped response from backend TransformInterceptor
-        let actualResponse: PaginatedResponse<Permission>;
-
-        if (response && response.success && response.data) {
-          // Unwrap the response from TransformInterceptor
-          actualResponse = response.data;
-
-          // Check if it's double-wrapped
-          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
-            actualResponse = (actualResponse as any).data;
-          }
-        } else {
-          // Use response directly if not wrapped
-          actualResponse = response;
-        }
-
-        // Ensure we have valid data
-        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+        // Validate response structure
+        if (!response || !Array.isArray(response.data)) {
           return {
             data: [],
             total: 0,
@@ -64,8 +49,8 @@ export const permissionApi = apiSlice.injectEndpoints({
         }
 
         return {
-          ...actualResponse,
-          data: actualResponse.data.map(perm => ({
+          ...response,
+          data: response.data.map((perm: any) => ({
             ...perm,
             createdAt: new Date(perm.createdAt).toISOString(),
             updatedAt: new Date(perm.updatedAt).toISOString(),

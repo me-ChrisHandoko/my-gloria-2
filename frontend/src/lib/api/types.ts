@@ -33,8 +33,8 @@ export interface QueryParams {
   page?: number;
   limit?: number;
   search?: string;
-  sort?: string;
-  order?: 'asc' | 'desc';
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
   filters?: Record<string, any>;
   include?: string[];
 }

@@ -170,14 +170,12 @@ export class ModulesService {
 
     const result: PaginatedModuleResponseDto = {
       data: modules.map((module) => this.formatModuleResponse(module)),
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNext,
-        hasPrevious,
-      },
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext,
+      hasPrevious,
     };
 
     await this.cache.set(cacheKey, result, this.cacheTTL);

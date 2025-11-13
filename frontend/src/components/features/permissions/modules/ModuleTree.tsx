@@ -15,6 +15,7 @@
 import React, { useState, useMemo } from 'react';
 import { useGetModuleTreeQuery, useMoveModuleMutation } from '@/store/api/modulesApi';
 import type { ModuleTreeNode } from '@/lib/api/services/modules.service';
+import { renderIcon } from '@/lib/utils/iconRenderer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -171,11 +172,11 @@ export default function ModuleTree({
 
           {/* Icon */}
           <div className="flex-shrink-0">
-            {node.icon ? (
-              <span className="text-lg">{node.icon}</span>
-            ) : (
-              <Box className="h-4 w-4 text-muted-foreground" />
-            )}
+            {renderIcon({
+              icon: node.icon,
+              size: 18,
+              className: "text-muted-foreground",
+            })}
           </div>
 
           {/* Node Content */}

@@ -12,7 +12,7 @@
  * - Row actions (View, Edit, Delete)
  */
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -20,12 +20,16 @@ import {
   flexRender,
   type ColumnDef,
   type SortingState,
-} from '@tanstack/react-table';
+} from "@tanstack/react-table";
 import {
   useGetModulesQuery,
   useDeleteModuleMutation,
-} from '@/store/api/modulesApi';
-import type { Module, ModuleCategory } from '@/lib/api/services/modules.service';
+} from "@/store/api/modulesApi";
+import type {
+  Module,
+  ModuleCategory,
+} from "@/lib/api/services/modules.service";
+import { renderIcon } from "@/lib/utils/iconRenderer";
 import {
   Table,
   TableBody,
@@ -33,7 +37,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,35 +45,31 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   MoreHorizontal,
   Eye,
   Edit,
   Trash2,
-  Plus,
-  Search,
   ArrowUpDown,
   Loader2,
   FolderTree,
-  Box,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { Dialog, DialogTrigger, DialogContent } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+} from "lucide-react";
+import { toast } from "sonner";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import ModuleForm from './ModuleForm';
-import { DeleteModuleDialog } from './DeleteModuleDialog';
-import { ViewModuleDialog } from './ViewModuleDialog';
+} from "@/components/ui/select";
+import ModuleForm from "./ModuleForm";
+import { DeleteModuleDialog } from "./DeleteModuleDialog";
+import { ViewModuleDialog } from "./ViewModuleDialog";
 
 interface ModuleListProps {
   onModuleSelect?: (moduleId: string) => void;
@@ -79,10 +79,14 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
   // State management
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [categoryFilter, setCategoryFilter] = useState<ModuleCategory | undefined>(undefined);
-  const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(undefined);
+  const [categoryFilter, setCategoryFilter] = useState<
+    ModuleCategory | undefined
+  >(undefined);
+  const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(
+    undefined
+  );
 
   // Dialog states
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -96,8 +100,8 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
     page,
     limit,
     search: search || undefined,
-    sort: sorting[0]?.id,
-    order: sorting[0]?.desc ? 'desc' : 'asc',
+    sortBy: sorting[0]?.id,
+    sortOrder: sorting[0]?.desc ? "desc" : "asc",
     category: categoryFilter,
     isActive: isActiveFilter,
   });
@@ -122,11 +126,11 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
   // Column definitions
   const columns: ColumnDef<Module>[] = [
     {
-      accessorKey: 'code',
+      accessorKey: "code",
       header: ({ column }) => (
         <Button
           variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8 px-2"
         >
           Code
@@ -135,45 +139,51 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
       ),
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Box className="h-4 w-4 text-muted-foreground" />
-          <span className="font-mono font-medium">{row.getValue('code')}</span>
+          <span className="font-mono font-medium">{row.getValue("code")}</span>
         </div>
       ),
     },
     {
-      accessorKey: 'name',
+      accessorKey: "name",
       header: ({ column }) => (
         <Button
           variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-8 px-2"
         >
           Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => {
-        const icon = row.original.icon;
-        return (
-          <div className="flex items-center gap-2">
-            {icon && <span className="text-lg">{icon}</span>}
-            <span className="font-medium">{row.getValue('name')}</span>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          {renderIcon({
+            icon: row.original.icon,
+            size: 18,
+            className: "text-muted-foreground",
+          })}
+          <span className="font-medium">{row.getValue("name")}</span>
+        </div>
+      ),
     },
     {
-      accessorKey: 'category',
-      header: 'Category',
+      accessorKey: "category",
+      header: "Category",
       cell: ({ row }) => {
-        const category = row.getValue('category') as ModuleCategory;
+        const category = row.getValue("category") as ModuleCategory;
         const categoryColors: Record<ModuleCategory, string> = {
-          SERVICE: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-          PERFORMANCE: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-          QUALITY: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-          FEEDBACK: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-          TRAINING: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-          SYSTEM: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+          SERVICE:
+            "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+          PERFORMANCE:
+            "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+          QUALITY:
+            "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+          FEEDBACK:
+            "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+          TRAINING:
+            "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+          SYSTEM:
+            "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200",
         };
 
         return (
@@ -184,44 +194,44 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
       },
     },
     {
-      accessorKey: 'description',
-      header: 'Description',
+      accessorKey: "description",
+      header: "Description",
       cell: ({ row }) => {
-        const description = row.getValue('description') as string;
+        const description = row.getValue("description") as string;
         return (
           <div className="max-w-[300px] truncate text-sm text-muted-foreground">
-            {description || '-'}
+            {description || "-"}
           </div>
         );
       },
     },
     {
-      accessorKey: 'isActive',
-      header: 'Status',
+      accessorKey: "isActive",
+      header: "Status",
       cell: ({ row }) => {
-        const isActive = row.getValue('isActive');
+        const isActive = row.getValue("isActive");
         return (
-          <Badge variant={isActive ? 'default' : 'secondary'}>
-            {isActive ? 'Active' : 'Inactive'}
+          <Badge variant={isActive ? "default" : "secondary"}>
+            {isActive ? "Active" : "Inactive"}
           </Badge>
         );
       },
     },
     {
-      accessorKey: 'isVisible',
-      header: 'Visibility',
+      accessorKey: "isVisible",
+      header: "Visibility",
       cell: ({ row }) => {
-        const isVisible = row.getValue('isVisible');
+        const isVisible = row.getValue("isVisible");
         return (
-          <Badge variant={isVisible ? 'outline' : 'secondary'}>
-            {isVisible ? 'Visible' : 'Hidden'}
+          <Badge variant={isVisible ? "outline" : "secondary"}>
+            {isVisible ? "Visible" : "Hidden"}
           </Badge>
         );
       },
     },
     {
-      id: 'actions',
-      header: 'Actions',
+      id: "actions",
+      header: "Actions",
       cell: ({ row }) => {
         const module = row.original;
 
@@ -279,7 +289,7 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
         <div className="text-center">
           <p className="text-destructive">Error loading modules</p>
           <p className="text-sm text-muted-foreground mt-2">
-            {(error as any)?.message || 'Something went wrong'}
+            {(error as any)?.message || "Something went wrong"}
           </p>
         </div>
       </div>
@@ -304,9 +314,11 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
 
         {/* Category Filter */}
         <Select
-          value={categoryFilter || 'all'}
+          value={categoryFilter || "all"}
           onValueChange={(value) => {
-            setCategoryFilter(value === 'all' ? undefined : (value as ModuleCategory));
+            setCategoryFilter(
+              value === "all" ? undefined : (value as ModuleCategory)
+            );
             setPage(1);
           }}
         >
@@ -326,9 +338,15 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
 
         {/* Status Filter */}
         <Select
-          value={isActiveFilter === undefined ? 'all' : isActiveFilter ? 'active' : 'inactive'}
+          value={
+            isActiveFilter === undefined
+              ? "all"
+              : isActiveFilter
+              ? "active"
+              : "inactive"
+          }
           onValueChange={(value) => {
-            setIsActiveFilter(value === 'all' ? undefined : value === 'active');
+            setIsActiveFilter(value === "all" ? undefined : value === "active");
             setPage(1);
           }}
         >
@@ -349,7 +367,7 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
           <ModuleForm
             onSuccess={() => {
               setIsCreateDialogOpen(false);
-              toast.success('Module created successfully');
+              toast.success("Module created successfully");
             }}
             onCancel={() => setIsCreateDialogOpen(false)}
           />
@@ -366,7 +384,10 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -375,30 +396,46 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
           <TableBody>
             {isLoading || isFetching ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    <span className="text-muted-foreground">Loading modules...</span>
+                    <span className="text-muted-foreground">
+                      Loading modules...
+                    </span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                     <FolderTree className="h-8 w-8" />
                     <p>No modules found</p>
-                    <p className="text-sm">Try adjusting your search or filters</p>
+                    <p className="text-sm">
+                      Try adjusting your search or filters
+                    </p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -466,7 +503,7 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
               onSuccess={() => {
                 setIsEditDialogOpen(false);
                 setSelectedModule(null);
-                toast.success('Module updated successfully');
+                toast.success("Module updated successfully");
               }}
               onCancel={() => {
                 setIsEditDialogOpen(false);
@@ -495,7 +532,7 @@ export default function ModuleList({ onModuleSelect }: ModuleListProps) {
           onSuccess={() => {
             setIsDeleteDialogOpen(false);
             setSelectedModule(null);
-            toast.success('Module deleted successfully');
+            toast.success("Module deleted successfully");
           }}
         />
       )}
