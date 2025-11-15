@@ -192,7 +192,10 @@ export default function PermissionForm({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-6"
+          >
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Code */}
               <FormField
@@ -227,7 +230,9 @@ export default function PermissionForm({
                     <FormControl>
                       <Input placeholder="Create User" {...field} />
                     </FormControl>
-                    <FormDescription>Display name for the permission</FormDescription>
+                    <FormDescription>
+                      Display name for the permission
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -247,7 +252,9 @@ export default function PermissionForm({
                         disabled={isEditMode}
                       />
                     </FormControl>
-                    <FormDescription>Resource type (e.g., user, role)</FormDescription>
+                    <FormDescription>
+                      Resource type (e.g., user, role)
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -266,7 +273,7 @@ export default function PermissionForm({
                       disabled={isEditMode}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select action" />
                         </SelectTrigger>
                       </FormControl>
@@ -298,7 +305,7 @@ export default function PermissionForm({
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select scope (optional)" />
                         </SelectTrigger>
                       </FormControl>
@@ -317,6 +324,31 @@ export default function PermissionForm({
                 )}
               />
 
+              {/* Active Status */}
+              {isEditMode && (
+                <FormField
+                  control={form.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Active Status
+                        </FormLabel>
+                        <FormDescription>
+                          Enable or disable this permission
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             {/* Description */}
@@ -341,30 +373,6 @@ export default function PermissionForm({
                 </FormItem>
               )}
             />
-
-            {/* Active Status */}
-            {isEditMode && (
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Active Status</FormLabel>
-                      <FormDescription>
-                        Enable or disable this permission
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            )}
 
             <DialogFooter>
               <Button

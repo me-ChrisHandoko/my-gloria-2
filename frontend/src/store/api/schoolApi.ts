@@ -139,12 +139,24 @@ export const schoolApi = apiSlice.injectEndpoints({
       query: () => '/organizations/schools/bagian-kerja-jenjang',
       keepUnusedDataFor: 3600, // Cache for 1 hour
       transformResponse: (response: any) => {
+        console.log('📡 [schoolApi] getBagianKerjaJenjangList Raw Response:', {
+          response,
+          responseType: typeof response,
+          hasSuccess: response && 'success' in response,
+          hasData: response && 'data' in response,
+          isArray: Array.isArray(response),
+        });
+
         // Handle wrapped response from backend TransformInterceptor
         if (response && response.success && response.data) {
+          console.log('✅ [schoolApi] Using wrapped response.data:', response.data);
           return response.data;
         }
+
         // Return response directly if not wrapped, or empty array as fallback
-        return Array.isArray(response) ? response : [];
+        const result = Array.isArray(response) ? response : [];
+        console.log('✅ [schoolApi] Using direct array or fallback:', result);
+        return result;
       },
     }),
 

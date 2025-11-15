@@ -20,6 +20,7 @@ import { useGetOrganizationsQuery } from "@/store/api/organizationApi";
 import { useGetDepartmentsQuery } from "@/store/api/departmentApi";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { logRTKError } from "@/lib/utils/errorLogger";
 
 interface CreatePositionModalProps {
   open: boolean;
@@ -144,7 +145,7 @@ export default function CreatePositionModal({
 
       onSuccess();
     } catch (error: any) {
-      console.error("Failed to create position:", error);
+      logRTKError("Failed to create position", error);
       toast.error(error?.data?.message || "Failed to create position");
     }
   };

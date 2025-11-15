@@ -35,6 +35,7 @@ import {
 import { School } from "@/types";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logRTKError } from "@/lib/utils/errorLogger";
 
 interface EditSchoolModalProps {
   open: boolean;
@@ -140,7 +141,7 @@ export default function EditSchoolModal({
       handleClose();
       onSuccess();
     } catch (error: any) {
-      console.error("Failed to update school:", error);
+      logRTKError("Failed to update school", error);
       toast.error(error?.data?.message || "Failed to update school");
     }
   };

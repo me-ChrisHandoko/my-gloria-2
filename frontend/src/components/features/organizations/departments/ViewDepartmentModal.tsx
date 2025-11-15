@@ -25,6 +25,7 @@ import {
 import { departmentService, type Department, type DepartmentUser } from '@/lib/api/services/departments.service';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { extractErrorMessage } from '@/lib/utils/errorLogger';
 
 interface ViewDepartmentModalProps {
   open: boolean;
@@ -52,7 +53,7 @@ export default function ViewDepartmentModal({
       const users = await departmentService.getDepartmentUsers(department.id);
       setDepartmentUsers(users);
     } catch (error) {
-      console.error('Failed to fetch department users:', error);
+      console.error('Failed to fetch department users:', extractErrorMessage(error));
     } finally {
       setLoadingUsers(false);
     }

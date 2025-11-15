@@ -48,12 +48,19 @@ export const permissionApi = apiSlice.injectEndpoints({
           };
         }
 
+        // Helper function to safely convert date strings
+        const toSafeISOString = (dateValue: any): string | null => {
+          if (!dateValue) return null;
+          const date = new Date(dateValue);
+          return isNaN(date.getTime()) ? null : date.toISOString();
+        };
+
         return {
           ...response,
           data: response.data.map((perm: any) => ({
             ...perm,
-            createdAt: new Date(perm.createdAt).toISOString(),
-            updatedAt: new Date(perm.updatedAt).toISOString(),
+            createdAt: toSafeISOString(perm.createdAt),
+            updatedAt: toSafeISOString(perm.updatedAt),
           })),
         };
       },

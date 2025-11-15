@@ -27,6 +27,7 @@ import { useAssignUserToPositionMutation } from "@/store/api/positionApi";
 import { Position } from "@/lib/api/services/positions.service";
 import { UserPlus, AlertCircle, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { logRTKError } from "@/lib/utils/errorLogger";
 
 interface AssignUserModalProps {
   open: boolean;
@@ -114,7 +115,7 @@ export default function AssignUserModal({
       toast.success(`User assigned to ${position.name} successfully`);
       onSuccess();
     } catch (error: any) {
-      console.error("Failed to assign user:", error);
+      logRTKError("Failed to assign user", error);
       toast.error(error?.data?.message || "Failed to assign user");
     }
   };

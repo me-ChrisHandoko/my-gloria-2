@@ -29,6 +29,7 @@ import {
   useGetDepartmentCodeOptionsQuery
 } from '@/store/api/departmentApi';
 import { useGetOrganizationsQuery } from '@/store/api/organizationApi';
+import { logRTKError } from '@/lib/utils/errorLogger';
 
 interface EditDepartmentModalProps {
   open: boolean;
@@ -138,7 +139,7 @@ export default function EditDepartmentModal({
       await updateDepartment({ id: department.id, data: formData }).unwrap();
       onSuccess();
     } catch (error: any) {
-      console.error('Failed to update department:', error);
+      logRTKError('Failed to update department', error);
       const errorMessage = error?.data?.message || error?.error || 'Failed to update department';
       if (errorMessage.includes('already exists')) {
         toast.error('Department code already exists in this school');

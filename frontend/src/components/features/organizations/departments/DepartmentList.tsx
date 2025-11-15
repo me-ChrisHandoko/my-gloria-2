@@ -29,6 +29,7 @@ import { type Department } from "@/lib/api/services/departments.service";
 import { useGetDepartmentsQuery } from "@/store/api/departmentApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
+import { logRTKError } from "@/lib/utils/errorLogger";
 
 export default function DepartmentList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -79,7 +80,7 @@ export default function DepartmentList() {
   // Handle RTK Query errors
   useEffect(() => {
     if (departmentsError) {
-      console.error("Failed to fetch departments:", departmentsError);
+      logRTKError("Failed to fetch departments", departmentsError);
       toast.error("Failed to load departments");
     }
   }, [departmentsError]);
@@ -209,11 +210,6 @@ export default function DepartmentList() {
               onPageSizeChange: () => {},
             }}
           />
-
-          {/* Display total count */}
-          <div className="mt-4 text-sm text-muted-foreground">
-            Showing {departments.length} of {totalItems} department(s)
-          </div>
         </CardContent>
       </Card>
 

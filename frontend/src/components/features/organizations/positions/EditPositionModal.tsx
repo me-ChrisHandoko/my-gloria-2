@@ -18,6 +18,7 @@ import { useUpdatePositionMutation } from "@/store/api/positionApi";
 import { Position } from "@/lib/api/services/positions.service";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { logRTKError } from "@/lib/utils/errorLogger";
 
 interface EditPositionModalProps {
   open: boolean;
@@ -103,7 +104,7 @@ export default function EditPositionModal({
 
       onSuccess();
     } catch (error: any) {
-      console.error("Failed to update position:", error);
+      logRTKError("Failed to update position", error);
       toast.error(error?.data?.message || "Failed to update position");
     }
   };

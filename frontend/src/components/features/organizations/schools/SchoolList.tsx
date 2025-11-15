@@ -29,6 +29,7 @@ import CreateSchoolModal from "./CreateSchoolModal";
 import EditSchoolModal from "./EditSchoolModal";
 import ViewSchoolModal from "./ViewSchoolModal";
 import DeleteSchoolModal from "./DeleteSchoolModal";
+import { logRTKError } from "@/lib/utils/errorLogger";
 
 export default function SchoolList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -76,7 +77,7 @@ export default function SchoolList() {
   // Handle RTK Query errors
   useEffect(() => {
     if (schoolsError) {
-      console.error("Failed to fetch schools:", schoolsError);
+      logRTKError("Failed to fetch schools", schoolsError);
       toast.error("Failed to load schools");
     }
   }, [schoolsError]);
@@ -219,11 +220,6 @@ export default function SchoolList() {
               onPageSizeChange: () => {},
             }}
           />
-
-          {/* Display total count */}
-          <div className="mt-4 text-sm text-muted-foreground">
-            Showing {schools.length} of {totalItems} school(s)
-          </div>
         </CardContent>
       </Card>
 

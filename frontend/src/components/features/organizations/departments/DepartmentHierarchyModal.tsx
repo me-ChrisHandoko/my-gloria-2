@@ -18,6 +18,7 @@ import {
 } from '@/lib/api/services/departments.service';
 import { organizationService } from '@/lib/api/services/organizations.service';
 import { cn } from '@/lib/utils';
+import { extractErrorMessage } from '@/lib/utils/errorLogger';
 
 interface DepartmentHierarchyModalProps {
   open: boolean;
@@ -97,7 +98,7 @@ export default function DepartmentHierarchyModal({
       const data = await departmentService.getDepartmentHierarchy(schoolId);
       setHierarchy(data);
     } catch (error) {
-      console.error('Failed to fetch hierarchy:', error);
+      console.error('Failed to fetch hierarchy:', extractErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,7 @@ export default function DepartmentHierarchyModal({
       const school = await organizationService.getOrganizationById(schoolId);
       setSchoolName(school.name);
     } catch (error) {
-      console.error('Failed to fetch school info:', error);
+      console.error('Failed to fetch school info:', extractErrorMessage(error));
     }
   };
 

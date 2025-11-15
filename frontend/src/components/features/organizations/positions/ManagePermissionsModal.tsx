@@ -23,6 +23,7 @@ import {
 import { Position } from "@/lib/api/services/positions.service";
 import { Shield, Search, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { logRTKError } from "@/lib/utils/errorLogger";
 
 interface ManagePermissionsModalProps {
   open: boolean;
@@ -141,7 +142,7 @@ export default function ManagePermissionsModal({
       toast.success("Permissions updated successfully");
       onClose();
     } catch (error: any) {
-      console.error("Failed to update permissions:", error);
+      logRTKError("Failed to update permissions", error);
       toast.error(error?.data?.message || "Failed to update permissions");
     }
   };

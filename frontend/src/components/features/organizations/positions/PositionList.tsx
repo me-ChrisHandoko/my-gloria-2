@@ -32,11 +32,13 @@ import DeletePositionModal from "./DeletePositionModal";
 import ViewHoldersModal from "./ViewHoldersModal";
 import ManagePermissionsModal from "./ManagePermissionsModal";
 import AssignUserModal from "./AssignUserModal";
+import { logRTKError } from "@/lib/utils/errorLogger";
 
 export default function PositionList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isActiveFilter, setIsActiveFilter] = useState<string>("all");
-  const [hierarchyLevelFilter, setHierarchyLevelFilter] = useState<string>("all");
+  const [hierarchyLevelFilter, setHierarchyLevelFilter] =
+    useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   // Modal states
@@ -47,7 +49,9 @@ export default function PositionList() {
   const [holdersModalOpen, setHoldersModalOpen] = useState(false);
   const [permissionsModalOpen, setPermissionsModalOpen] = useState(false);
   const [assignUserModalOpen, setAssignUserModalOpen] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(
+    null
+  );
 
   // Increased debounce delay to reduce API call frequency and prevent rate limiting
   const debouncedSearchTerm = useDebounce(searchTerm, 800);
@@ -79,7 +83,8 @@ export default function PositionList() {
   // RTK Query types expect PaginatedResponse<Position> but actual response has extra nesting
   // Cast to any to access the nested structure safely
   const responseData = positionsData as any;
-  const allPositions: Position[] = responseData?.data?.data || responseData?.data || [];
+  const allPositions: Position[] =
+    responseData?.data?.data || responseData?.data || [];
 
   const positions = React.useMemo(() => {
     if (hierarchyLevelFilter === "all") {
@@ -89,24 +94,32 @@ export default function PositionList() {
     // Handle range filters
     if (hierarchyLevelFilter === "1-3") {
       return allPositions.filter(
-        (p: Position) => (p.hierarchyLevel || p.level || 0) >= 1 && (p.hierarchyLevel || p.level || 0) <= 3
+        (p: Position) =>
+          (p.hierarchyLevel || p.level || 0) >= 1 &&
+          (p.hierarchyLevel || p.level || 0) <= 3
       );
     }
     if (hierarchyLevelFilter === "4-6") {
       return allPositions.filter(
-        (p: Position) => (p.hierarchyLevel || p.level || 0) >= 4 && (p.hierarchyLevel || p.level || 0) <= 6
+        (p: Position) =>
+          (p.hierarchyLevel || p.level || 0) >= 4 &&
+          (p.hierarchyLevel || p.level || 0) <= 6
       );
     }
     if (hierarchyLevelFilter === "7-10") {
       return allPositions.filter(
-        (p: Position) => (p.hierarchyLevel || p.level || 0) >= 7 && (p.hierarchyLevel || p.level || 0) <= 10
+        (p: Position) =>
+          (p.hierarchyLevel || p.level || 0) >= 7 &&
+          (p.hierarchyLevel || p.level || 0) <= 10
       );
     }
 
     // Handle single level filter
     const levelNum = parseInt(hierarchyLevelFilter);
     if (!isNaN(levelNum)) {
-      return allPositions.filter((p: Position) => (p.hierarchyLevel || p.level || 0) === levelNum);
+      return allPositions.filter(
+        (p: Position) => (p.hierarchyLevel || p.level || 0) === levelNum
+      );
     }
 
     return allPositions;
@@ -120,7 +133,7 @@ export default function PositionList() {
   // Handle RTK Query errors
   useEffect(() => {
     if (positionsError) {
-      console.error("Failed to fetch positions:", positionsError);
+      logRTKError("Failed to fetch positions", positionsError);
       toast.error("Failed to load positions");
     }
   }, [positionsError]);
@@ -245,7 +258,10 @@ export default function PositionList() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Select value={hierarchyLevelFilter} onValueChange={setHierarchyLevelFilter}>
+            <Select
+              value={hierarchyLevelFilter}
+              onValueChange={setHierarchyLevelFilter}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by level" />
               </SelectTrigger>
@@ -288,11 +304,6 @@ export default function PositionList() {
               onPageSizeChange: () => {},
             }}
           />
-
-          {/* Display total count */}
-          <div className="mt-4 text-sm text-muted-foreground">
-            Showing {positions.length} of {totalItems} position(s)
-          </div>
         </CardContent>
       </Card>
 

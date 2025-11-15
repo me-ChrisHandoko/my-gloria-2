@@ -8,6 +8,7 @@ import { User, UserRole } from '@/types';
 import { useCreateUserMutation, useUpdateUserMutation } from '@/store/api/userApi';
 import { toast } from 'sonner';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { logRTKError } from '@/lib/utils/errorLogger';
 
 // Validation schema
 const userSchema = z.object({
@@ -86,7 +87,7 @@ export const UserForm: React.FC<UserFormProps> = ({ user, onClose }) => {
     } catch (error: any) {
       const message = error?.data?.message || 'An error occurred';
       toast.error(message);
-      console.error('Form submission error:', error);
+      logRTKError('Form submission error', error);
     }
   };
 

@@ -27,6 +27,7 @@ import { createPermissionColumns } from "./PermissionColumns";
 import PermissionForm from "./PermissionForm";
 import DeletePermissionDialog from "./DeletePermissionDialog";
 import type { Permission } from "@/lib/api/services/permissions.service";
+import { logRTKError } from "@/lib/utils/errorLogger";
 
 export default function PermissionList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,7 +69,7 @@ export default function PermissionList() {
   // Handle errors
   useEffect(() => {
     if (error) {
-      console.error("Failed to fetch permissions:", error);
+      logRTKError("Failed to fetch permissions", error);
       toast.error("Failed to load permissions");
     }
   }, [error]);

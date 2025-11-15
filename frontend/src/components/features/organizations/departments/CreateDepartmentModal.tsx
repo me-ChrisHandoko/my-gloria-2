@@ -28,6 +28,7 @@ import {
   useGetDepartmentCodeOptionsQuery,
 } from "@/store/api/departmentApi";
 import { useGetOrganizationsQuery } from "@/store/api/organizationApi";
+import { logRTKError } from "@/lib/utils/errorLogger";
 
 interface CreateDepartmentModalProps {
   open: boolean;
@@ -139,7 +140,7 @@ export default function CreateDepartmentModal({
       onSuccess();
       handleReset();
     } catch (error: any) {
-      console.error("Failed to create department:", error);
+      logRTKError("Failed to create department", error);
       const errorMessage =
         error?.data?.message || error?.error || "Failed to create department";
       if (errorMessage.includes("already exists")) {
