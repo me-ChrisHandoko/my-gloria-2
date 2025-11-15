@@ -37,26 +37,11 @@ export const departmentApi = apiSlice.injectEndpoints({
           params: queryParams,
         };
       },
-      // Transform response to handle wrapped response from backend TransformInterceptor
+      // Transform response to handle date conversions
+      // baseQueryWithReauth already unwraps the success layer
       transformResponse: (response: any) => {
-        // Handle wrapped response from backend TransformInterceptor
-        let actualResponse: PaginatedResponse<Department>;
-
-        if (response && response.success && response.data) {
-          // Unwrap the response from TransformInterceptor
-          actualResponse = response.data;
-
-          // Check if it's double-wrapped
-          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
-            actualResponse = (actualResponse as any).data;
-          }
-        } else {
-          // Use response directly if not wrapped
-          actualResponse = response;
-        }
-
-        // Ensure we have valid data
-        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+        // Validate response structure
+        if (!response || !Array.isArray(response.data)) {
           return {
             data: [],
             total: 0,
@@ -67,8 +52,8 @@ export const departmentApi = apiSlice.injectEndpoints({
         }
 
         return {
-          ...actualResponse,
-          data: actualResponse.data.map(dept => ({
+          ...response,
+          data: response.data.map((dept: any) => ({
             ...dept,
             createdAt: new Date(dept.createdAt),
             updatedAt: new Date(dept.updatedAt),
@@ -111,25 +96,11 @@ export const departmentApi = apiSlice.injectEndpoints({
           includeParent: true,
         },
       }),
+      // Transform response to handle date conversions
+      // baseQueryWithReauth already unwraps the success layer
       transformResponse: (response: any) => {
-        // Handle wrapped response from backend TransformInterceptor
-        let actualResponse: PaginatedResponse<Department>;
-
-        if (response && response.success && response.data) {
-          // Unwrap the response from TransformInterceptor
-          actualResponse = response.data;
-
-          // Check if it's double-wrapped
-          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
-            actualResponse = (actualResponse as any).data;
-          }
-        } else {
-          // Use response directly if not wrapped
-          actualResponse = response;
-        }
-
-        // Ensure we have valid data
-        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+        // Validate response structure
+        if (!response || !Array.isArray(response.data)) {
           return {
             data: [],
             total: 0,
@@ -140,8 +111,8 @@ export const departmentApi = apiSlice.injectEndpoints({
         }
 
         return {
-          ...actualResponse,
-          data: actualResponse.data.map(dept => ({
+          ...response,
+          data: response.data.map((dept: any) => ({
             ...dept,
             createdAt: new Date(dept.createdAt),
             updatedAt: new Date(dept.updatedAt),

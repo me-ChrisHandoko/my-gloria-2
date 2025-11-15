@@ -30,27 +30,11 @@ export const positionApi = apiSlice.injectEndpoints({
           params: queryParams,
         };
       },
-      // Transform response to handle wrapped response from backend TransformInterceptor
-      // This follows PermissionList and RoleList pattern for consistency
+      // Transform response to handle date conversions
+      // baseQueryWithReauth already unwraps the success layer
       transformResponse: (response: any) => {
-        // Handle wrapped response from backend TransformInterceptor
-        let actualResponse: PaginatedResponse<Position>;
-
-        if (response && response.success && response.data) {
-          // Unwrap the response from TransformInterceptor
-          actualResponse = response.data;
-
-          // Check if it's double-wrapped
-          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
-            actualResponse = (actualResponse as any).data;
-          }
-        } else {
-          // Use response directly if not wrapped
-          actualResponse = response;
-        }
-
-        // Ensure we have valid data
-        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+        // Validate response structure
+        if (!response || !Array.isArray(response.data)) {
           return {
             data: [],
             total: 0,
@@ -61,8 +45,8 @@ export const positionApi = apiSlice.injectEndpoints({
         }
 
         return {
-          ...actualResponse,
-          data: actualResponse.data.map(position => ({
+          ...response,
+          data: response.data.map((position: any) => ({
             ...position,
             createdAt: new Date(position.createdAt),
             updatedAt: new Date(position.updatedAt),

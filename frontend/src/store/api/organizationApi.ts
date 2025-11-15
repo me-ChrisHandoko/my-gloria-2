@@ -32,26 +32,11 @@ export const organizationApi = apiSlice.injectEndpoints({
           : [{ type: 'Organization', id: 'LIST' }],
       // Cache for 5 minutes
       keepUnusedDataFor: 300,
-      // Transform response to ensure data consistency
+      // Transform response to handle date conversions
+      // baseQueryWithReauth already unwraps the success layer
       transformResponse: (response: any) => {
-        // Handle wrapped response from backend TransformInterceptor
-        let actualResponse: PaginatedResponse<Organization>;
-
-        if (response && response.success && response.data) {
-          // Unwrap the response from TransformInterceptor
-          actualResponse = response.data;
-
-          // Check if it's double-wrapped
-          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
-            actualResponse = (actualResponse as any).data;
-          }
-        } else {
-          // Use response directly if not wrapped
-          actualResponse = response;
-        }
-
-        // Ensure we have valid data
-        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+        // Validate response structure
+        if (!response || !Array.isArray(response.data)) {
           return {
             data: [],
             total: 0,
@@ -61,12 +46,19 @@ export const organizationApi = apiSlice.injectEndpoints({
           };
         }
 
+        // Helper function to safely convert date strings
+        const toSafeDate = (dateValue: any): Date | null => {
+          if (!dateValue) return null;
+          const date = new Date(dateValue);
+          return isNaN(date.getTime()) ? null : date;
+        };
+
         return {
-          ...actualResponse,
-          data: actualResponse.data.map(org => ({
+          ...response,
+          data: response.data.map((org: any) => ({
             ...org,
-            createdAt: new Date(org.createdAt),
-            updatedAt: new Date(org.updatedAt),
+            createdAt: toSafeDate(org.createdAt),
+            updatedAt: toSafeDate(org.updatedAt),
           })),
         };
       },

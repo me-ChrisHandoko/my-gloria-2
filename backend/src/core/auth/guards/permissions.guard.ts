@@ -583,7 +583,8 @@ export class PermissionsGuard implements CanActivate {
     try {
       // Log permission checks to AuditLog for compliance and monitoring
       // Only log denied permissions or successful access to sensitive resources
-      const shouldLog = !allowed || this.isSensitiveResource(requiredPermissions);
+      const shouldLog =
+        !allowed || this.isSensitiveResource(requiredPermissions);
 
       if (shouldLog) {
         await this.prisma.auditLog.create({

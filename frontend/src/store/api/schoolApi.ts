@@ -37,25 +37,11 @@ export const schoolApi = apiSlice.injectEndpoints({
           : [{ type: 'School', id: 'LIST' }],
       // Set cache duration to 60 seconds (matches backend Redis TTL)
       keepUnusedDataFor: 60,
+      // Transform response to handle date conversions
+      // baseQueryWithReauth already unwraps the success layer
       transformResponse: (response: any) => {
-        // Handle wrapped response from backend TransformInterceptor
-        let actualResponse: PaginatedResponse<School>;
-
-        if (response && response.success && response.data) {
-          // Unwrap the response from TransformInterceptor
-          actualResponse = response.data;
-
-          // Check if it's double-wrapped
-          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
-            actualResponse = (actualResponse as any).data;
-          }
-        } else {
-          // Use response directly if not wrapped
-          actualResponse = response;
-        }
-
-        // Ensure we have valid data
-        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+        // Validate response structure
+        if (!response || !Array.isArray(response.data)) {
           return {
             data: [],
             total: 0,
@@ -66,8 +52,8 @@ export const schoolApi = apiSlice.injectEndpoints({
         }
 
         return {
-          ...actualResponse,
-          data: actualResponse.data.map(school => ({
+          ...response,
+          data: response.data.map((school: any) => ({
             ...school,
             createdAt: new Date(school.createdAt),
             updatedAt: new Date(school.updatedAt),
@@ -139,24 +125,23 @@ export const schoolApi = apiSlice.injectEndpoints({
       query: () => '/organizations/schools/bagian-kerja-jenjang',
       keepUnusedDataFor: 3600, // Cache for 1 hour
       transformResponse: (response: any) => {
-        console.log('📡 [schoolApi] getBagianKerjaJenjangList Raw Response:', {
+        console.log('📡 [schoolApi] getBagianKerjaJenjangList Response:', {
           response,
-          responseType: typeof response,
-          hasSuccess: response && 'success' in response,
-          hasData: response && 'data' in response,
+          type: typeof response,
           isArray: Array.isArray(response),
+          length: Array.isArray(response) ? response.length : 'N/A',
         });
 
-        // Handle wrapped response from backend TransformInterceptor
-        if (response && response.success && response.data) {
-          console.log('✅ [schoolApi] Using wrapped response.data:', response.data);
-          return response.data;
+        // baseQueryWithReauth already unwrapped the response
+        // Response should be array directly: ["PGTK1", "PGTK2", ...]
+        if (Array.isArray(response)) {
+          console.log('✅ [schoolApi] Returning array directly:', response);
+          return response;
         }
 
-        // Return response directly if not wrapped, or empty array as fallback
-        const result = Array.isArray(response) ? response : [];
-        console.log('✅ [schoolApi] Using direct array or fallback:', result);
-        return result;
+        // Fallback: return empty array
+        console.warn('⚠️ [schoolApi] Response is not an array, returning empty array');
+        return [];
       },
     }),
 

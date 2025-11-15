@@ -133,19 +133,11 @@ const baseQueryWithReauth: BaseQueryFn<
           hasPrevious: responseData.hasPrevious,
         } as any;
       } else if (Array.isArray(responseData.data)) {
-        // Non-paginated array response: wrap with pagination metadata
+        // Non-paginated array response: extract array directly without pagination wrapper
         console.log(
-          "[API] Transforming non-paginated array response - adding pagination wrapper"
+          "[API] Transforming non-paginated array response - extracting array directly"
         );
-        result.data = {
-          data: responseData.data,
-          total: responseData.data.length,
-          page: 1,
-          limit: responseData.data.length,
-          totalPages: 1,
-          hasNext: false,
-          hasPrevious: false,
-        } as any;
+        result.data = responseData.data as any;
       } else {
         // Non-paginated non-array response: extract data from success wrapper
         console.log(

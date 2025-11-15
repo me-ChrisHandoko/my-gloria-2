@@ -43,23 +43,11 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
           params: queryParams,
         };
       },
+      // Transform response to handle date conversions
+      // baseQueryWithReauth already unwraps the success layer
       transformResponse: (response: any) => {
-        // Handle wrapped response from backend TransformInterceptor
-        let actualResponse: PaginatedResponse<UserModuleAccess>;
-
-        if (response && response.success && response.data) {
-          actualResponse = response.data;
-
-          // Check if it's double-wrapped
-          if (actualResponse && (actualResponse as any).success && (actualResponse as any).data) {
-            actualResponse = (actualResponse as any).data;
-          }
-        } else {
-          actualResponse = response;
-        }
-
-        // Ensure we have valid data
-        if (!actualResponse || !Array.isArray(actualResponse.data)) {
+        // Validate response structure
+        if (!response || !Array.isArray(response.data)) {
           return {
             data: [],
             total: 0,
@@ -70,8 +58,8 @@ export const moduleAccessApi = apiSlice.injectEndpoints({
         }
 
         return {
-          ...actualResponse,
-          data: actualResponse.data.map((access) => ({
+          ...response,
+          data: response.data.map((access: any) => ({
             ...access,
             validFrom: new Date(access.validFrom).toISOString(),
             validUntil: access.validUntil ? new Date(access.validUntil).toISOString() : undefined,
