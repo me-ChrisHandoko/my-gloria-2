@@ -56,6 +56,28 @@ export function Combobox({
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const commandListRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Autofocus input when popover opens
+  React.useEffect(() => {
+    if (open) {
+      // Longer delay to ensure popover animation completes and DOM is ready
+      const timer = setTimeout(() => {
+        const input = inputRef.current;
+        if (input) {
+          input.focus();
+        } else {
+          // Fallback: try to find input by querySelector if ref doesn't work
+          const commandInput = document.querySelector('[cmdk-input]') as HTMLInputElement;
+          if (commandInput) {
+            commandInput.focus();
+          }
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   // Fix scroll in Dialog: Add wheel event listener with multiple approaches
   React.useEffect(() => {
@@ -157,7 +179,14 @@ export function Combobox({
           width: "var(--radix-popover-trigger-width)",
           overscrollBehavior: "contain"
         }}
-        onOpenAutoFocus={(e) => e.preventDefault()}
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          // Focus the input after preventing default
+          setTimeout(() => {
+            const input = inputRef.current || document.querySelector('[cmdk-input]') as HTMLInputElement;
+            input?.focus();
+          }, 0);
+        }}
       >
         <Command
           className="w-full"
@@ -178,7 +207,7 @@ export function Combobox({
             return 0;
           }}
         >
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput ref={inputRef} placeholder={searchPlaceholder} />
           <CommandList
             ref={commandListRef}
             className="max-h-[300px] overflow-y-auto overscroll-contain"
