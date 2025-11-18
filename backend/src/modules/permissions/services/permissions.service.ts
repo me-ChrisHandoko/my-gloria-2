@@ -177,12 +177,14 @@ export class PermissionsService {
       data: permissions.map((permission) =>
         this.formatPermissionResponse(permission),
       ),
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNext,
-      hasPrevious,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext,
+        hasPrevious,
+      },
     };
 
     await this.cache.set(cacheKey, result, this.cacheTTL);

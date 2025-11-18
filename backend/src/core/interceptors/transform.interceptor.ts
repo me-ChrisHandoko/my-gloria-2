@@ -14,6 +14,15 @@ export interface Response<T> {
   timestamp: string;
   path: string;
   requestId: string;
+  // Pagination metadata (NESTED structure - all APIs use this)
+  meta?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
 }
 
 @Injectable()
@@ -34,19 +43,12 @@ export class TransformInterceptor<T>
           return data;
         }
 
-        // Check if response has pagination structure (paginated response)
+        // Check if response has pagination structure (paginated response with NESTED meta)
         if (this.isPaginatedResponse(data)) {
-          // For paginated responses, spread all properties at top level
-          // This prevents double wrapping - data array goes directly to 'data' property
           return {
             success: true,
-            data: data.data, // Array goes to data property (not nested!)
-            total: data.total,
-            page: data.page,
-            limit: data.limit,
-            totalPages: data.totalPages,
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious,
+            data: data.data, // Extract the array
+            meta: data.meta, // Preserve nested meta object
             timestamp: new Date().toISOString(),
             path: request.url,
             requestId: request.id,
@@ -66,9 +68,9 @@ export class TransformInterceptor<T>
   }
 
   /**
-   * Determines if a response is paginated based on its structure
+   * Determines if a response is paginated based on NESTED meta structure
    * @param response - The response object to check
-   * @returns true if the response has pagination structure
+   * @returns true if the response has pagination with nested meta
    */
   private isPaginatedResponse(response: any): boolean {
     return (
@@ -76,10 +78,12 @@ export class TransformInterceptor<T>
       typeof response === 'object' &&
       'data' in response &&
       Array.isArray(response.data) &&
-      'total' in response &&
-      'page' in response &&
-      'limit' in response &&
-      'totalPages' in response
+      'meta' in response &&
+      typeof response.meta === 'object' &&
+      response.meta !== null &&
+      'total' in response.meta &&
+      'page' in response.meta &&
+      'limit' in response.meta
     );
   }
 

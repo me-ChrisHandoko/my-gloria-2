@@ -369,38 +369,22 @@ export class PaginatedPermissionResponseDto {
   data: PermissionResponseDto[];
 
   @ApiProperty({
-    description: 'Total number of items',
-    example: 100,
+    description: 'Pagination metadata',
+    example: {
+      total: 100,
+      page: 1,
+      limit: 10,
+      totalPages: 10,
+      hasNext: true,
+      hasPrevious: false,
+    },
   })
-  total: number;
-
-  @ApiProperty({
-    description: 'Current page number',
-    example: 1,
-  })
-  page: number;
-
-  @ApiProperty({
-    description: 'Items per page',
-    example: 10,
-  })
-  limit: number;
-
-  @ApiProperty({
-    description: 'Total number of pages',
-    example: 10,
-  })
-  totalPages: number;
-
-  @ApiProperty({
-    description: 'Whether there is a next page',
-    example: true,
-  })
-  hasNext: boolean;
-
-  @ApiProperty({
-    description: 'Whether there is a previous page',
-    example: false,
-  })
-  hasPrevious: boolean;
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
 }

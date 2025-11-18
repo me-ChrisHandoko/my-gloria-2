@@ -207,7 +207,7 @@ export function DataTable<TData, TValue>({
                       <TableHead
                         key={header.id}
                         style={{ width: header.getSize() }}
-                        className="uppercase tracking-wider"
+                        className="uppercase tracking-wider px-4"
                       >
                         {header.isPlaceholder ? null : (
                           <div

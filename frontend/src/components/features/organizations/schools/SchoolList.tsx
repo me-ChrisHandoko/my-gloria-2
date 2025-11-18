@@ -46,7 +46,7 @@ export default function SchoolList() {
 
   // Increased debounce delay to reduce API call frequency and prevent rate limiting
   const debouncedSearchTerm = useDebounce(searchTerm, 800);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Fetch schools using RTK Query
   // Skip query execution while debouncing to prevent premature API calls
@@ -217,7 +217,10 @@ export default function SchoolList() {
               pageSize: itemsPerPage,
               total: totalItems,
               onPageChange: setCurrentPage,
-              onPageSizeChange: () => {},
+              onPageSizeChange: (newSize) => {
+                setItemsPerPage(newSize);
+                setCurrentPage(1);
+              },
             }}
           />
         </CardContent>
