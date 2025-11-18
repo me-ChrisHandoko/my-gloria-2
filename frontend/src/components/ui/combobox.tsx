@@ -55,6 +55,49 @@ export function Combobox({
   renderTrigger,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const commandListRef = React.useRef<HTMLDivElement>(null);
+
+  // Fix scroll in Dialog: Add wheel event listener with multiple approaches
+  React.useEffect(() => {
+    if (!open) return;
+
+    const listElement = commandListRef.current;
+    if (!listElement) return;
+
+    // Also try to get the actual scrollable element via querySelector
+    const scrollableElement = listElement.querySelector('[cmdk-list]') as HTMLElement || listElement;
+
+    const handleWheel = (e: WheelEvent) => {
+      const target = scrollableElement || listElement;
+      const { scrollTop, scrollHeight, clientHeight } = target;
+      const isAtTop = scrollTop === 0;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+      const scrollingUp = e.deltaY < 0;
+      const scrollingDown = e.deltaY > 0;
+
+      // Prevent default only if we can scroll within the list
+      if ((scrollingUp && !isAtTop) || (scrollingDown && !isAtBottom)) {
+        e.preventDefault();
+      }
+
+      e.stopPropagation();
+      target.scrollTop += e.deltaY;
+    };
+
+    // Attach to both elements for safety
+    scrollableElement.addEventListener("wheel", handleWheel, { passive: false });
+    if (scrollableElement !== listElement) {
+      listElement.addEventListener("wheel", handleWheel, { passive: false });
+    }
+
+    return () => {
+      scrollableElement.removeEventListener("wheel", handleWheel);
+      if (scrollableElement !== listElement) {
+        listElement.removeEventListener("wheel", handleWheel);
+      }
+    };
+  }, [open]);
 
   const selectedOption = options.find((option) => option.value === value);
 
@@ -84,7 +127,7 @@ export function Combobox({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -110,11 +153,41 @@ export function Combobox({
       <PopoverContent
         className="p-0 popover-content-width-same-as-trigger"
         align="start"
-        style={{ width: "var(--radix-popover-trigger-width)" }}
+        style={{
+          width: "var(--radix-popover-trigger-width)",
+          overscrollBehavior: "contain"
+        }}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <Command className="w-full">
+        <Command
+          className="w-full"
+          loop
+          filter={(value, search) => {
+            // Custom filter: strict substring matching instead of fuzzy search
+            if (!search) return 1;
+            const normalizedValue = value.toLowerCase();
+            const normalizedSearch = search.toLowerCase();
+
+            // Prioritize starts-with matches
+            if (normalizedValue.startsWith(normalizedSearch)) return 1;
+
+            // Allow contains matches with lower priority
+            if (normalizedValue.includes(normalizedSearch)) return 0.8;
+
+            // No match
+            return 0;
+          }}
+        >
           <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
+          <CommandList
+            ref={commandListRef}
+            className="max-h-[300px] overflow-y-auto overscroll-contain"
+            style={{
+              scrollPaddingBlock: "8px",
+              overscrollBehavior: "contain",
+              WebkitOverflowScrolling: "touch"
+            }}
+          >
             <CommandEmpty>{emptyMessage}</CommandEmpty>
 
             {/* Render ungrouped options */}
