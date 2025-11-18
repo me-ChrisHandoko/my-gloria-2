@@ -145,6 +145,31 @@ export const schoolApi = apiSlice.injectEndpoints({
       },
     }),
 
+    // Get karyawan names list for principal selection
+    getKaryawanNamesList: builder.query<string[], void>({
+      query: () => '/organizations/schools/karyawan-names',
+      keepUnusedDataFor: 3600, // Cache for 1 hour
+      transformResponse: (response: any) => {
+        console.log('📡 [schoolApi] getKaryawanNamesList Response:', {
+          response,
+          type: typeof response,
+          isArray: Array.isArray(response),
+          length: Array.isArray(response) ? response.length : 'N/A',
+        });
+
+        // baseQueryWithReauth already unwrapped the response
+        // Response should be array directly: ["Name 1", "Name 2", ...]
+        if (Array.isArray(response)) {
+          console.log('✅ [schoolApi] Returning array directly:', response);
+          return response;
+        }
+
+        // Fallback: return empty array
+        console.warn('⚠️ [schoolApi] Response is not an array, returning empty array');
+        return [];
+      },
+    }),
+
     // ===== MUTATIONS =====
 
     // Create new school
@@ -368,6 +393,7 @@ export const {
   useGetSchoolStatsQuery,
   useGetSchoolAcademicPeriodsQuery,
   useGetBagianKerjaJenjangListQuery,
+  useGetKaryawanNamesListQuery,
   useCreateSchoolMutation,
   useUpdateSchoolMutation,
   useDeleteSchoolMutation,

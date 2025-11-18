@@ -13,28 +13,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Combobox } from "@/components/ui/combobox";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   useUpdateSchoolMutation,
   useGetBagianKerjaJenjangListQuery,
+  useGetKaryawanNamesListQuery,
 } from "@/store/api/schoolApi";
 import { School } from "@/types";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 import { logRTKError } from "@/lib/utils/errorLogger";
 
 interface EditSchoolModalProps {
@@ -62,38 +50,74 @@ export default function EditSchoolModal({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [lokasiOpen, setLokasiOpen] = useState(false);
-  const [codeOpen, setCodeOpen] = useState(false);
 
   const [updateSchool, { isLoading }] = useUpdateSchoolMutation();
   const { data: bagianKerjaJenjangList = [], isLoading: isLoadingBagianKerja } =
     useGetBagianKerjaJenjangListQuery();
+  const { data: karyawanNamesList = [], isLoading: isLoadingKaryawan } =
+    useGetKaryawanNamesListQuery();
 
-  const lokasiOptions = [
-    { value: "Barat", label: "Barat" },
-    { value: "Timur", label: "Timur" },
-  ];
+  const lokasiOptions = React.useMemo(
+    () => [
+      { value: "Barat", label: "Barat", searchLabel: "Barat" },
+      { value: "Timur", label: "Timur", searchLabel: "Timur" },
+    ],
+    []
+  );
 
-  const codeOptions = bagianKerjaJenjangList.map((bagian) => ({
-    value: bagian,
-    label: bagian,
-  }));
+  const codeOptions = React.useMemo(
+    () =>
+      bagianKerjaJenjangList.map((bagian) => ({
+        value: bagian,
+        label: bagian,
+        searchLabel: bagian,
+      })),
+    [bagianKerjaJenjangList]
+  );
+
+  const karyawanOptions = React.useMemo(
+    () =>
+      karyawanNamesList.map((nama) => ({
+        value: nama,
+        label: nama,
+        searchLabel: nama,
+      })),
+    [karyawanNamesList]
+  );
+
+  // Helper function for case-insensitive value matching
+  // Fixes issue where DB has lowercase values but API returns uppercase
+  const findMatchingValue = (
+    dbValue: string | undefined,
+    options: { value: string; label: string; searchLabel?: string }[]
+  ): string => {
+    if (!dbValue) return "";
+
+    // Find option case-insensitively
+    const match = options.find(
+      (opt) => opt.value.toLowerCase() === dbValue.toLowerCase()
+    );
+
+    // Return matched option's value (correct case) or original value
+    return match ? match.value : dbValue;
+  };
 
   // Populate form when school changes
+  // Wait for all API data to load before populating to avoid race conditions
   useEffect(() => {
-    if (school) {
+    if (school && !isLoadingBagianKerja && !isLoadingKaryawan) {
       setFormData({
         name: school.name || "",
-        code: school.code || "",
-        lokasi: school.lokasi || "",
+        code: findMatchingValue(school.code, codeOptions),
+        lokasi: findMatchingValue(school.lokasi, lokasiOptions),
         address: school.address || "",
         phone: school.phone || "",
         email: school.email || "",
-        principal: school.principal || "",
+        principal: findMatchingValue(school.principal, karyawanOptions),
         isActive: school.isActive ?? true,
       });
     }
-  }, [school]);
+  }, [school, codeOptions, karyawanOptions, lokasiOptions, isLoadingBagianKerja, isLoadingKaryawan]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -188,70 +212,25 @@ export default function EditSchoolModal({
               <Label htmlFor="code">
                 Code <span className="text-red-500">*</span>
               </Label>
-              <Popover open={codeOpen} onOpenChange={setCodeOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={codeOpen}
-                    className={cn(
-                      "w-full justify-between",
-                      errors.code ? "border-red-500" : ""
-                    )}
-                    disabled={isLoadingBagianKerja}
-                  >
-                    {isLoadingBagianKerja ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Loading...
-                      </>
-                    ) : formData.code ? (
-                      codeOptions.find(
-                        (option) => option.value === formData.code
-                      )?.label
-                    ) : (
-                      "Select school code..."
-                    )}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
-                  <Command className="max-h-[300px]">
-                    <CommandInput placeholder="Search code..." />
-                    <CommandList>
-                      <CommandEmpty>No code found.</CommandEmpty>
-                      <CommandGroup>
-                        {codeOptions.map((option) => (
-                          <CommandItem
-                            key={option.value}
-                            value={option.value}
-                            onSelect={(currentValue) => {
-                              setFormData({
-                                ...formData,
-                                code:
-                                  currentValue === formData.code
-                                    ? ""
-                                    : currentValue,
-                              });
-                              setCodeOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.code === option.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {option.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Combobox
+                options={codeOptions}
+                value={formData.code}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    code: value,
+                  })
+                }
+                placeholder={
+                  isLoadingBagianKerja
+                    ? "Loading codes..."
+                    : "Select school code..."
+                }
+                searchPlaceholder="Search code..."
+                emptyMessage="No code found."
+                disabled={isLoadingBagianKerja}
+                className={errors.code ? "border-red-500" : ""}
+              />
               {errors.code && (
                 <p className="text-sm text-red-500">{errors.code}</p>
               )}
@@ -260,59 +239,19 @@ export default function EditSchoolModal({
             {/* Lokasi */}
             <div className="space-y-2">
               <Label htmlFor="lokasi">Lokasi</Label>
-              <Popover open={lokasiOpen} onOpenChange={setLokasiOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={lokasiOpen}
-                    className="w-full justify-between"
-                  >
-                    {formData.lokasi
-                      ? lokasiOptions.find(
-                          (option) => option.value === formData.lokasi
-                        )?.label
-                      : "Select location..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search location..." />
-                    <CommandList>
-                      <CommandEmpty>No location found.</CommandEmpty>
-                      <CommandGroup>
-                        {lokasiOptions.map((option) => (
-                          <CommandItem
-                            key={option.value}
-                            value={option.value}
-                            onSelect={(currentValue) => {
-                              setFormData({
-                                ...formData,
-                                lokasi:
-                                  currentValue === formData.lokasi
-                                    ? ""
-                                    : currentValue,
-                              });
-                              setLokasiOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.lokasi === option.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {option.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Combobox
+                options={lokasiOptions}
+                value={formData.lokasi}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    lokasi: value,
+                  })
+                }
+                placeholder="Select location..."
+                searchPlaceholder="Search location..."
+                emptyMessage="No location found."
+              />
             </div>
           </div>
 
@@ -364,14 +303,23 @@ export default function EditSchoolModal({
           {/* Principal */}
           <div className="space-y-2">
             <Label htmlFor="principal">Principal / Head of School</Label>
-            <Input
-              id="principal"
+            <Combobox
+              options={karyawanOptions}
               value={formData.principal}
-              onChange={(e) =>
-                setFormData({ ...formData, principal: e.target.value })
+              onValueChange={(value) =>
+                setFormData({
+                  ...formData,
+                  principal: value,
+                })
               }
-              placeholder="Enter principal name (e.g., Dr. John Doe)"
-              maxLength={200}
+              placeholder={
+                isLoadingKaryawan
+                  ? "Loading names..."
+                  : "Select principal name..."
+              }
+              searchPlaceholder="Search employee name..."
+              emptyMessage="No employee found."
+              disabled={isLoadingKaryawan}
             />
           </div>
 

@@ -438,18 +438,41 @@ export class SchoolsService {
       const result = await this.prisma.$queryRaw<
         Array<{ bagian_kerja: string }>
       >`
-        SELECT bagian_kerja
+        SELECT DISTINCT TRIM(bagian_kerja) as bagian_kerja
         FROM gloria_master.data_karyawan
         WHERE bagian_kerja NOT IN ('YAYASAN', 'SATPAM', 'UMUM')
         AND status_aktif = 'Aktif'
-        GROUP BY bagian_kerja
-        ORDER BY bagian_kerja ASC
+        ORDER BY TRIM(bagian_kerja) ASC
       `;
 
-      return result.map((row) => row.bagian_kerja);
+      return result.map((row) => row.bagian_kerja.trim());
     } catch (error) {
       this.logger.error(
         `Failed to get bagian_kerja jenjang list: ${error.message}`,
+        error.stack,
+      );
+      return [];
+    }
+  }
+
+  async getKaryawanNamesList(): Promise<string[]> {
+    try {
+      // Query to get distinct employee names from data_karyawan table
+      const result = await this.prisma.$queryRaw<
+        Array<{ nama: string }>
+      >`
+        SELECT DISTINCT TRIM(nama) as nama
+        FROM gloria_master.data_karyawan
+        WHERE status_aktif = 'Aktif'
+          AND nama IS NOT NULL
+          AND nama != ''
+        ORDER BY TRIM(nama) ASC
+      `;
+
+      return result.map((row) => row.nama.trim());
+    } catch (error) {
+      this.logger.error(
+        `Failed to get karyawan names list: ${error.message}`,
         error.stack,
       );
       return [];

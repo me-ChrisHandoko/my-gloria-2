@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import {
   useCreateSchoolMutation,
   useGetBagianKerjaJenjangListQuery,
+  useGetKaryawanNamesListQuery,
 } from "@/store/api/schoolApi";
 import { Loader2 } from "lucide-react";
 
@@ -49,6 +50,8 @@ export default function CreateSchoolModal({
   const [createSchool, { isLoading }] = useCreateSchoolMutation();
   const { data: bagianKerjaJenjangList = [], isLoading: isLoadingBagianKerja } =
     useGetBagianKerjaJenjangListQuery();
+  const { data: karyawanNamesList = [], isLoading: isLoadingKaryawan } =
+    useGetKaryawanNamesListQuery();
 
   const lokasiOptions = [
     { value: "Barat", label: "Barat", searchLabel: "Barat" },
@@ -59,6 +62,12 @@ export default function CreateSchoolModal({
     value: bagian,
     label: bagian,
     searchLabel: bagian,
+  }));
+
+  const karyawanOptions = karyawanNamesList.map((nama) => ({
+    value: nama,
+    label: nama,
+    searchLabel: nama,
   }));
 
   const validateForm = () => {
@@ -254,14 +263,23 @@ export default function CreateSchoolModal({
           {/* Principal */}
           <div className="space-y-2">
             <Label htmlFor="principal">Principal / Head of School</Label>
-            <Input
-              id="principal"
+            <Combobox
+              options={karyawanOptions}
               value={formData.principal}
-              onChange={(e) =>
-                setFormData({ ...formData, principal: e.target.value })
+              onValueChange={(value) =>
+                setFormData({
+                  ...formData,
+                  principal: value,
+                })
               }
-              placeholder="Enter principal name (e.g., Dr. John Doe)"
-              maxLength={200}
+              placeholder={
+                isLoadingKaryawan
+                  ? "Loading names..."
+                  : "Select principal name..."
+              }
+              searchPlaceholder="Search employee name..."
+              emptyMessage="No employee found."
+              disabled={isLoadingKaryawan}
             />
           </div>
 

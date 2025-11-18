@@ -100,15 +100,18 @@ export default function EditDepartmentModal({
   }, [departments, schools]);
 
   // Reset form data when department changes
+  // Wait for all API data to load before populating to avoid race conditions
   useEffect(() => {
-    setFormData({
-      name: department.name,
-      code: department.code,
-      parentId: department.parentId,
-      description: department.description,
-      isActive: department.isActive,
-    });
-  }, [department]);
+    if (!isLoadingSchools && !isLoadingDepartments && !isLoadingCodeOptions) {
+      setFormData({
+        name: department.name,
+        code: department.code,
+        parentId: department.parentId,
+        description: department.description,
+        isActive: department.isActive,
+      });
+    }
+  }, [department, isLoadingSchools, isLoadingDepartments, isLoadingCodeOptions]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {

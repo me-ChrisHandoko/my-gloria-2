@@ -118,6 +118,26 @@ export class SchoolsController {
     return this.schoolsService.getBagianKerjaJenjangList();
   }
 
+  @Get('karyawan-names')
+  @Public()
+  @ApiOperation({
+    summary: 'Get karyawan names list',
+    description:
+      'Retrieves list of employee names from data_karyawan table for principal selection. This endpoint is public for dropdown population.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Karyawan names list retrieved successfully',
+    schema: {
+      type: 'array',
+      items: { type: 'string' },
+      example: ['Dr. John Doe', 'Jane Smith', 'Ahmad Rahman'],
+    },
+  })
+  async getKaryawanNamesList(): Promise<string[]> {
+    return this.schoolsService.getKaryawanNamesList();
+  }
+
   @Get('statistics')
   @RequiredPermissions({ resource: 'schools', action: PermissionAction.READ })
   @ApiOperation({
